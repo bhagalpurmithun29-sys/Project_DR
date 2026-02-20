@@ -4,13 +4,14 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import LandingPage from './components/LandingPage'
 import RetinaAIAnalysis from './components/Demo'
+import RetinaAISignIn from './components/Login'
 
 function App() {
 
 
   return (
     <>
-    <RetinaAIAnalysis />
+    <RetinaAISignIn />
       
     </>
   )
