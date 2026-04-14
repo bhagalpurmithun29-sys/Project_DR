@@ -5,7 +5,7 @@ const Doctor = require('../models/Doctor');
 // @access  Private
 exports.createOrUpdateProfile = async (req, res) => {
     try {
-        const { licenseNumber, country, experience, specialization, degrees } = req.body;
+        const { licenseNumber, country, experience, specialization, email, phoneNumber, degrees } = req.body;
 
         const profileFields = {
             user: req.user.id,
@@ -13,6 +13,8 @@ exports.createOrUpdateProfile = async (req, res) => {
             country,
             experience,
             specialization,
+            email,
+            phoneNumber,
             degrees: Array.isArray(degrees) ? degrees : [],
         };
 
@@ -42,6 +44,33 @@ exports.createOrUpdateProfile = async (req, res) => {
 exports.getProfile = async (req, res) => {
     try {
         const doctor = await Doctor.findOne({ user: req.user.id }).populate('user', ['name', 'email']);
+
+        if (!doctor) {
+            return res.status(404).json({ success: false, message: 'Doctor profile not found' });
+        }
+
+        res.status(200).json({ success: true, data: doctor });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Upload profile photo
+// @route   POST /api/doctors/profile/photo
+// @access  Private
+exports.uploadProfilePhoto = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'Please upload a file' });
+        }
+
+        const photoUrl = `/uploads/${req.file.filename}`;
+
+        const doctor = await Doctor.findOneAndUpdate(
+            { user: req.user.id },
+            { $set: { photo: photoUrl } },
+            { new: true }
+        ).populate('user', ['name', 'email']);
 
         if (!doctor) {
             return res.status(404).json({ success: false, message: 'Doctor profile not found' });

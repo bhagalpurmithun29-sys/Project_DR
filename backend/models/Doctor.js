@@ -23,6 +23,14 @@ const doctorSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add a primary specialization'],
     },
+    email: {
+        type: String,
+        required: [true, 'Please add a professional email'],
+    },
+    phoneNumber: {
+        type: String,
+        required: [true, 'Please add a mobile number'],
+    },
     degrees: [
         {
             title: String,

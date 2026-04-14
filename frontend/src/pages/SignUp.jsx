@@ -2,20 +2,29 @@ import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-    Eye,
     User,
     Stethoscope,
     UserPlus,
-    ShieldCheck,
     ChevronLeft,
     Activity,
     Mail,
     Lock,
     Calendar,
-    Fingerprint,
-    Award
+    Building2,
+    Loader2
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { useGoogleLogin } from '@react-oauth/google';
+import { getApiErrorMessage } from '../services/api';
+
+const GoogleIcon = () => (
+    <svg className="h-5 w-5" viewBox="0 0 24 24">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    </svg>
+);
 
 const Register = () => {
     const [role, setRole] = useState('patient'); // 'patient' or 'doctor'
@@ -24,11 +33,65 @@ const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { register } = useContext(AuthContext);
+    const [googleLoading, setGoogleLoading] = useState(false);
+    const { register, loginWithGoogle } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    // ── Google Sign-Up Handler ──
+    const handleGoogleSignupSuccess = async (tokenResponse) => {
+        setGoogleLoading(true);
+        setError('');
+        try {
+            const res = await loginWithGoogle(tokenResponse.access_token, role);
+            if (res?.data?.requiresSecuritySetup) {
+                // New user — route to profile setup, then to role-specific dashboard
+                const nextRoute = role === 'doctor'
+                    ? '/doctor-registration'
+                    : role === 'diagnosis_center'
+                        ? '/diagnosis-center/'
+                        : '/dashboard';
+                navigate('/profile-setup', { state: { nextRoute } });
+                return;
+            }
+            // Existing user signed in via Google — route directly to dashboard
+            const userRole = res?.data?.role;
+            if (userRole === 'doctor' || userRole === 'technician') {
+                navigate('/doctor-dashboard');
+            } else if (userRole === 'diagnosis_center') {
+                navigate('/diagnosis-center/');
+            } else {
+                navigate('/dashboard');
+            }
+        } catch (err) {
+            setError(getApiErrorMessage(err, 'Google Sign-Up failed. Please try again.'));
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
+
+    const googleSignupHandler = useGoogleLogin({
+        onSuccess: handleGoogleSignupSuccess,
+        onError: () => setError('Google Sign-Up was unsuccessful. Please try again.'),
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+
+        // Strict Validation Regex
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,12}$/;
+
+        if (!emailRegex.test(email)) {
+            setError('Please provide a valid email address.');
+            return;
+        }
+
+        if (!passwordRegex.test(password)) {
+            setError('Password must be 8-12 characters and include uppercase, lowercase, numbers, and a special character.');
+            return;
+        }
+
         try {
             // Calculate age from dob
             let age = 0;
@@ -42,16 +105,15 @@ const Register = () => {
                 }
             }
 
-            // Call register with extra fields
             await register(name, email, password, role, age);
-
-            if (role === 'doctor') {
-                navigate('/doctor-registration');
-            } else {
-                navigate('/dashboard');
-            }
+            const nextRoute = role === 'doctor'
+                ? '/doctor-registration'
+                : role === 'diagnosis_center'
+                    ? '/diagnosis-center/'
+                    : '/dashboard';
+            navigate('/profile-setup', { state: { nextRoute } });
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to register');
+            setError(getApiErrorMessage(err, 'Failed to register'));
         }
     };
 
@@ -60,20 +122,15 @@ const Register = () => {
         visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.1 } }
     };
 
-    const itemVariants = {
-        hidden: { opacity: 0, y: 10 },
-        visible: { opacity: 1, y: 0 }
-    };
-
     return (
-        <div className="font-display bg-white text-slate-900 antialiased min-h-screen overflow-hidden">
+        <div className="font-display bg-main text-slate-900 antialiased min-h-screen overflow-hidden">
             <div className="flex min-h-screen w-full">
                 {/* Left Side Branding */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="hidden lg:flex lg:w-5/12 bg-primary relative overflow-hidden flex-col justify-between p-16"
-                    style={{ background: "linear-gradient(135deg, #137fec 0%, #0a56a3 100%)" }}
+                    style={{ background: "linear-gradient(135deg, #059669 0%, #022c22 100%)" }}
                 >
                     <div className="absolute inset-0 opacity-10 pointer-events-none">
                         <motion.svg
@@ -120,7 +177,7 @@ const Register = () => {
                 </motion.div>
 
                 {/* Right Side Form */}
-                <div className="w-full lg:w-7/12 flex flex-col items-center justify-center p-6 sm:p-12 lg:p-16 bg-[#f8fafc] overflow-y-auto">
+                <div className="w-full lg:w-7/12 flex flex-col items-center justify-center p-6 sm:p-12 lg:p-16 bg-main overflow-y-auto">
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
@@ -143,47 +200,69 @@ const Register = () => {
                         <div className="space-y-10">
                             <div className="space-y-5">
                                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Select Identity</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {/* Patient Role Card */}
+                                {/* Role Cards — 3 columns */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    {/* Patient */}
                                     <motion.div
                                         whileHover={{ y: -4 }}
                                         onClick={() => setRole('patient')}
-                                        className={`cursor-pointer group relative p-6 rounded-3xl transition-all duration-300 shadow-sm ${role === 'patient'
-                                            ? 'border-slate-900 bg-white ring-4 ring-primary/20'
-                                            : 'border-white bg-white/40 hover:border-slate-200'
+                                        className={`cursor-pointer group relative p-5 rounded-3xl transition-all duration-300 shadow-sm ${role === 'patient'
+                                                ? 'border-slate-900 bg-white ring-4 ring-primary/20'
+                                                : 'border-white bg-white/40 hover:border-slate-200'
                                             }`}
                                     >
-                                        <div className="flex items-start justify-between mb-5">
+                                        <div className="flex items-start justify-between mb-4">
                                             <div className={`p-3 rounded-2xl transition-all duration-300 ${role === 'patient' ? 'bg-slate-100 text-black shadow-lg shadow-slate-200/50' : 'bg-slate-100 text-slate-400'}`}>
-                                                <User size={24} strokeWidth={2.5} />
+                                                <User size={22} strokeWidth={2.5} />
                                             </div>
-                                            <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${role === 'patient' ? 'bg-primary border-slate-900' : 'border-slate-200'}`}>
-                                                {role === 'patient' && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-2 w-2 rounded-full bg-primary" />}
+                                            <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${role === 'patient' ? 'bg-primary border-slate-900' : 'border-slate-200'}`}>
+                                                {role === 'patient' && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-2 w-2 rounded-full bg-white" />}
                                             </div>
                                         </div>
-                                        <h4 className="font-black text-slate-900 text-lg">Patient</h4>
-                                        <p className="text-xs font-bold text-slate-400 mt-2 leading-relaxed">Securely access your clinical markers and eye health data.</p>
+                                        <h4 className="font-black text-slate-900 text-base">Patient</h4>
+                                        <p className="text-[11px] font-bold text-slate-400 mt-1 leading-relaxed">Access your eye health data and reports.</p>
                                     </motion.div>
 
-                                    {/* Doctor Role Card */}
+                                    {/* Doctor */}
                                     <motion.div
                                         whileHover={{ y: -4 }}
                                         onClick={() => setRole('doctor')}
-                                        className={`cursor-pointer group relative p-6 rounded-3xl  transition-all duration-300 shadow-sm ${role === 'doctor'
-                                            ? 'border-slate-900 bg-white ring-4 ring-primary/20'
-                                            : 'border-white bg-white/40 hover:border-slate-200'
+                                        className={`cursor-pointer group relative p-5 rounded-3xl transition-all duration-300 shadow-sm ${role === 'doctor'
+                                                ? 'border-slate-900 bg-white ring-4 ring-primary/20'
+                                                : 'border-white bg-white/40 hover:border-slate-200'
                                             }`}
                                     >
-                                        <div className="flex items-start justify-between mb-5">
+                                        <div className="flex items-start justify-between mb-4">
                                             <div className={`p-3 rounded-2xl transition-all duration-300 ${role === 'doctor' ? 'bg-slate-100 text-black shadow-lg shadow-slate-200/50' : 'bg-slate-100 text-slate-400'}`}>
-                                                <Stethoscope size={24} strokeWidth={2.5} />
+                                                <Stethoscope size={22} strokeWidth={2.5} />
                                             </div>
-                                            <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${role === 'doctor' ? 'bg-primary border-slate-900' : 'border-slate-200'}`}>
-                                                {role === 'doctor' && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-2 w-2 rounded-full bg-primary" />}
+                                            <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${role === 'doctor' ? 'bg-primary border-slate-900' : 'border-slate-200'}`}>
+                                                {role === 'doctor' && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-2 w-2 rounded-full bg-white" />}
                                             </div>
                                         </div>
-                                        <h4 className="font-black text-slate-900 text-lg">Clinician</h4>
-                                        <p className="text-xs font-bold text-slate-400 mt-2 leading-relaxed">Advanced screening tools and HIPAA patient management.</p>
+                                        <h4 className="font-black text-slate-900 text-base">Clinician</h4>
+                                        <p className="text-[11px] font-bold text-slate-400 mt-1 leading-relaxed">Advanced screening tools and patient management.</p>
+                                    </motion.div>
+
+                                    {/* Diagnosis Center */}
+                                    <motion.div
+                                        whileHover={{ y: -4 }}
+                                        onClick={() => setRole('diagnosis_center')}
+                                        className={`cursor-pointer group relative p-5 rounded-3xl transition-all duration-300 shadow-sm ${role === 'diagnosis_center'
+                                                ? 'border-slate-900 bg-white ring-4 ring-primary/20'
+                                                : 'border-white bg-white/40 hover:border-slate-200'
+                                            }`}
+                                    >
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className={`p-3 rounded-2xl transition-all duration-300 ${role === 'diagnosis_center' ? 'bg-primary/5 text-primary shadow-lg shadow-primary/10' : 'bg-slate-100 text-slate-400'}`}>
+                                                <Building2 size={22} strokeWidth={2.5} />
+                                            </div>
+                                            <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${role === 'diagnosis_center' ? 'bg-primary border-slate-900' : 'border-slate-200'}`}>
+                                                {role === 'diagnosis_center' && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-2 w-2 rounded-full bg-white" />}
+                                            </div>
+                                        </div>
+                                        <h4 className="font-black text-slate-900 text-base">Diagnosis Center</h4>
+                                        <p className="text-[11px] font-bold text-slate-400 mt-1 leading-relaxed">Register your diagnosis center, lab, or hospital facility.</p>
                                     </motion.div>
                                 </div>
                             </div>
@@ -264,6 +343,35 @@ const Register = () => {
                                 </div>
                             </form>
 
+                            {/* ── OR Divider ── */}
+                            <div className="relative">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-slate-200" />
+                                </div>
+                                <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                    <span className="bg-main px-4">Or sign up with</span>
+                                </div>
+                            </div>
+
+                            {/* ── Google Sign-Up Button ── */}
+                            <motion.button
+                                whileHover={{ y: -2 }}
+                                whileTap={{ scale: 0.98 }}
+                                type="button"
+                                disabled={googleLoading}
+                                onClick={() => googleSignupHandler()}
+                                className="w-full flex items-center justify-center gap-3 rounded-2xl border-2 border-slate-100 bg-white px-6 py-4 font-black text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {googleLoading ? (
+                                    <Loader2 className="animate-spin text-primary" size={20} />
+                                ) : (
+                                    <GoogleIcon />
+                                )}
+                                <span className="text-sm">
+                                    {googleLoading ? 'Creating account...' : 'Sign up with Google'}
+                                </span>
+                            </motion.button>
+
                             <div className="text-center">
                                 <p className="text-slate-500 font-bold">
                                     Already registered?{' '}
@@ -274,10 +382,7 @@ const Register = () => {
                             </div>
                         </div>
 
-                        <div className="mt-16 flex items-center justify-center gap-3 px-6 py-3 bg-white rounded-full w-fit mx-auto shadow-sm border border-slate-100">
-                            <ShieldCheck className="text-green-500" size={20} strokeWidth={2.5} />
-                            <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">Certified HIPAA Secure Environment</span>
-                        </div>
+
 
                     </motion.div>
                 </div>

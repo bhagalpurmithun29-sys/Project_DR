@@ -14,6 +14,21 @@ const patientService = {
     getMyProfile: async () => {
         const response = await api.get('/patients/me');
         return response.data;
+    },
+
+    getAllPatients: async () => {
+        const response = await api.get('/patients');
+        return response.data;
+    },
+    createPatient: async (patientData) => {
+        const response = await api.post('/patients', patientData);
+        return response.data;
+    },
+    uploadPatientPhoto: async (id, formData) => {
+        const response = await api.post(`/patients/${id}/photo`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
     }
 };
 

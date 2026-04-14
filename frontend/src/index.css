@@ -1,9 +1,76 @@
+/* stylelint-disable at-rule-no-unknown */
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --color-primary: #137fec;
-  --font-sans: "Ubuntu", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-display: "Ubuntu", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+.font-hindi,
+.font-hindi * {
+  font-family: 'Tiro Devanagari Hindi', serif !important;
 }
 
+@theme {
+  --color-primary: #059669;
+  --color-sidebar: #022c22;
+  --font-sans: "Ubuntu", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: "Ubuntu", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* Theme-aware backgrounds and surfaces */
+  --color-bg-main: #F0FDF4;
+  --color-bg-surface: #ffffff;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --color-bg-main: #F0FDF4;
+    --color-bg-surface: #ffffff;
+    --color-text-main: #111827;
+    --color-text-muted: #4b5563;
+    --color-border-main: #e5e7eb;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --color-bg-main: #020617;
+    --color-bg-surface: #0f172a;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+    --color-border-main: #1e293b;
+  }
+}
+
+/* Global transitions and base styles */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
+}
+
+/* Custom Scrollbar Utility */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}

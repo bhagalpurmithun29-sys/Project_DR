@@ -30,6 +30,8 @@ const DoctorRegistration = () => {
     country: '',
     experience: '',
     specialization: '',
+    email: '',
+    phoneNumber: '',
     photo: null
   });
 
@@ -60,6 +62,15 @@ const DoctorRegistration = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Strict Email Validation (alphabet, number, @)
+    const emailRegex = /^(?=.*[0-9])(?=.*[a-zA-Z])[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.email)) {
+        setError('Invalid professional email. It must contain letters, numbers, and a valid @ domain.');
+        setLoading(false);
+        return;
+    }
+
     try {
       const profileData = {
         ...formData,
@@ -74,20 +85,15 @@ const DoctorRegistration = () => {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.1 } }
-  };
-
   const cardVariants = {
     hidden: { opacity: 0, scale: 0.98 },
     visible: { opacity: 1, scale: 1 }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] font-display text-slate-900 antialiased overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-main font-display text-slate-900 antialiased overflow-x-hidden">
       {/* Header */}
-      <header className="w-full bg-white/70 backdrop-blur-xl border-b border-slate-200/60 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+      <header className="w-full bg-white/70 backdrop-blur-xl border-b border-white px-8 py-4 flex justify-between items-center sticky top-0 z-50">
         <Link to="/" className="flex items-center gap-3 group">
           <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm group-hover:scale-110 transition-transform">
             <Activity size={24} strokeWidth={2.5} />
@@ -110,9 +116,9 @@ const DoctorRegistration = () => {
           ].map((s, i) => (
             <React.Fragment key={s.step}>
               <div className="flex flex-col items-center gap-3 group">
-                <div className={`size-12 rounded-2xl flex items-center justify-center transition-all duration-500 font-black shadow-lg ${s.status === 'complete' ? 'bg-green-500 text-white shadow-green-500/20' :
-                    s.status === 'active' ? 'bg-primary text-white shadow-primary/20 scale-110 ring-4 ring-primary/10' :
-                      'bg-white text-slate-300 border-2 border-slate-100'
+                <div className={`size-12 rounded-2xl flex items-center justify-center transition-all duration-500 font-black shadow-lg ${s.status === 'complete' ? 'bg-primary text-white shadow-primary/20' :
+                  s.status === 'active' ? 'bg-primary text-white shadow-primary/20 scale-110 ring-4 ring-primary/10' :
+                    'bg-white text-slate-300 border-2 border-slate-100'
                   }`}>
                   {s.status === 'complete' ? <Check size={22} strokeWidth={3} /> : s.step}
                 </div>
@@ -152,7 +158,7 @@ const DoctorRegistration = () => {
           animate="visible"
           className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white overflow-hidden"
         >
-          <div className="p-10 border-b border-slate-50 bg-[#f8fafc]/50 flex items-center justify-between">
+          <div className="p-10 border-b border-slate-50 bg-main/50 flex items-center justify-between">
             <div>
               <h4 className="text-xl font-black text-slate-900 tracking-tight">Professional Dossier</h4>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Medical Identity Verification</p>
@@ -174,14 +180,35 @@ const DoctorRegistration = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
               {/* Photo Upload */}
               <div className="lg:col-span-4 flex flex-col items-center">
+                <input
+                  type="file"
+                  id="doctor-photo-upload"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setFormData(prev => ({ ...prev, photo: file }));
+                    }
+                  }}
+                />
                 <motion.div
                   whileHover={{ scale: 1.02, rotate: -1 }}
+                  onClick={() => document.getElementById('doctor-photo-upload').click()}
                   className="w-56 h-72 rounded-3xl bg-slate-50 border-4 border-dashed border-slate-200 flex flex-col items-center justify-center relative group cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all overflow-hidden mb-6 shadow-inner"
                 >
-                  <UserCircle size={64} strokeWidth={1} className="text-slate-200 group-hover:text-primary/20 transition-colors" />
+                  {formData.photo ? (
+                    <img
+                      src={URL.createObjectURL(formData.photo)}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <UserCircle size={64} strokeWidth={1} className="text-slate-200 group-hover:text-primary/20 transition-colors" />
+                  )}
                   <div className="absolute inset-x-0 bottom-0 bg-white/80 backdrop-blur-md p-4 flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Upload size={18} className="text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Upload Profile</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Click here to upload photo</span>
                   </div>
                 </motion.div>
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center leading-relaxed max-w-[200px]">
@@ -257,6 +284,38 @@ const DoctorRegistration = () => {
                       <option value="surgery">Vitreoretinal Surgery</option>
                       <option value="pediatric">Pediatric Ophthalmology</option>
                     </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Email ID</label>
+                  <div className="relative group">
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+                    </div>
+                    <input
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white"
+                      placeholder="doctor@professional.com"
+                      type="email"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Mobile Number</label>
+                  <div className="relative group">
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2" /><path d="M12 18h.01" /></svg>
+                    </div>
+                    <input
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white"
+                      placeholder="+91 98765 43210"
+                      type="tel"
+                    />
                   </div>
                 </div>
               </div>
@@ -360,7 +419,7 @@ const DoctorRegistration = () => {
 
         {/* Secure Badge */}
         <div className="mt-12 flex items-center justify-center gap-3 px-6 py-3 bg-white rounded-full w-fit mx-auto shadow-sm border border-slate-100">
-          <ShieldCheck className="text-green-500" size={20} strokeWidth={2.5} />
+          <ShieldCheck className="text-primary" size={20} strokeWidth={2.5} />
           <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">E2EE Medical Data Vault Active</span>
         </div>
       </main>

@@ -24,44 +24,8 @@ import {
   Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const STAT_CARDS = [
-  {
-    icon: Dna,
-    iconBg: "bg-blue-500/10",
-    iconColor: "text-blue-500",
-    barColor: "bg-blue-500",
-    label: "Vessel Density",
-    value: "42.8%",
-    barWidth: 42.8,
-    trend: "+2.4%",
-    trendUp: true,
-  },
-  {
-    icon: AlertCircle,
-    iconBg: "bg-rose-500/10",
-    iconColor: "text-rose-500",
-    barColor: "bg-rose-500",
-    label: "Microaneurysm Rate",
-    value: "18.4",
-    unit: "/ cm²",
-    barWidth: 65,
-    trend: "+12%",
-    trendUp: false,
-  },
-  {
-    icon: Activity,
-    iconBg: "bg-indigo-500/10",
-    iconColor: "text-indigo-500",
-    barColor: "bg-indigo-500",
-    label: "Macular Thickness",
-    value: "284",
-    unit: "μm",
-    barWidth: 30,
-    trend: "Stable",
-    trendUp: true,
-  },
-];
+import PatientPreferencesModal from './PatientPreferencesModal';
+import patientService from "../services/patientService";
 
 const X_AXIS_LABELS = ["Jan 2024", "Mar 2024", "May 2024", "Jul 2024", "Sep 2024", "Nov 2024"];
 
@@ -69,6 +33,66 @@ export default function PatientAnalytics() {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeEye, setActiveEye] = useState("OD");
+  const [patient, setPatient] = useState(null);
+  const [stats, setStats] = useState([]);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const profile = await patientService.getMyProfile();
+        if (profile.success) {
+          setPatient(profile.data);
+          const res = await patientService.getPatientScans(profile.data._id);
+          const scanData = res.data;
+
+          // Calculate some dynamic stats for the cards based on latest scan
+          const latest = scanData[0] || {};
+          const dynamicStats = [
+            {
+              icon: Dna,
+              iconBg: "bg-teal-500/10",
+              iconColor: "text-teal-500",
+              barColor: "bg-teal-500",
+              label: "Vessel Density",
+              value: latest.aiResult === 'Low Risk' ? "44.2%" : "38.5%",
+              barWidth: latest.aiResult === 'Low Risk' ? 44.2 : 38.5,
+              trend: "+2.1%",
+              trendUp: true,
+            },
+            {
+              icon: AlertCircle,
+              iconBg: "bg-rose-500/10",
+              iconColor: "text-rose-500",
+              barColor: "bg-rose-500",
+              label: "Lesion Count",
+              value: (latest.lesionCount || 0).toString(),
+              unit: "Focal",
+              barWidth: Math.min((latest.lesionCount || 0) * 5, 100),
+              trend: latest.aiResult,
+              trendUp: latest.aiResult === 'Low Risk',
+            },
+            {
+              icon: Activity,
+              iconBg: "bg-primary/10",
+              iconColor: "text-primary",
+              barColor: "bg-primary",
+              label: "Scan Progress",
+              value: scanData.length.toString(),
+              unit: "Total",
+              barWidth: Math.min(scanData.length * 10, 100),
+              trend: "Stable",
+              trendUp: true,
+            },
+          ];
+          setStats(dynamicStats);
+        }
+      } catch (err) {
+        console.error("Failed to fetch analytics", err);
+      }
+    };
+    fetchAnalytics();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -86,56 +110,69 @@ export default function PatientAnalytics() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-display text-slate-900 antialiased flex flex-col lg:flex-row overflow-x-hidden">
+    <div className="min-h-screen bg-main font-display text-slate-900 antialiased flex flex-col lg:flex-row overflow-x-hidden">
       {/* Sidebar */}
-      <aside className="sticky top-0 h-screen w-72 bg-white/70 backdrop-blur-2xl border-r border-slate-200/60 hidden lg:flex flex-col z-50">
+      <aside className="fixed top-0 left-0 h-screen w-72 flex-shrink-0 bg-sidebar border-r border-white/5 hidden lg:flex flex-col z-50">
         <div className="p-8 pb-12 flex items-center gap-3">
-          <div className="size-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm">
+          <div className="size-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
             <Activity size={24} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-900 italic uppercase leading-none">RetinaAI</h1>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Patient Portal</p>
+            <h1 className="text-xl font-black tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Patients Portal</p>
           </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1.5">
-          <Link to="/dashboard" className="flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <LayoutDashboard size={18} />
-            <span className="text-sm">Overview</span>
-          </Link>
-          <Link to="/analytics" className="flex items-center gap-3 px-4 py-4 bg-primary text-white rounded-2xl font-black shadow-2xl shadow-primary/25 transition-all">
-            <BarChart3 size={18} strokeWidth={2.5} />
+        <nav className="flex-1 overflow-y-auto px-4 space-y-1 mt-6 custom-scrollbar">
+          <button onClick={() => navigate('/dashboard')} className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group text-left">
+            <LayoutDashboard size={16} />
+            <span className="text-sm">Patient Dashboard</span>
+          </button>
+          <Link to="/analytics" className="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-black shadow-lg shadow-primary/20 transition-all">
+            <BarChart3 size={16} strokeWidth={2.5} />
             <span className="text-sm">Health Analytics</span>
           </Link>
-          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <History size={18} />
-            <span className="text-sm">Scan Archive</span>
+          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
+            <History size={16} />
+            <span className="text-sm">Reports</span>
           </Link>
-          <Link to="/tips" className="flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <BookOpen size={18} />
+          <Link to="/tips" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
+            <BookOpen size={16} />
             <span className="text-sm">Medical Library</span>
           </Link>
-          <div className="pt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">System</div>
-          <button className="w-full flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <Settings size={18} />
-            <span className="text-sm">Preferences</span>
-          </button>
+
+          <div className="pt-8 mb-4">
+            <p className="px-4 mb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-left">System</p>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group text-left"
+            >
+              <Settings size={16} />
+              <span className="text-sm">Settings</span>
+            </button>
+          </div>
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-50 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
+        <div className="p-4 border-t border-white/5">
+          <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5 text-left">
+            <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${patient?.photo && patient.photo !== 'default-patient.jpg' ? patient.photo : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Patient')}&background=059669&color=fff&bold=true`})` }}></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-black truncate text-white">{user?.name || 'Patient'}</p>
+              <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{patient?.patientId || 'Medical ID: 88A-29C'}</p>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-500/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
             <LogOut size={16} strokeWidth={2.5} />
-            End Session
+            Sign Out
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 flex flex-col relative z-10">
+      <main className="flex-1 min-w-0 flex flex-col relative z-10 lg:ml-72">
         <div className="absolute top-0 inset-x-0 h-80 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
 
-        <header className="sticky top-0 z-40 h-24 bg-white/70 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-10">
+        <header className="sticky top-0 z-40 h-24 bg-white/70 backdrop-blur-xl border-b border-white flex items-center justify-between px-10">
           <div className="flex flex-col">
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1">Health Hub / <span className="text-primary">Analytics</span></h2>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Biometric <span className="text-primary not-italic">Insights</span></h1>
@@ -161,7 +198,7 @@ export default function PatientAnalytics() {
         >
           {/* KPI Row */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {STAT_CARDS.map((card, idx) => (
+            {stats.map((card, idx) => (
               <div key={idx} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/30 hover:shadow-2xl transition-all group relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <ArrowUpRight className="text-slate-200" size={20} />
@@ -170,7 +207,7 @@ export default function PatientAnalytics() {
                   <div className={`p-4 rounded-2xl ${card.iconBg} ${card.iconColor} shadow-sm border border-white`}>
                     <card.icon size={22} strokeWidth={2.5} />
                   </div>
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${card.trendUp ? 'bg-green-50 text-green-600' : 'bg-rose-50 text-rose-600'}`}>
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${card.trendUp ? 'bg-primary/10 text-primary' : 'bg-rose-50 text-rose-600'}`}>
                     {card.trendUp ? <TrendingUp size={12} /> : <AlertCircle size={12} />}
                     {card.trend}
                   </div>
@@ -231,7 +268,7 @@ export default function PatientAnalytics() {
                       key={pts}
                       points={pts}
                       fill="none"
-                      stroke={i === 0 ? "rgba(19,127,236,0.1)" : "rgba(19,127,236,0.05)"}
+                      stroke={i === 0 ? "rgba(5,150,105,0.1)" : "rgba(5,150,105,0.05)"}
                       strokeWidth="2"
                     />
                   ))}
@@ -243,7 +280,7 @@ export default function PatientAnalytics() {
                     [200, 200, 106, 330],
                     [200, 200, 48, 151],
                   ].map(([x1, y1, x2, y2], i) => (
-                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(19,127,236,0.05)" strokeWidth="1" />
+                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(5,150,105,0.05)" strokeWidth="1" />
                   ))}
                   {/* Data area */}
                   <motion.polygon
@@ -251,8 +288,8 @@ export default function PatientAnalytics() {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: "spring", duration: 2 }}
                     points="200,80 320,165 240,280 140,250 80,140"
-                    fill="rgba(19,127,236,0.15)"
-                    stroke="#137fec"
+                    fill="rgba(5,150,105,0.15)"
+                    stroke="var(--primary)"
                     strokeWidth="4"
                     strokeLinejoin="round"
                     className="group-hover:fill-primary/25 transition-colors duration-500"
@@ -267,9 +304,9 @@ export default function PatientAnalytics() {
                   </g>
                 </svg>
 
-                <div className="absolute top-0 right-0 p-6 space-y-4 bg-[#f8fafc]/50 backdrop-blur-sm rounded-3xl border border-white/50">
+                <div className="absolute top-0 right-0 p-6 space-y-4 bg-main/50 backdrop-blur-sm rounded-3xl border border-white/50">
                   <div className="flex items-center gap-3">
-                    <div className="size-3 bg-primary rounded-full shadow-[0_0_8px_rgba(19,127,236,0.6)]" />
+                    <div className="size-3 bg-primary rounded-full shadow-[0_0_8px_rgba(5,150,105,0.6)]" />
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Scan</span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -302,8 +339,8 @@ export default function PatientAnalytics() {
                         initial={{ strokeDashoffset: 264 }}
                         animate={{ strokeDashoffset: 264 - (264 * 0.68) }}
                         transition={{ duration: 2, ease: "easeOut" }}
-                        cx="50" cy="50" r="42" fill="none" stroke="#137fec" strokeWidth="10" strokeDasharray="264" strokeLinecap="round"
-                        className="drop-shadow-[0_0_15px_rgba(19,127,236,0.6)]"
+                        cx="50" cy="50" r="42" fill="none" stroke="#059669" strokeWidth="10" strokeDasharray="264" strokeLinecap="round"
+                        className="drop-shadow-[0_0_15px_rgba(5,150,105,0.6)]"
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center group-hover:scale-110 transition-transform duration-500">
@@ -333,13 +370,13 @@ export default function PatientAnalytics() {
                   <h4 className="text-2xl font-black text-slate-900 tracking-tight italic">Longitudinal <span className="text-primary">Correlation</span></h4>
                   <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">HbA1c levels mapped against focal lesion counts</p>
                 </div>
-                <div className="flex gap-8 px-6 py-4 bg-[#f8fafc] rounded-2xl border border-slate-50">
+                <div className="flex gap-8 px-6 py-4 bg-main rounded-2xl border border-slate-50">
                   <div className="flex items-center gap-3">
                     <div className="size-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">HbA1c Sync (%)</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="size-2 rounded-full bg-primary shadow-[0_0_8px_rgba(19,127,236,0.6)]" />
+                    <div className="size-2 rounded-full bg-primary shadow-[0_0_8px_rgba(5,150,105,0.6)]" />
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lesion Density</span>
                   </div>
                 </div>
@@ -349,7 +386,7 @@ export default function PatientAnalytics() {
                 <svg className="h-full w-full" viewBox="0 0 1000 200" preserveAspectRatio="none">
                   {/* Grid System */}
                   {[40, 100, 160].map((y) => (
-                    <line key={y} x1="0" y1={y} x2="1000" y2={y} stroke="rgba(19,127,236,0.03)" strokeWidth="1" />
+                    <line key={y} x1="0" y1={y} x2="1000" y2={y} stroke="rgba(5,150,105,0.03)" strokeWidth="1" />
                   ))}
 
                   {/* HbA1c Line */}
@@ -375,12 +412,12 @@ export default function PatientAnalytics() {
                     transition={{ duration: 2.5 }}
                     d="M0,160 L200,165 L400,155 L600,120 L800,130 L1000,70"
                     fill="none"
-                    stroke="#137fec"
+                    stroke="#059669"
                     strokeWidth="4"
                     strokeLinecap="round"
                   />
                   {[[200, 165], [400, 155], [600, 120], [800, 130], [1000, 70]].map(([cx, cy], i) => (
-                    <circle key={i} cx={cx} cy={cy} r="6" fill="#137fec" className="group-hover:scale-125 transition-transform" />
+                    <circle key={i} cx={cx} cy={cy} r="6" fill="#059669" className="group-hover:scale-125 transition-transform" />
                   ))}
                 </svg>
 
@@ -425,6 +462,13 @@ export default function PatientAnalytics() {
           </p>
         </footer>
       </main>
+      <PatientPreferencesModal
+        isOpen={isPreferencesOpen}
+        onClose={() => setIsPreferencesOpen(false)}
+        patient={patient}
+        user={user}
+        onProfileUpdate={(updated) => setPatient(prev => ({ ...prev, ...updated }))}
+      />
     </div>
   );
 }

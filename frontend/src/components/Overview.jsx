@@ -38,17 +38,17 @@ const USER_AVATARS = [
 const STAFF = [
   {
     name: "Dr. Helena Hills",
-    email: "h.hills@healthai.com",
+    email: "h.hills@retinaai.health",
     role: "Lead Ophthalmologist",
     lastActive: "12 mins ago",
     status: "Online",
-    statusStyle: "bg-green-100 text-green-700 border-green-200",
+    statusStyle: "bg-primary/10 text-primary border-primary/20",
     avatar:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCYVMdSodEeqXXao_8ywmApzjYK5Wm1QVDWbRiGKf7g8CmzawVljlvbFZZU3cnvOKM1YCkExf9eTruqo8UHgR_eVGlRmzjmlrd3lrr3JEBv1QNScAoqsCC85zlTcCtT5BKgEpU5Ky4B11zoXsec3n1lGGH872gsx_OBZpC_fvAAP89oaEk6gbGirBqGStLszOKpbaxLo0lF7WH3DXaS9750ORICRiUnYFx4E_yC_TJRCkFnshuy81YaVtroyrT7PghHVVBZRG-LOiTk",
   },
   {
     name: "Marcus Thorne",
-    email: "m.thorne@healthai.com",
+    email: "m.thorne@retinaai.health",
     role: "Data Scientist",
     lastActive: "2 hours ago",
     status: "Offline",
@@ -58,7 +58,7 @@ const STAFF = [
   },
   {
     name: "Jin Wu",
-    email: "j.wu@healthai.com",
+    email: "j.wu@retinaai.health",
     role: "Clinical Technician",
     lastActive: "Yesterday",
     status: "Away",
@@ -112,7 +112,7 @@ const SCAN_THUMBNAILS = [
   },
   {
     label: "Patient #1025",
-    dot: "bg-green-500",
+    dot: "bg-primary",
     src: "https://lh3.googleusercontent.com/aida-public/AB6AXuCu_No3u1t1GpiW9DWpTQ-zkcn030CpbeC6AahM1ip_Fz9IkVhxjj4EmoZPruXJd65mMlcYGRb_-QH-rvQ775kJ_9wQPCVncah_fQzbxUb7VkiCgZ3CDlpTe7w---e6xxfHgf_VchnKvQh4AdzV_FTUmpcjyYy7stUzrkU7M2vAQCojqLxC7RR47RABFHKO0e1dlA5U9Ap-QALYActpRov-VwDPNK9pw2Slzf_fkg3mLRkdED-XH24fURTPL_zgofKgMaXLDJoOQa1j",
   },
   {
@@ -142,14 +142,14 @@ const NAV_SYSTEM = [
 
 function Sidebar() {
   return (
-    <aside className="sticky top-0 flex h-screen w-72 flex-col border-r border-slate-200/60 bg-white/50 backdrop-blur-xl">
+    <aside className="fixed top-0 left-0 flex h-screen w-72 flex-col border-r border-white/5 bg-sidebar z-50">
       {/* Logo */}
       <div className="flex items-center gap-3 p-8">
         <div className="rounded-xl bg-primary/10 p-2 text-primary shadow-sm">
           <Activity size={24} strokeWidth={2.5} />
         </div>
         <div>
-          <h1 className="text-lg font-black leading-none tracking-tight">HealthAI</h1>
+          <h1 className="text-lg font-black leading-none tracking-tight text-white italic">RetinaAI</h1>
           <p className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
             Admin Suite
           </p>
@@ -169,8 +169,8 @@ function Sidebar() {
                 key={item.label}
                 href="#"
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${item.active
-                    ? "bg-primary text-white shadow-lg shadow-primary/25"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-primary text-white shadow-lg shadow-primary/25"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
                   }`}
               >
                 <item.icon size={18} strokeWidth={item.active ? 2.5 : 2} />
@@ -190,7 +190,7 @@ function Sidebar() {
               <a
                 key={item.label}
                 href="#"
-                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-900"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-slate-400 transition-all hover:bg-white/5 hover:text-white"
               >
                 <item.icon size={18} />
                 {item.label}
@@ -202,15 +202,15 @@ function Sidebar() {
 
       {/* User info */}
       <div className="p-4">
-        <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 border border-slate-100">
+        <div className="flex items-center gap-3 rounded-2xl bg-white/5 p-4 border border-white/5">
           <img
             src={ADMIN_AVATAR}
             alt="Admin"
-            className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+            className="h-10 w-10 rounded-full object-cover ring-2 ring-white/10 shadow-sm"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-black text-slate-900">Dr. Sarah Chen</p>
-            <p className="truncate text-[10px] font-bold text-slate-400">Administrator</p>
+            <p className="truncate text-xs font-black text-white">Dr. Sarah Chen</p>
+            <p className="truncate text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administrator</p>
           </div>
           <button className="text-slate-400 hover:text-red-500 transition-colors">
             <LogOut size={18} />
@@ -223,11 +223,11 @@ function Sidebar() {
 
 function Header({ search, onSearch }) {
   return (
-    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/60 bg-white/70 px-8 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-white bg-white/70 px-8 backdrop-blur-xl">
       <div className="flex items-center gap-4">
         <h2 className="text-xl font-black tracking-tight">System Overview</h2>
-        <div className="flex items-center gap-1.5 rounded-full border border-green-100 bg-green-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-green-600">
-          <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+        <div className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
           Healthy
         </div>
       </div>
@@ -275,7 +275,7 @@ function MetricCard({ title, value, icon: Icon, trend, colorClass }) {
       </div>
       {trend && (
         <div className="mt-6 flex items-center gap-2">
-          <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-black text-green-600 border border-green-100">
+          <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-black text-primary border border-primary/20">
             <TrendingUp size={14} />
             {trend}
           </span>
@@ -385,7 +385,7 @@ function SystemAlerts() {
         </AnimatePresence>
         {alerts.length === 0 && (
           <div className="py-10 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-500">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Shield size={24} />
             </div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No active threats</p>
@@ -448,8 +448,8 @@ function PerformanceChart() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`rounded-xl px-4 py-2 text-xs font-black transition-all ${activeTab === tab
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
                 }`}
             >
               {tab}
@@ -477,8 +477,8 @@ function PerformanceChart() {
                 animate={{ height: "100%" }}
                 transition={{ duration: 0.8, delay: i * 0.05 }}
                 className={`h-full w-full rounded-t-xl transition-all ${isLast
-                    ? "bg-primary shadow-lg shadow-primary/30"
-                    : "bg-primary/10 hover:bg-primary/40"
+                  ? "bg-primary shadow-lg shadow-primary/30"
+                  : "bg-primary/10 hover:bg-primary/40"
                   }`}
               />
 
@@ -519,10 +519,10 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-display text-slate-900 antialiased overflow-x-hidden">
+    <div className="flex min-h-screen bg-main font-display text-slate-900 antialiased overflow-x-hidden">
       <Sidebar />
 
-      <main className="flex min-w-0 flex-1 flex-col pb-12">
+      <main className="flex min-w-0 flex-1 flex-col pb-12 ml-72">
         <Header search={search} onSearch={setSearch} />
 
         <motion.div
@@ -545,7 +545,7 @@ export default function AdminDashboard() {
               value="98.2%"
               icon={Cpu}
               trend="+0.1%"
-              colorClass="bg-indigo-500/10 text-indigo-600"
+              colorClass="bg-primary/10 text-primary"
             />
             <MetricCard
               title="Active Pros"
@@ -569,7 +569,7 @@ export default function AdminDashboard() {
 
         <footer className="mt-auto px-10 pt-10 text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">
-            © 2024 HealthAI Diagnostic Systems / v2.4.1-stable / Encryption Active
+            © 2024 RetinaAI Clinical Systems / v2.4.1-stable / Encryption Active
           </p>
         </footer>
       </main>

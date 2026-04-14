@@ -52,13 +52,13 @@ const scanImages = [
 
 // --- Sidebar Component ---
 const Sidebar = () => (
-  <aside className="sticky top-0 flex h-screen w-72 flex-col border-r border-slate-200/60 bg-white/50 backdrop-blur-xl">
+  <aside className="fixed top-0 left-0 flex h-screen w-72 flex-col border-r border-white/5 bg-sidebar z-50">
     <div className="flex items-center gap-3 p-8">
       <div className="rounded-xl bg-primary/10 p-2 text-primary shadow-sm">
         <Activity size={24} strokeWidth={2.5} />
       </div>
       <div>
-        <h1 className="text-lg font-black leading-none tracking-tight text-slate-900">HealthAI</h1>
+        <h1 className="text-lg font-black leading-none tracking-tight text-white italic">RetinaAI</h1>
         <p className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
           Admin Suite
         </p>
@@ -90,8 +90,8 @@ const Sidebar = () => (
     </nav>
 
     <div className="p-4">
-      <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 border border-slate-100">
-        <div className="size-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-white shadow-sm">
+      <div className="flex items-center gap-3 rounded-2xl bg-white/5 p-4 border border-white/5">
+        <div className="size-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-white/10 shadow-sm">
           <img
             src={avatarUrls.admin}
             alt="Dr. Sarah Chen"
@@ -99,8 +99,8 @@ const Sidebar = () => (
           />
         </div>
         <div className="flex-1 overflow-hidden">
-          <p className="text-xs font-black truncate text-slate-900">Dr. Sarah Chen</p>
-          <p className="text-[10px] font-bold text-slate-400 truncate">Senior Administrator</p>
+          <p className="text-xs font-black truncate text-white">Dr. Sarah Chen</p>
+          <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">Senior Administrator</p>
         </div>
         <button className="text-slate-400 hover:text-red-500 transition-colors">
           <LogOut size={18} />
@@ -115,8 +115,8 @@ const NavItem = ({ icon: Icon, children, active = false }) => {
     <a
       href="#"
       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${active
-          ? "bg-primary text-white shadow-lg shadow-primary/25"
-          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+        ? "bg-primary text-white shadow-lg shadow-primary/25"
+        : "text-slate-400 hover:bg-white/5 hover:text-white"
         }`}
     >
       <Icon size={18} strokeWidth={active ? 2.5 : 2} />
@@ -129,11 +129,11 @@ const NavItem = ({ icon: Icon, children, active = false }) => {
 const Header = ({ notificationEnabled = true }) => {
   const [showNotification, setShowNotification] = useState(notificationEnabled);
   return (
-    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/60 bg-white/70 px-8 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-white bg-white/70 px-8 backdrop-blur-xl">
       <div className="flex items-center gap-4">
         <h2 className="text-xl font-black tracking-tight text-slate-900">Model Configuration</h2>
-        <div className="flex items-center gap-1.5 rounded-full border border-green-100 bg-green-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-green-600">
-          <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+        <div className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
           Stable v2.4
         </div>
       </div>
@@ -181,7 +181,7 @@ const MetricCard = ({ title, value, change, icon: Icon, colorClass = "bg-primary
       </div>
       {change && (
         <div className="mt-6 flex items-center gap-2">
-          <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-black text-green-600 border border-green-100">
+          <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-black text-primary border border-primary/20">
             <TrendingUp size={14} />
             {change}
           </span>
@@ -195,7 +195,7 @@ const MetricCard = ({ title, value, change, icon: Icon, colorClass = "bg-primary
 // --- Staff Table Row Component ---
 const StaffRow = ({ name, email, role, lastActive, status, avatar }) => {
   const statusStyles = {
-    Online: "bg-green-100 text-green-700 border-green-200",
+    Online: "bg-primary/10 text-primary border-primary/20",
     Offline: "bg-slate-100 text-slate-600 border-slate-200",
     Away: "bg-amber-100 text-amber-700 border-amber-200",
   };
@@ -264,9 +264,9 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-display text-slate-900 antialiased overflow-x-hidden">
+    <div className="flex min-h-screen bg-main font-display text-slate-900 antialiased overflow-x-hidden">
       <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 pb-12">
+      <main className="flex-1 flex flex-col min-w-0 pb-12 ml-72">
         <Header />
 
         <motion.div
@@ -293,7 +293,7 @@ function App() {
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Model Accuracy</p>
                   <div className="flex items-baseline gap-2 mt-2">
                     <h3 className="text-4xl font-black tracking-tight text-slate-900">98.2%</h3>
-                    <span className="text-xs font-black text-green-600">+0.1%</span>
+                    <span className="text-xs font-black text-primary">+0.1%</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2 rounded-full mt-6 overflow-hidden">
                     <motion.div
@@ -304,7 +304,7 @@ function App() {
                     />
                   </div>
                 </div>
-                <div className="bg-indigo-500/10 text-indigo-600 p-3 rounded-2xl ml-4 shadow-lg">
+                <div className="bg-primary/10 text-primary p-3 rounded-2xl ml-4 shadow-lg">
                   <Cpu size={24} strokeWidth={2.5} />
                 </div>
               </div>
@@ -347,9 +347,9 @@ function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    <StaffRow name="Dr. Helena Hills" email="h.hills@healthai.com" role="Lead Opthalmologist" lastActive="12 mins ago" status="Online" avatar={avatarUrls.staff1} />
-                    <StaffRow name="Marcus Thorne" email="m.thorne@healthai.com" role="Data Scientist" lastActive="2 hours ago" status="Offline" avatar={avatarUrls.staff2} />
-                    <StaffRow name="Jin Wu" email="j.wu@healthai.com" role="Clinical Technician" lastActive="Yesterday" status="Away" avatar={avatarUrls.staff3} />
+                    <StaffRow name="Dr. Helena Hills" email="h.hills@retinaai.health" role="Lead Opthalmologist" lastActive="12 mins ago" status="Online" avatar={avatarUrls.staff1} />
+                    <StaffRow name="Marcus Thorne" email="m.thorne@retinaai.health" role="Data Scientist" lastActive="2 hours ago" status="Offline" avatar={avatarUrls.staff2} />
+                    <StaffRow name="Jin Wu" email="j.wu@retinaai.health" role="Clinical Technician" lastActive="Yesterday" status="Away" avatar={avatarUrls.staff3} />
                   </tbody>
                 </table>
               </div>
@@ -389,7 +389,7 @@ function App() {
                         <span className="text-white text-[10px] font-black uppercase tracking-widest">Patient #102{4 + idx}</span>
                       </div>
                       <img src={src} alt={`Scan ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                      <div className={`absolute top-3 right-3 size-2.5 ring-4 ring-white shadow-sm ${idx === 0 ? 'bg-red-500' : idx === 1 ? 'bg-green-500' : 'bg-amber-500'} rounded-full`}></div>
+                      <div className={`absolute top-3 right-3 size-2.5 ring-4 ring-white shadow-sm ${idx === 0 ? 'bg-red-500' : idx === 1 ? 'bg-primary' : 'bg-amber-500'} rounded-full`}></div>
                     </motion.div>
                   ))}
                   <button className="group relative aspect-square bg-slate-50/50 rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 hover:border-primary/40 hover:bg-primary/5 transition-all">
@@ -456,7 +456,7 @@ function App() {
 
         <footer className="p-10 text-center mt-auto">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
-            © 2024 HealthAI Diagnostic Systems / v2.4.1-stable / Encryption Active
+            © 2024 RetinaAI Clinical Systems / v2.4.1-stable / Encryption Active
           </p>
         </footer>
       </main>

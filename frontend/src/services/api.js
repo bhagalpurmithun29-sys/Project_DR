@@ -1,10 +1,52 @@
 import axios from 'axios';
 
+const LOCAL_DEV_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
+
+const trimTrailingSlashes = (value) => value.replace(/\/+$/, '');
+
+const resolveApiBaseUrl = () => {
+    const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
+    if (configuredBaseUrl) {
+        const normalizedBaseUrl = trimTrailingSlashes(configuredBaseUrl);
+        return normalizedBaseUrl.endsWith('/api')
+            ? normalizedBaseUrl
+            : `${normalizedBaseUrl}/api`;
+    }
+
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+        const { hostname } = window.location;
+
+        if (LOCAL_DEV_HOSTS.has(hostname)) {
+            const backendHost = hostname === '0.0.0.0' ? 'localhost' : hostname;
+            return `http://${backendHost}:5001/api`;
+        }
+    }
+
+    return '/api';
+};
+
+export const getApiErrorMessage = (error, fallbackMessage = 'Something went wrong. Please try again.') => {
+    if (error.response?.data?.message) {
+        return error.response.data.message;
+    }
+
+    if (error.code === 'ERR_NETWORK') {
+        return 'Cannot reach the backend API. Start the backend server on port 5001 and try again.';
+    }
+
+    if (error.response?.status === 404) {
+        return 'The requested API route was not found. Make sure the backend server is running on port 5001.';
+    }
+
+    return fallbackMessage;
+};
+
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: resolveApiBaseUrl(),
 });
 
-// Add a request interceptor to include the JWT token in all requests
+// Request interceptor — attach JWT token to every request
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -13,7 +55,20 @@ api.interceptors.request.use(
         }
         return config;
     },
+    (error) => Promise.reject(error)
+);
+
+// Response interceptor — auto-logout on 401 (expired/invalid token)
+api.interceptors.response.use(
+    (response) => response,
     (error) => {
+        if (error.response?.status === 401) {
+            // Clear stale token + redirect to login
+            localStorage.removeItem('token');
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
+        }
         return Promise.reject(error);
     }
 );

@@ -12,15 +12,17 @@ const scanSchema = new mongoose.Schema({
     },
     aiResult: {
         type: String,
-        required: true,
     },
     lesionCount: {
         type: Number,
         default: 0,
     },
+    lesionPercent: {
+        type: Number,
+        default: 0,
+    },
     technician: {
         type: String,
-        required: true,
     },
     imageUrl: {
         type: String,
@@ -28,7 +30,7 @@ const scanSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Pending', 'Reviewed'],
+        enum: ['Pending', 'Analyzed', 'Reviewed'],
         default: 'Pending',
     },
     eyeSide: {

@@ -29,6 +29,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PatientPreferencesModal from './PatientPreferencesModal';
 
 const PAGE_SIZE = 6;
 
@@ -57,6 +58,22 @@ const DetailedScanHistory = () => {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("list"); // "list" | "grid"
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await patientService.getMyProfile();
+      if (res.success) {
+        setPatient(res.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch profile", err);
+    }
+  };
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,7 +112,7 @@ const DetailedScanHistory = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+      <div className="min-h-screen bg-main flex items-center justify-center">
         <div className="relative">
           <div className="h-20 w-20 rounded-full border-4 border-primary/10 border-t-primary animate-spin"></div>
           <Eye className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary" size={24} />
@@ -115,58 +132,71 @@ const DetailedScanHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-display text-slate-900 antialiased flex flex-col lg:flex-row overflow-x-hidden">
+    <div className="min-h-screen bg-main font-display text-slate-900 antialiased flex flex-col lg:flex-row overflow-x-hidden">
       {/* Sidebar */}
-      <aside className="sticky top-0 h-screen w-72 bg-white/70 backdrop-blur-2xl border-r border-slate-200/60 hidden lg:flex flex-col z-50">
+      <aside className="fixed top-0 left-0 h-screen w-72 flex-shrink-0 bg-sidebar border-r border-white/5 hidden lg:flex flex-col z-50">
         <div className="p-8 pb-12 flex items-center gap-3">
           <div className="size-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
             <Activity size={24} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-900 italic uppercase leading-none">RetinaAI</h1>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Patient Portal</p>
+            <h1 className="text-xl font-black tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Patients Portal</p>
           </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1.5">
-          <Link to="/dashboard" className="flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <LayoutDashboard size={18} />
-            <span className="text-sm">Overview</span>
-          </Link>
-          <Link to="/analytics" className="flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <BarChart3 size={18} />
+        <nav className="flex-1 overflow-y-auto px-4 space-y-1 mt-6 custom-scrollbar">
+          <button onClick={() => navigate('/dashboard')} className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group text-left">
+            <LayoutDashboard size={16} />
+            <span className="text-sm">Patient Dashboard</span>
+          </button>
+          <Link to="/analytics" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
+            <Activity size={16} />
             <span className="text-sm">Health Analytics</span>
           </Link>
-          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-4 bg-primary text-white rounded-2xl font-black shadow-2xl shadow-primary/25 transition-all">
-            <History size={18} strokeWidth={2.5} />
-            <span className="text-sm">Scan Archive</span>
+          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-black shadow-lg shadow-primary/20 transition-all">
+            <History size={16} strokeWidth={2.5} />
+            <span className="text-sm">Reports</span>
           </Link>
-          <Link to="/tips" className="flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <BookOpen size={18} />
+          <Link to="/tips" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
+            <BookOpen size={16} />
             <span className="text-sm">Medical Library</span>
           </Link>
-          <div className="pt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">System</div>
-          <button className="w-full flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <Settings size={18} />
-            <span className="text-sm">Preferences</span>
-          </button>
+
+          <div className="pt-8 mb-4">
+            <p className="px-4 mb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-left">System</p>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group text-left"
+            >
+              <Settings size={16} />
+              <span className="text-sm">Settings</span>
+            </button>
+          </div>
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-50 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
+        <div className="p-4 border-t border-white/5">
+          <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5 text-left">
+            <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${patient?.photo && patient.photo !== 'default-patient.jpg' ? patient.photo : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Patient')}&background=059669&color=fff&bold=true`})` }}></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-black truncate text-white">{user?.name || 'Patient'}</p>
+              <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{patient?.patientId || 'Medical ID: 88A-29C'}</p>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-500/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
             <LogOut size={16} strokeWidth={2.5} />
-            End Session
+            Sign Out
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 flex flex-col relative z-10">
+      <main className="flex-1 min-w-0 flex flex-col relative z-10 lg:ml-72">
         <div className="absolute top-0 inset-x-0 h-80 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
 
-        <header className="sticky top-0 z-40 h-24 bg-white/70 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-10">
+        <header className="sticky top-0 z-40 h-24 bg-white/70 backdrop-blur-xl border-b border-white flex items-center justify-between px-10">
           <div className="flex flex-col">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1">Clinic Hub / <span className="text-primary italic">Archive</span></h2>
+
             <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Scan <span className="text-primary not-italic">Records</span></h1>
           </div>
 
@@ -175,10 +205,7 @@ const DetailedScanHistory = () => {
               <ShieldCheck size={16} className="text-primary mr-2" />
               <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">Instance-{patient?._id?.substring(0, 8).toUpperCase() || "AUTH"}</span>
             </div>
-            <button className="h-12 px-6 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-xl shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2 group">
-              <PlusCircle size={16} />
-              New Diagnostics
-            </button>
+
           </div>
         </header>
 
@@ -232,7 +259,7 @@ const DetailedScanHistory = () => {
             {viewMode === "list" ? (
               <div className="overflow-x-auto flex-1">
                 <table className="w-full text-left">
-                  <thead className="bg-[#f8fafc]/50">
+                  <thead className="bg-main/50">
                     <tr>
                       <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Scan Identity</th>
                       <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Diagnosis Epoch</th>
@@ -244,7 +271,7 @@ const DetailedScanHistory = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     <AnimatePresence>
-                      {currentScans.length > 0 ? currentScans.map((row, i) => (
+                      {currentScans.length > 0 ? currentScans.map((row) => (
                         <motion.tr
                           key={row._id}
                           initial={{ opacity: 0 }}
@@ -265,11 +292,11 @@ const DetailedScanHistory = () => {
                             </div>
                           </td>
                           <td className="px-10 py-8">
-                            <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.aiResult.includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                row.aiResult.includes('Severe') ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                  'bg-green-50 text-green-600 border-green-100'
+                            <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${(row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                              (row.aiResult || '').includes('Severe') ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                'bg-primary/10 text-primary border-primary/20'
                               }`}>
-                              {row.aiResult}
+                              {row.aiResult || 'Pending Analysis'}
                             </span>
                           </td>
                           <td className="px-10 py-8">
@@ -282,9 +309,18 @@ const DetailedScanHistory = () => {
                             <ConfidenceBar value={95} />
                           </td>
                           <td className="px-10 py-8 text-right">
-                            <button className="h-10 px-5 bg-white text-slate-400 hover:text-primary hover:border-primary/20 border-2 border-slate-50 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group/btn">
-                              Open <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" strokeWidth={3} />
-                            </button>
+                            {['Analyzed', 'Reviewed'].includes(row.status) ? (
+                              <Link
+                                to={`/report/${row._id}`}
+                                className="h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group/btn"
+                              >
+                                View Report <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" strokeWidth={3} />
+                              </Link>
+                            ) : (
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                                {row.status}
+                              </span>
+                            )}
                           </td>
                         </motion.tr>
                       )) : (
@@ -309,7 +345,7 @@ const DetailedScanHistory = () => {
                   <motion.div
                     key={row._id}
                     layoutId={row._id}
-                    className="group bg-[#f8fafc] rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 cursor-pointer relative overflow-hidden"
+                    className="group bg-main rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 cursor-pointer relative overflow-hidden"
                   >
                     <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-150 transition-transform">
                       <Activity size={80} />
@@ -340,9 +376,18 @@ const DetailedScanHistory = () => {
                         </div>
                       </div>
 
-                      <button className="w-full h-12 bg-white text-slate-900 border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all flex items-center justify-center gap-2">
-                        Access Analysis <ArrowUpRight size={14} strokeWidth={2.5} />
-                      </button>
+                      {['Analyzed', 'Reviewed'].includes(row.status) ? (
+                        <Link
+                          to={`/report/${row._id}`}
+                          className="w-full h-12 bg-white text-slate-900 border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-white hover:border-primary transition-all flex items-center justify-center gap-2"
+                        >
+                          Access Analysis <ArrowUpRight size={14} strokeWidth={2.5} />
+                        </Link>
+                      ) : (
+                        <div className="w-full h-12 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                          {row.status} <Clock size={14} />
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -350,7 +395,7 @@ const DetailedScanHistory = () => {
             )}
 
             {/* Pagination */}
-            <div className="p-10 bg-[#f8fafc]/50 border-t border-slate-50 flex items-center justify-between">
+            <div className="p-10 bg-main/50 border-t border-slate-50 flex items-center justify-between">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Showing {currentScans.length} of {filtered.length} Indexed Results</p>
               <div className="flex items-center gap-2">
                 <button
@@ -380,6 +425,12 @@ const DetailedScanHistory = () => {
           </p>
         </footer>
       </main>
+      <PatientPreferencesModal
+        isOpen={isPreferencesOpen}
+        onClose={() => setIsPreferencesOpen(false)}
+        patient={patient}
+        user={user}
+      />
     </div>
   );
 };

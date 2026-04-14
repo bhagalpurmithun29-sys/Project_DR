@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import patientService from "../services/patientService";
 import {
   Eye,
   LayoutDashboard,
@@ -26,11 +27,29 @@ import {
   Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PatientPreferencesModal from './PatientPreferencesModal';
 
 const EducationalResources = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const [patient, setPatient] = useState(null);
+
+  React.useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await patientService.getMyProfile();
+        if (res.success) {
+          setPatient(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile', err);
+      }
+    };
+
+    void loadProfile();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -58,8 +77,8 @@ const EducationalResources = () => {
     },
     {
       icon: ShieldCheck,
-      iconBg: "bg-indigo-500/10",
-      iconColor: "text-indigo-600",
+      iconBg: "bg-teal-500/10",
+      iconColor: "text-teal-600",
       title: "Prevention Protocol",
       desc: "Optimal glycemic control and regular blood pressure monitoring are the cornerstones of preventing disease progression according to ETDRS standards.",
       linkText: "Management Guide",
@@ -103,56 +122,69 @@ const EducationalResources = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-display text-slate-900 antialiased flex flex-col lg:flex-row overflow-x-hidden">
+    <div className="min-h-screen bg-main font-display text-slate-900 antialiased flex flex-col lg:flex-row overflow-x-hidden">
       {/* Sidebar */}
-      <aside className="sticky top-0 h-screen w-72 bg-white/70 backdrop-blur-2xl border-r border-slate-200/60 hidden lg:flex flex-col z-50">
+      <aside className="fixed top-0 left-0 h-screen w-72 flex-shrink-0 bg-sidebar border-r border-white/5 hidden lg:flex flex-col z-50">
         <div className="p-8 pb-12 flex items-center gap-3">
           <div className="size-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
             <Activity size={24} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-900 italic uppercase leading-none">RetinaAI</h1>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Patient Portal</p>
+            <h1 className="text-xl font-black tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Patients Portal</p>
           </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1.5">
-          <Link to="/dashboard" className="flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <LayoutDashboard size={18} />
-            <span className="text-sm">Overview</span>
-          </Link>
-          <Link to="/analytics" className="flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <BarChart3 size={18} />
+        <nav className="flex-1 overflow-y-auto px-4 space-y-1 mt-6 custom-scrollbar">
+          <button onClick={() => navigate('/dashboard')} className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
+            <LayoutDashboard size={16} />
+            <span className="text-sm">Patient Dashboard</span>
+          </button>
+          <Link to="/analytics" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
+            <Activity size={16} />
             <span className="text-sm">Health Analytics</span>
           </Link>
-          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <History size={18} />
-            <span className="text-sm">Scan Archive</span>
+          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
+            <History size={16} />
+            <span className="text-sm">Reports</span>
           </Link>
-          <Link to="/tips" className="flex items-center gap-3 px-4 py-4 bg-primary text-white rounded-2xl font-black shadow-2xl shadow-primary/25 transition-all">
-            <BookOpen size={18} strokeWidth={2.5} />
+          <Link to="/tips" className="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-black shadow-lg shadow-primary/20 transition-all">
+            <BookOpen size={16} strokeWidth={2.5} />
             <span className="text-sm">Medical Library</span>
           </Link>
-          <div className="pt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">System</div>
-          <button className="w-full flex items-center gap-3 px-4 py-4 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all group">
-            <Settings size={18} />
-            <span className="text-sm">Preferences</span>
-          </button>
+
+          <div className="pt-8 mb-4">
+            <p className="px-4 mb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-left">System</p>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group"
+            >
+              <Settings size={16} />
+              <span className="text-sm">Settings</span>
+            </button>
+          </div>
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-50 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
+        <div className="p-4 border-t border-white/5">
+          <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5 text-left">
+            <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${patient?.photo && patient.photo !== 'default-patient.jpg' ? patient.photo : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Patient')}&background=059669&color=fff&bold=true`})` }}></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-black truncate text-white">{user?.name || 'Patient'}</p>
+              <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{patient?.patientId || 'Medical ID: 88A-29C'}</p>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-500/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
             <LogOut size={16} strokeWidth={2.5} />
-            End Session
+            Sign Out
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 flex flex-col relative z-10">
+      <main className="flex-1 min-w-0 flex flex-col relative z-10 lg:ml-72">
         <div className="absolute top-0 inset-x-0 h-80 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
 
-        <header className="sticky top-0 z-40 h-24 bg-white/70 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-10">
+        <header className="sticky top-0 z-40 h-24 bg-white/70 backdrop-blur-xl border-b border-white flex items-center justify-between px-10">
           <div className="flex flex-col">
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1">Knowledge Hub / <span className="text-primary italic">Library</span></h2>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Medical <span className="text-primary not-italic">Resources</span></h1>
@@ -187,10 +219,7 @@ const EducationalResources = () => {
               <h3 className="text-5xl font-black text-slate-900 tracking-tighter leading-none italic">Evidence Based <span className="text-primary not-italic">Ophthalmology</span></h3>
               <p className="text-lg font-medium text-slate-500 leading-relaxed italic">Access professional-grade guidance on Diabetic Retinopathy management, clinical classifications, and AI-assisted diagnostic methodologies.</p>
             </div>
-            <div className="p-2 bg-slate-100 rounded-3xl flex gap-2">
-              <button className="px-6 py-3 bg-white shadow-sm rounded-2xl text-[10px] font-black uppercase tracking-widest text-primary">All Resources</button>
-              <button className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Clinical Focus</button>
-            </div>
+
           </motion.section>
 
           {/* Feature Grid */}
@@ -250,7 +279,7 @@ const EducationalResources = () => {
           {/* Deep Focus Section */}
           <motion.div variants={itemVariants} className="bg-slate-900 rounded-[3rem] p-12 lg:p-20 text-white flex flex-col lg:flex-row items-center gap-16 overflow-hidden relative group">
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px] -translate-y-12 translate-x-12 opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[150px] translate-y-24 -translate-x-24" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[150px] translate-y-24 -translate-x-24" />
 
             <div className="relative z-10 flex-1 space-y-10">
               <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border border-white/10">
@@ -326,6 +355,11 @@ const EducationalResources = () => {
           </p>
         </footer>
       </main>
+      <PatientPreferencesModal
+        isOpen={isPreferencesOpen}
+        onClose={() => setIsPreferencesOpen(false)}
+        user={user}
+      />
     </div>
   );
 };

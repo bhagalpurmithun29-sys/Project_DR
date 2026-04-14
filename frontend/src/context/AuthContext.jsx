@@ -1,4 +1,5 @@
-import { createContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 export const AuthContext = createContext();
@@ -8,6 +9,12 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(localStorage.getItem('token') || null);
     const [loading, setLoading] = useState(true);
 
+    const logout = useCallback(() => {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('token');
+    }, []);
+
     // Load user details if token exists
     useEffect(() => {
         const fetchUser = async () => {
@@ -16,15 +23,19 @@ export const AuthProvider = ({ children }) => {
                     const res = await api.get('/auth/me');
                     setUser(res.data.data);
                 } catch (error) {
-                    console.error('Failed to fetch user', error);
+                    console.error('Failed to fetch user:', error.response?.data?.message || error.message);
+                    // Token invalid/expired — clear it so user is redirected to login
                     logout();
+                } finally {
+                    setLoading(false);
                 }
+            } else {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         fetchUser();
-    }, [token]);
+    }, [token, logout]);
 
     const login = async (email, password) => {
         const res = await api.post('/auth/login', { email, password });
@@ -46,14 +57,20 @@ export const AuthProvider = ({ children }) => {
         return res.data;
     };
 
-    const logout = () => {
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem('token');
+    const loginWithGoogle = async (googleToken, role) => {
+        const res = await api.post('/auth/google', { accessToken: googleToken, role });
+        if (res.data.success) {
+            setToken(res.data.data.token);
+            setUser(res.data.data);
+            localStorage.setItem('token', res.data.data.token);
+        }
+        return res.data;
     };
 
+    const isAuthenticated = !!token && !!user;
+
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, setUser, token, loading, login, register, loginWithGoogle, logout, isAuthenticated }}>
             {children}
         </AuthContext.Provider>
     );

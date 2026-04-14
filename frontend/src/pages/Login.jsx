@@ -9,10 +9,18 @@ import {
   Building2,
   ShieldCheck,
   ChevronLeft,
-  Activity
+  Activity,
+  X,
+  KeyRound,
+  Hash,
+  CheckCircle2,
+  Loader2,
+  CopyCheck
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { useGoogleLogin } from '@react-oauth/google';
+import { getApiErrorMessage } from "../services/api";
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -23,41 +31,83 @@ const GoogleIcon = () => (
   </svg>
 );
 
+// ────────────────────────────────────────────────────────────
+
 export default function Login() {
-  const [role, setRole] = useState("doctor"); // 'doctor' or 'patient'
+  const [role, setRole] = useState("doctor"); // 'doctor' | 'patient' | 'diagnosis_center'
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { login } = useContext(AuthContext);
+  const { login, loginWithGoogle } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  const handleGoogleLoginSuccess = async (tokenResponse) => {
+    setGoogleLoading(true);
+    setError("");
+    try {
+      // loginWithGoogle expects (token, role)
+      const res = await loginWithGoogle(tokenResponse.access_token, role);
+      if (res?.data?.requiresSecuritySetup) {
+        const nextRoute = role === 'doctor'
+          ? '/doctor-dashboard'
+          : role === 'diagnosis_center'
+            ? '/diagnosis-center/'
+            : '/dashboard';
+        navigate('/profile-setup', { state: { nextRoute } });
+        return;
+      }
+      const userRole = res?.data?.role;
+      
+      if (userRole === 'doctor' || userRole === 'technician') {
+        navigate("/doctor-dashboard");
+      } else if (userRole === 'diagnosis_center') {
+        navigate("/diagnosis-center/");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Google Login failed. Please try again."));
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const googleLoginHandler = useGoogleLogin({
+    onSuccess: handleGoogleLoginSuccess,
+    onError: () => setError("Google Login was unsuccessful"),
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      // AuthContext.login() returns res.data directly, so role lives at res.role (not res.data.role)
+      const res = await login(email, password);
+      const userRole = res?.data?.role;
+      if (userRole === 'doctor' || userRole === 'technician') {
+        navigate("/doctor-dashboard");
+      } else if (userRole === 'diagnosis_center') {
+        navigate("/diagnosis-center/");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to login");
+      setError(getApiErrorMessage(err, "Failed to login"));
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0, x: 20 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.5 } }
-  };
-
   return (
-    <div className="font-display bg-white text-slate-900 antialiased min-h-screen overflow-hidden">
+    <div className="font-display bg-main text-slate-900 antialiased min-h-screen overflow-hidden">
       <div className="flex min-h-screen w-full">
         {/* ── LEFT PANEL ── */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="relative hidden flex-col justify-between overflow-hidden p-16 lg:flex lg:w-1/2"
-          style={{ background: "linear-gradient(135deg, #137fec 0%, #0a56a3 100%)" }}
+          style={{ background: "linear-gradient(135deg, #059669 0%, #022c22 100%)" }}
         >
           {/* Animated SVG decorative background */}
           <div className="pointer-events-none absolute inset-0 opacity-10">
@@ -111,48 +161,54 @@ export default function Login() {
         </motion.div>
 
         {/* ── RIGHT PANEL ── */}
-        <div className="flex w-full items-center justify-center bg-[#f8fafc] p-6 sm:p-12 lg:w-1/2 lg:p-24 overflow-y-auto">
+        <div className="flex w-full items-center justify-center bg-main p-6 lg:w-1/2 lg:p-12 overflow-hidden">
           <div className="w-full max-w-[460px]">
             {/* Back Button */}
-            <Link to="/" className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-primary transition-colors mb-12 group">
+            <Link to="/" className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-primary transition-colors mb-6 group">
               <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
               Back to Home
             </Link>
 
-            <div className="mb-10">
-              <h2 className="mb-3 text-4xl font-black tracking-tight text-slate-900">
-                {role === "doctor" ? "Provider Portal" : "Patient Access"}
+            <div className="mb-6">
+              <h2 className="mb-2 text-3xl font-black tracking-tight text-slate-900">
+                {role === 'doctor' ? 'Provider Portal' : role === 'diagnosis_center' ? 'Diagnosis Center portal' : 'Patients Portal'}
               </h2>
-              <p className="text-lg font-medium text-slate-500">
-                {role === "doctor"
-                  ? "Welcome back, Doctor. Enter your credentials."
-                  : "View your eye health and screening history."}
+              <p className="text-base font-medium text-slate-500">
+                {role === 'doctor'
+                  ? 'Welcome back, Doctor.'
+                  : role === 'diagnosis_center'
+                    ? 'Sign in to manage your facility.'
+                    : 'View your health history.'}
               </p>
             </div>
 
-            {/* Role Switcher */}
-            <div className="mb-10 relative flex items-center p-1.5 bg-slate-200/50 rounded-2xl h-14 shadow-inner">
-              <motion.div
-                layoutId="activeRole"
-                className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white rounded-xl shadow-lg z-0"
-                initial={false}
-                animate={{ x: role === 'patient' ? "100%" : "0%" }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-              <button
-                type="button"
-                className={`flex-1 relative text-center text-sm font-black uppercase tracking-widest transition-colors duration-300 z-10 ${role === 'doctor' ? 'text-primary' : 'text-slate-500'}`}
-                onClick={() => setRole("doctor")}
-              >
-                Clinician
-              </button>
-              <button
-                type="button"
-                className={`flex-1 relative text-center text-sm font-black uppercase tracking-widest transition-colors duration-300 z-10 ${role === 'patient' ? 'text-primary' : 'text-slate-500'}`}
-                onClick={() => setRole("patient")}
-              >
-                Patient
-              </button>
+            {/* Role Switcher — 3 tabs */}
+            <div className="mb-6 flex items-center p-1.5 bg-slate-200/50 rounded-2xl h-12 shadow-inner gap-1">
+              {[
+                { id: 'doctor', label: 'Clinician' },
+                { id: 'patient', label: 'Patient' },
+                { id: 'diagnosis_center', label: 'Center' },
+              ].map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => { setRole(id); setError(''); }}
+                  className={`relative flex-1 h-full flex items-center justify-center text-[11px] font-black uppercase tracking-widest rounded-xl transition-all duration-200 ${role === id
+                    ? 'bg-white text-primary shadow-md'
+                    : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                  {role === id && (
+                    <motion.span
+                      layoutId="roleUnderline"
+                      className="absolute inset-0 bg-white rounded-xl shadow-md"
+                      style={{ zIndex: -1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                    />
+                  )}
+                  {label}
+                </button>
+              ))}
             </div>
 
             <AnimatePresence mode="wait">
@@ -162,9 +218,10 @@ export default function Login() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] border border-white"
+                className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] border border-white"
               >
-                {error && <div className="p-4 mb-8 text-sm font-bold text-red-600 bg-red-50 border border-red-100 rounded-2xl">{error}</div>}
+                {error && <div className="p-3 mb-6 text-[11px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl leading-snug">{error}</div>}
+
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
@@ -179,7 +236,7 @@ export default function Login() {
                       <input
                         required
                         type="email"
-                        placeholder="clinician@healthai.com"
+                        placeholder="clinician@retinaai.health"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50/50 py-4 pl-14 pr-6 text-slate-900 font-bold outline-none transition-all focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 shadow-sm"
@@ -190,9 +247,12 @@ export default function Login() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between px-1">
                       <label className="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
-                      <a href="#" className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline hover:underline-offset-4">
+                      <Link
+                        to="/forgot-password"
+                        className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline hover:underline-offset-4"
+                      >
                         Forgot Access?
-                      </a>
+                      </Link>
                     </div>
                     <div className="relative group">
                       <Lock
@@ -232,7 +292,7 @@ export default function Login() {
 
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-5 font-black text-black shadow-2xl shadow-primary/30 transition-all hover:bg-primary/90 hover:-translate-y-1 active:translate-y-0"
+                    className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-5 font-black text-white shadow-2xl shadow-primary/30 transition-all hover:bg-primary/90 hover:-translate-y-1 active:translate-y-0"
                   >
                     <span>Sign In</span>
                     <ArrowRight size={22} />
@@ -243,41 +303,42 @@ export default function Login() {
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-slate-100" />
                   </div>
-                  <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
-                    <span className="bg-white/0 text-black px-4">Secure Social Sign-On</span>
+                  <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    <span className="bg-white px-4">Sign in with Google</span>
                   </div>
                 </div>
 
-                <div className={`grid gap-4 ${role === "doctor" ? "grid-cols-2" : "grid-cols-1"}`}>
-                  {role === "doctor" && (
-                    <button className="flex items-center justify-center gap-3 rounded-2xl border-2 border-slate-100 bg-white px-4 py-4 transition-all hover:bg-slate-50 hover:border-slate-200">
-                      <Building2 className="text-slate-400" size={20} />
-                      <span className="text-xs font-black text-slate-600">Hospital ID</span>
-                    </button>
-                  )}
-                  <button className="flex items-center justify-center gap-3 rounded-2xl border-2 border-slate-100 bg-white px-4 py-4 transition-all hover:bg-slate-50 hover:border-slate-200">
-                    <GoogleIcon />
-                    <span className="text-xs font-black text-slate-600">Google</span>
+                <div className="grid gap-3 grid-cols-1">
+
+                  <button 
+                    type="button"
+                    disabled={googleLoading}
+                    onClick={() => googleLoginHandler()}
+                    className="flex items-center justify-center gap-3 rounded-2xl border-2 border-slate-100 bg-white px-4 py-3.5 transition-all hover:bg-slate-50 hover:border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {googleLoading ? (
+                      <Loader2 className="animate-spin text-primary" size={20} />
+                    ) : (
+                      <GoogleIcon />
+                    )}
+                    <span className="text-xs font-black text-slate-600">
+                      {googleLoading ? 'Connecting...' : 'Sign in with Google'}
+                    </span>
                   </button>
                 </div>
               </motion.div>
             </AnimatePresence>
 
-            <div className="mt-12 text-center">
-              <p className="text-slate-500 font-bold">
+            <div className="mt-8 text-center">
+              <p className="text-sm text-slate-500 font-bold">
                 New to RetinaAI?{" "}
                 <Link to="/register" className="font-black text-primary hover:underline hover:underline-offset-4">
-                  Create secure account
+                  Create Account
                 </Link>
               </p>
             </div>
 
-            <div className="mx-auto mt-12 flex w-fit items-center gap-3 rounded-full bg-white px-6 py-3 shadow-sm border border-slate-100">
-              <ShieldCheck className="text-green-500" size={20} strokeWidth={2.5} />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                End-to-End Encrypted & HIPAA Ready
-              </span>
-            </div>
+
           </div>
         </div>
       </div>

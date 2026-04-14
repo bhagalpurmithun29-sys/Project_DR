@@ -10,6 +10,14 @@ const patientSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add a name'],
     },
+    patientId: {
+        type: String,
+        unique: true,
+    },
+    photo: {
+        type: String,
+        default: '',
+    },
     age: {
         type: Number,
         required: true,
@@ -17,6 +25,9 @@ const patientSchema = new mongoose.Schema({
     gender: {
         type: String,
         enum: ['Male', 'Female', 'Other'],
+    },
+    phoneNumber: {
+        type: String,
     },
     diabetesType: {
         type: String,
