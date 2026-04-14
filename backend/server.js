@@ -7,6 +7,16 @@ const path = require('path');
 // Load env vars
 dotenv.config();
 
+// Env validation
+const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
+const missingEnv = requiredEnv.filter(ev => !process.env[ev]);
+
+if (missingEnv.length > 0) {
+    console.error(`\x1b[31m❌ CRITICAL ERROR: Missing required environment variables: ${missingEnv.join(', ')}\x1b[0m`);
+    console.warn('\x1b[33m💡 Please check your backend/.env file against backend/.env.example\x1b[0m');
+    // We don't exit(1) to allow the app to run in a degraded state (e.g., for deployment debug)
+}
+
 // Route files
 const authRoutes = require('./routes/authRoutes');
 const patientRoutes = require('./routes/patientRoutes');
