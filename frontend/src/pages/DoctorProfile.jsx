@@ -11,13 +11,16 @@ import {
 } from 'lucide-react';
 import CentralAlertsModal from '../components/CentralAlertsModal';
 import NodeSettingsModal from '../components/NodeSettingsModal';
+import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
+
 
 const DoctorProfile = () => {
     const { logout, user } = useContext(AuthContext);
     const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+
     const [isUploading, setIsUploading] = useState(false);
     const [isAlertsOpen, setIsAlertsOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -40,9 +43,10 @@ const DoctorProfile = () => {
             try {
                 const res = await doctorService.getProfile();
                 setProfile(res.data);
+                setIsProfileIncomplete(false);
             } catch (err) {
                 console.error('Failed to fetch profile', err);
-                setError('Profile not found. Please complete your registration.');
+                setIsProfileIncomplete(true);
             } finally {
                 setLoading(false);
             }
@@ -123,25 +127,6 @@ const DoctorProfile = () => {
         );
     }
 
-    if (error && !profile) {
-        return (
-            <div className="min-h-screen bg-main flex items-center justify-center p-6">
-                <div className="max-w-md w-full bg-white rounded-3xl border border-slate-100 p-8 shadow-2xl shadow-slate-200/50 text-center">
-                    <div className="size-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary">
-                        <AlertCircle size={32} />
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">Profile Incomplete</h2>
-                    <p className="text-sm font-medium text-slate-500 mb-8">{error}</p>
-                    <Link to="/doctor-registration" className="block w-full py-4 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 hover:-translate-y-0.5 transition-all shadow-xl shadow-primary/30">
-                        Initialize Professional ID
-                    </Link>
-                    <button onClick={handleLogout} className="mt-6 text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center justify-center gap-2 mx-auto uppercase tracking-widest">
-                        <LogOut size={16} /> Close Session
-                    </button>
-                </div>
-            </div>
-        );
-    }
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -174,7 +159,7 @@ const DoctorProfile = () => {
                     </Link>
                     <Link to="/doctor/scan-history" className="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
                         <Activity size={18} />
-                        <span className="text-sm">Patient Archive</span>
+                        <span className="text-sm">Scan History</span>
                     </Link>
                     <Link to="/doctor-profile" className="flex items-center gap-3 px-4 py-4 bg-primary text-white rounded-2xl font-black shadow-2xl shadow-primary/25 transition-all">
                         <UserIcon size={18} />
@@ -198,12 +183,13 @@ const DoctorProfile = () => {
 
                 <div className="p-4 border-t border-white/5">
                     <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5">
-                        <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm" style={{ backgroundImage: `url(${profile?.photo && profile.photo !== 'default-doctor.jpg' ? profile.photo : `https://ui-avatars.com/api/?name=${user?.name}&background=059669&color=fff&bold=true`})` }}></div>
+                        <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm" style={{ backgroundImage: `url(${profile?.photo && profile.photo !== 'default-doctor.jpg' ? profile.photo : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black truncate text-white">Dr. {user?.name.split(' ').pop() || "Provider"}</p>
+                            <p className="text-xs font-black truncate text-white">Dr. {user?.name || "Provider"}</p>
                             <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">Retina Specialist</p>
                         </div>
                     </div>
+
                     <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-50 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
                         <LogOut size={16} strokeWidth={2.5} />
                         Sign Out
@@ -231,6 +217,8 @@ const DoctorProfile = () => {
                         </Link>
                     </div>
                 </header>
+
+                {isProfileIncomplete && <ProfileIncompleteBanner />}
 
                 <motion.div
                     variants={containerVariants}
@@ -271,15 +259,11 @@ const DoctorProfile = () => {
                                 <div className="flex-1 text-center md:text-left pt-2">
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
                                         <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg border border-primary/20 flex items-center gap-1.5">
-                                            <Activity size={12} /> {profile?.specialization || 'Retina Specialist'}
-                                        </span>
-                                        <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg border border-primary/20 flex items-center gap-1.5">
-                                            <Star size={12} className="fill-primary" /> E2E Verified
-                                        </span>
-                                        <span className="px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-lg border border-amber-200/50 flex items-center gap-1.5">
-                                            <Award size={12} className="fill-amber-600" /> Fellowship Trained
+                                            <Activity size={12} /> {profile?.specialization === 'retina' ? 'Retina Specialist' : (profile?.specialization || 'Retina Specialist')}
                                         </span>
                                     </div>
+
+
 
                                     <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-none mb-2">
                                         {user?.name || "Dr. Identity Unknown"}
@@ -304,44 +288,6 @@ const DoctorProfile = () => {
                                                 </div>
                                             </div>
                                         ))}
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-row md:flex-col gap-3 relative">
-                                    <button
-                                        onClick={handleMail}
-                                        title={`Mail to ${profile?.email || user?.email}`}
-                                        className="size-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-colors"
-                                    >
-                                        <Mail size={18} />
-                                    </button>
-                                    <button
-                                        onClick={handleCall}
-                                        title={`Call ${profile?.phoneNumber}`}
-                                        className="size-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-colors"
-                                    >
-                                        <Phone size={18} />
-                                    </button>
-                                    <div className="relative">
-                                        <button
-                                            onClick={handleCopy}
-                                            title="Copy Contact Info"
-                                            className="size-12 rounded-2xl bg-white text-slate-400 hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-colors border border-slate-100 shadow-sm"
-                                        >
-                                            <LinkIcon size={18} />
-                                        </button>
-                                        <AnimatePresence>
-                                            {copyStatus && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                    exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                                                    className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-xl whitespace-nowrap z-50"
-                                                >
-                                                    {copyStatus}
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
                                     </div>
                                 </div>
                             </div>
@@ -442,25 +388,7 @@ const DoctorProfile = () => {
                                 </div>
                             </motion.div>
 
-                            {/* Equipment Proficiency */}
-                            <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-xl shadow-slate-200/20">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="size-12 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600">
-                                        <Microscope size={24} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-black text-slate-900 tracking-tight">Equipment Proficiency</h3>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 gap-3">
-                                    {['OCT Imaging', 'Fundus Photography', 'Laser Photocoagulation', 'AI-Assisted Screening'].map((equip, i) => (
-                                        <div key={i} className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100/50">
-                                            <div className="size-2 rounded-full bg-teal-500" />
-                                            <span className="text-sm font-bold text-slate-700">{equip}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </motion.div>
+
                         </div>
                     </div>
 

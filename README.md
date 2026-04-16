@@ -16,34 +16,27 @@ To empower clinicians with state-of-the-art AI insights, reducing the burden of 
 - **Visualization**: Recharts (for patient analytics)
 - **Internationalization**: i18next
 
-### Backend
-- **Runtime**: Node.js with Express 5
-- **Database**: MongoDB (Mongoose 9)
-- **Security**: JWT Authentication, bcryptjs
-- **File Handling**: Multer (for retinal image uploads)
-
-### AI Engine
-- **Model**: YOLOv8 (Inference using `best.pt`)
-- **Bridge**: Python-Node.js Bridge for real-time inference execution.
+### AI & Reporting Engine
+- **Generative Summaries**: Groq API integration using **Llama 3.3 (70B)** for lightning-fast clinical reporting.
+- **Diagnostic Logic**: YOLOv8 backend (Python-Node.js Bridge) for real-time fundus image segmentation.
+- **Tone & Accuracy**: Specialized medical prompts with low temperature (0.1) for forensic precision.
 
 ---
 
-## ✨ Key Features
+### 👨‍⚕️ Specialist Dashboard (Doctors)
+- **Expert Review**: Analyze referred reports from external diagnosis centers.
+- **Triage Queue**: Manage urgent high-risk cases via a streamlined clinical feed.
+- **Provenance Tracking**: Trace every referral back to the specific initiating lab and technician.
 
-### 👨‍⚕️ Doctor Dashboard
-- **Patient Management**: Register and track patient health history.
-- **Scan Analysis**: Upload retinal scans and trigger AI analysis.
-- **Risk Assessment**: View automated risk levels (Low, Moderate, High) and lesion counts.
-- **Reports**: Generate and finalize diagnostic reports for patients.
+### 🏥 Diagnosis Center Portal
+- **Global Patient Registry**: Search and identify any patient in the system to review their historical records and AI reports.
+- **Specialist Referrals**: Direct P2P transfer of diagnostic data to medical practitioners for formal review.
+- **High-Volume Workflow**: Unified "Save & Analyze" logic for rapid diagnostic turnover.
 
-### 🏥 Diagnosis Centers
-- **High-Volume Scanning**: Dedicated interface for centers to manage multiple scans.
-- **Queue Management**: Monitor scan status from "Pending" to "Reviewed".
-
-### 👤 Patient Portal
-- **Dashboard**: View personal health summary and scan history.
-- **Analytics**: Interactive charts visualizing risk progression and health metrics.
-- **Report Downloads**: Securely access and download PDF reports.
+### 👤 Patient Experience
+- **Longitudinal Tracking**: View risk progression and health metrics through interactive Recharts analytics.
+- **Clinical Summaries**: Access structured AI-generated summaries of eye health.
+- **Secure Access**: Download verified diagnostic reports with full clinical metadata.
 
 ---
 

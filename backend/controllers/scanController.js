@@ -5,6 +5,7 @@ const Scan = require('../models/Scan');
 const Patient = require('../models/Patient');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const { generateClinicalSummary } = require('../services/aiService');
 
 // @desc    Create a new scan
 // @route   POST /api/scans
@@ -29,12 +30,13 @@ exports.createScan = async (req, res) => {
 
         const scan = await Scan.create({
             patient: patientId,
+            diagnosisCenter: req.user.role === 'diagnosis_center' ? req.user._id : undefined,
             technician: technician || req.user.name,
             imageUrl,
             eyeSide: eyeSide || 'OD',
             scanId: `SCAN-${Math.floor(1000 + Math.random() * 9000)}`,
             clinicalNotes: notes || 'Screening initiated.',
-            status: imageFile ? 'Pending' : 'Pending'
+            status: 'Pending'
         });
 
         // Populate patient name for response
@@ -85,10 +87,10 @@ exports.analyzeScan = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Scan has already been analyzed.' });
         }
 
-        // Path to Python bridge - check if venv exists, else use system python
-        const venvPath = path.join(__dirname, '../ai/venv/bin/python3');
+        // Path to Python bridge - use the dedicated venv for stability
+        const venvPath = path.resolve(__dirname, '../ai/venv/bin/python3');
         const pythonPath = fs.existsSync(venvPath) ? venvPath : 'python3';
-        const scriptPath = path.join(__dirname, '../ai/predict.py');
+        const scriptPath = path.resolve(__dirname, '../ai/predict.py');
         const imagePath = path.join(__dirname, '../', scan.imageUrl);
 
         // Execute Python Inference
@@ -101,10 +103,19 @@ exports.analyzeScan = async (req, res) => {
 
             if (error) {
                 console.error(`AI Inference Execution Error: ${error.message}`);
-                aiResults.error = "AI bridge execution failed.";
+                console.error(`AI Stderr: ${stderr}`);
+                // Try to parse stdout even if error, as predict.py might have printed JSON before exiting
+                if (stdout) {
+                    try {
+                        aiResults = JSON.parse(stdout);
+                    } catch (e) {
+                        aiResults.error = `Execution failed: ${stderr || error.message}`;
+                    }
+                } else {
+                    aiResults.error = `AI bridge execution failed: ${stderr || error.message}`;
+                }
             } else {
                 try {
-                    // Log raw output for debugging
                     console.log(`AI Bridge Output: ${stdout}`);
                     aiResults = JSON.parse(stdout);
                 } catch (e) {
@@ -129,13 +140,29 @@ exports.analyzeScan = async (req, res) => {
 
             currentScan.aiResult = aiResults.riskLevel;
             currentScan.lesionCount = aiResults.lesionCount;
-            currentScan.lesionPercent = aiResults.lesionPercent || 0;
+            currentScan.findings = aiResults.findings || [];
+            
+            // --- NEW: Generate Clinical Summary via Gemini ---
+            try {
+                const patient = await Patient.findById(currentScan.patient);
+                const summary = await generateClinicalSummary({
+                    patientName: patient?.name,
+                    riskLevel: aiResults.riskLevel,
+                    findings: aiResults.findings || [],
+                    eyeSide: currentScan.eyeSide
+                });
+                currentScan.aiReportSummary = summary;
+            } catch (geminiErr) {
+                console.error('Gemini Summary Failed:', geminiErr);
+                currentScan.aiReportSummary = `Diagnostic screening complete. Risk: ${aiResults.riskLevel}. Findings: ${aiResults.findings?.join(', ')}.`;
+            }
+
             currentScan.status = 'Analyzed';
             currentScan.insights = [
                 { type: 'info', message: 'Automated AI screening complete.' },
                 { 
                     type: aiResults.riskLevel === 'Low Risk' ? 'info' : 'high_risk', 
-                    message: `Risk level determined as ${aiResults.riskLevel} (${Math.round(aiResults.probability * 100)}% confidence). Lesion area: ${aiResults.lesionPercent?.toFixed(3)}%.` 
+                    message: `Risk level determined as ${aiResults.riskLevel} (${Math.round((aiResults.probability || 0) * 100)}% confidence). ${aiResults.findings?.length || 0} findings recorded.` 
                 }
             ];
 
@@ -146,14 +173,14 @@ exports.analyzeScan = async (req, res) => {
                 const patient = await Patient.findById(currentScan.patient);
                 if (patient) {
                     // Map "High Risk" -> "High", "Moderate" -> "Moderate", etc. for Patient model enum
-                    let mappedRisk = aiResults.riskLevel;
-                    if (aiResults.riskLevel === 'High Risk') mappedRisk = 'High';
-                    if (aiResults.riskLevel === 'Low Risk') mappedRisk = 'Low';
+                    // Map to Patient model enum: Low, Moderate, High
+                    let mappedRisk = 'Low';
+                    if (aiResults.riskLevel?.includes('High')) mappedRisk = 'High';
+                    else if (aiResults.riskLevel?.includes('Moderate')) mappedRisk = 'Moderate';
                     
-                    if (mappedRisk === 'High' || mappedRisk === 'Moderate') {
-                        patient.riskLevel = mappedRisk;
-                        await patient.save();
-                    }
+                    // Update patient risk regardless of level to stay in sync with latest scan
+                    patient.riskLevel = mappedRisk;
+                    await patient.save();
                 }
             } catch (pError) {
                 console.error('Failed to update patient risk level:', pError.message);
@@ -175,8 +202,38 @@ exports.analyzeScan = async (req, res) => {
 // @access  Private/Doctor
 exports.getScans = async (req, res) => {
     try {
-        const scans = await Scan.find().populate('patient', 'name email patientId age gender').sort('-createdAt');
-        
+        let query = {};
+
+        // Role-based filtering
+        if (req.user.role === 'diagnosis_center') {
+            // Centers can see all scans to check previous patient reports
+            query = {}; 
+        } else if (req.user.role === 'doctor') {
+            query = {
+                $or: [
+                    { technician: req.user.name },
+                    { referredDoctor: req.user._id }
+                ]
+            };
+        }
+
+        const scans = await Scan.find(query)
+            .populate('patient')
+            .populate('diagnosisCenter', 'centerName')
+            .populate('referredDoctor', 'name')
+            .sort('-createdAt');
+
+        // Self-Healing: Backfill diagnosisCenter ID for legacy records
+        if (req.user.role === 'diagnosis_center') {
+            const legacyScans = scans.filter(s => !s.diagnosisCenter && s.technician === req.user.name);
+            if (legacyScans.length > 0) {
+                await Scan.updateMany(
+                    { _id: { $in: legacyScans.map(s => s._id) } },
+                    { $set: { diagnosisCenter: req.user._id } }
+                );
+            }
+        }
+
         // LAZY REPAIR: Fix missing demographics in the list view
         for (const scan of scans) {
             if (scan.patient) {
@@ -297,6 +354,108 @@ exports.updateScan = async (req, res) => {
 
         res.json({
             success: true,
+            data: scan
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+// @desc    Delete scan
+// @route   DELETE /api/scans/:id
+// @access  Private/Doctor/Center
+exports.deleteScan = async (req, res) => {
+    try {
+        const scan = await Scan.findById(req.params.id);
+
+        if (!scan) {
+            return res.status(404).json({ success: false, message: 'Scan not found' });
+        }
+
+        // Authorization placeholder: In a real system, verify the center owns this scan
+        // For now, allow doctors and centers to delete
+
+        // 1. Delete image file from storage if it exists and is not the placeholder
+        if (scan.imageUrl && !scan.imageUrl.includes('placeholder.png')) {
+            const filePath = path.join(__dirname, '../', scan.imageUrl);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+
+        // 2. Delete the database record
+        await scan.deleteOne();
+
+        res.json({
+            success: true,
+            message: 'Scan record and associated image deleted.'
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * @desc    Manual re-generation of AI clinical summary (Gemini)
+ * @route   POST /api/scans/:id/generate-report
+ * @access  Private
+ */
+exports.generateReportSummary = async (req, res) => {
+    try {
+        const scan = await Scan.findById(req.params.id).populate('patient');
+        if (!scan) return res.status(404).json({ success: false, message: 'Scan not found' });
+
+        if (scan.status !== 'Analyzed' && scan.status !== 'Reviewed') {
+            return res.status(400).json({ success: false, message: 'Scan must be analyzed before generating report summary.' });
+        }
+
+        const summary = await generateClinicalSummary({
+            patientName: scan.patient?.name,
+            riskLevel: scan.aiResult,
+            findings: scan.findings || [],
+            eyeSide: scan.eyeSide
+        });
+
+        scan.aiReportSummary = summary;
+        await scan.save();
+
+        res.json({
+            success: true,
+            message: 'Clinical report summary generated successfully.',
+            data: scan
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * @desc    Refer a scan to a doctor
+ * @route   POST /api/scans/:id/refer
+ * @access  Private/DiagnosisCenter
+ */
+exports.referScan = async (req, res) => {
+    try {
+        const { doctorId } = req.body;
+        const scan = await Scan.findById(req.params.id);
+
+        if (!scan) return res.status(404).json({ success: false, message: 'Scan not found' });
+
+        // Verify the user referring is the diagnosis center of this scan
+        if (req.user.role === 'diagnosis_center' && scan.diagnosisCenter?.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ success: false, message: 'Not authorized to refer this scan' });
+        }
+
+        // Verify the doctorId exists and is a doctor
+        const doctor = await User.findOne({ _id: doctorId, role: 'doctor' });
+        if (!doctor) return res.status(404).json({ success: false, message: 'Target doctor not found' });
+
+        scan.referredDoctor = doctorId;
+        scan.referredAt = Date.now();
+        await scan.save();
+
+        res.json({
+            success: true,
+            message: `Report successfully referred to Dr. ${doctor.name}.`,
             data: scan
         });
     } catch (error) {

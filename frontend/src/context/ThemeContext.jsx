@@ -6,9 +6,10 @@ export const ThemeProvider = ({ children }) => {
     const [theme, setTheme] = useState(() => {
         // Check localStorage or system preference
         const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) return savedTheme;
-        return 'system';
+        if (savedTheme && savedTheme !== 'system') return savedTheme;
+        return 'light';
     });
+
 
     useEffect(() => {
         const root = window.document.documentElement;

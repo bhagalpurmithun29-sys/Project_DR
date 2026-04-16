@@ -20,11 +20,18 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import doctorService from '../services/doctorService';
 import { motion, AnimatePresence } from "framer-motion";
+import CustomSelect from '../components/common/CustomSelect';
+import { AuthContext } from '../context/AuthContext';
+import { useContext, useEffect } from 'react';
+import { Lock } from 'lucide-react';
+
 
 const DoctorRegistration = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+   const [loading, setLoading] = useState(false);
+   const [isFetching, setIsFetching] = useState(true);
+   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     licenseNumber: '',
     country: '',
@@ -38,6 +45,49 @@ const DoctorRegistration = () => {
   const [degrees, setDegrees] = useState([
     { id: 1, title: '', institution: '' }
   ]);
+
+   // Fetch profile data on mount for pre-population
+   useEffect(() => {
+     const fetchProfile = async () => {
+       try {
+         const res = await doctorService.getProfile();
+         if (res && res.data) {
+           const p = res.data;
+           setFormData({
+             licenseNumber: p.licenseNumber || '',
+             country: p.country || '',
+             experience: p.experience || '',
+             specialization: p.specialization || '',
+             email: p.email || (user?.email || ''),
+             phoneNumber: p.phoneNumber || '',
+             photo: null // We don't pre-populate the file input
+           });
+           
+           if (p.degrees && p.degrees.length > 0) {
+             setDegrees(p.degrees.map((d, index) => ({
+               id: index + 1,
+               title: d.title || '',
+               institution: d.institution || ''
+             })));
+           }
+         }
+       } catch (err) {
+         console.error('No existing profile found or fetch error:', err);
+         // If no profile, we still sync the email from auth context
+         if (user?.email) {
+           setFormData(prev => ({ ...prev, email: user.email }));
+         }
+       } finally {
+         setIsFetching(false);
+       }
+     };
+
+     if (user) {
+       fetchProfile();
+     } else {
+       setIsFetching(false);
+     }
+   }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -106,7 +156,24 @@ const DoctorRegistration = () => {
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-16">
+       <AnimatePresence>
+         {isFetching && (
+           <motion.div 
+             initial={{ opacity: 0 }} 
+             animate={{ opacity: 1 }} 
+             exit={{ opacity: 0 }} 
+             className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center gap-6"
+           >
+             <div className="relative">
+               <div className="h-24 w-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
+               <Activity className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary" size={28} />
+             </div>
+             <p className="text-xs font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Syncing Clinical Data...</p>
+           </motion.div>
+         )}
+       </AnimatePresence>
+
+       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-16">
         {/* Stepper */}
         <div className="flex items-center justify-between mb-16 max-w-4xl mx-auto">
           {[
@@ -178,46 +245,9 @@ const DoctorRegistration = () => {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-              {/* Photo Upload */}
-              <div className="lg:col-span-4 flex flex-col items-center">
-                <input
-                  type="file"
-                  id="doctor-photo-upload"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setFormData(prev => ({ ...prev, photo: file }));
-                    }
-                  }}
-                />
-                <motion.div
-                  whileHover={{ scale: 1.02, rotate: -1 }}
-                  onClick={() => document.getElementById('doctor-photo-upload').click()}
-                  className="w-56 h-72 rounded-3xl bg-slate-50 border-4 border-dashed border-slate-200 flex flex-col items-center justify-center relative group cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all overflow-hidden mb-6 shadow-inner"
-                >
-                  {formData.photo ? (
-                    <img
-                      src={URL.createObjectURL(formData.photo)}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <UserCircle size={64} strokeWidth={1} className="text-slate-200 group-hover:text-primary/20 transition-colors" />
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 bg-white/80 backdrop-blur-md p-4 flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Upload size={18} className="text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Click here to upload photo</span>
-                  </div>
-                </motion.div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center leading-relaxed max-w-[200px]">
-                  Official Clinical Portrait (JPG/PNG, Max 5MB)
-                </p>
-              </div>
-
               {/* Main Info */}
-              <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">License Identifier</label>
                   <div className="relative group">
@@ -232,76 +262,98 @@ const DoctorRegistration = () => {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Registration Region</label>
-                  <div className="relative group">
-                    <MapPin size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />
-                    <select
-                      name="country"
-                      value={formData.country}
-                      onChange={handleInputChange}
-                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white appearance-none"
-                    >
-                      <option value="">Select Jurisdiction</option>
-                      <option value="us">United States</option>
-                      <option value="uk">United Kingdom</option>
-                      <option value="ca">Canada</option>
-                      <option value="au">Australia</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Clinical Experience</label>
-                  <div className="relative group">
-                    <Briefcase size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />
-                    <select
-                      name="experience"
-                      value={formData.experience}
-                      onChange={handleInputChange}
-                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white appearance-none"
-                    >
-                      <option value="">Experience Range</option>
-                      <option value="0-5">0-5 years</option>
-                      <option value="5-10">5-10 years</option>
-                      <option value="10-20">10-20 years</option>
-                      <option value="20+">20+ years</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Specialization</label>
-                  <div className="relative group">
-                    <Activity size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />
-                    <select
-                      name="specialization"
-                      value={formData.specialization}
-                      onChange={handleInputChange}
-                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white appearance-none"
-                    >
-                      <option value="">Primary Focus</option>
-                      <option value="general">General Ophthalmology</option>
-                      <option value="retina">Medical Retina</option>
-                      <option value="surgery">Vitreoretinal Surgery</option>
-                      <option value="pediatric">Pediatric Ophthalmology</option>
-                    </select>
-                  </div>
-                </div>
+                <CustomSelect
+                  label="Registration Region"
+                  value={formData.country}
+                  onChange={(val) => setFormData(prev => ({ ...prev, country: val }))}
+                  icon={MapPin}
+                  searchable={true}
+                  placeholder="Select Jurisdiction"
+                  options={[
+                    { value: 'AP', label: 'Andhra Pradesh' },
+                    { value: 'AR', label: 'Arunachal Pradesh' },
+                    { value: 'AS', label: 'Assam' },
+                    { value: 'BR', label: 'Bihar' },
+                    { value: 'CT', label: 'Chhattisgarh' },
+                    { value: 'GA', label: 'Goa' },
+                    { value: 'GJ', label: 'Gujarat' },
+                    { value: 'HR', label: 'Haryana' },
+                    { value: 'HP', label: 'Himachal Pradesh' },
+                    { value: 'JH', label: 'Jharkhand' },
+                    { value: 'KA', label: 'Karnataka' },
+                    { value: 'KL', label: 'Kerala' },
+                    { value: 'MP', label: 'Madhya Pradesh' },
+                    { value: 'MH', label: 'Maharashtra' },
+                    { value: 'MN', label: 'Manipur' },
+                    { value: 'ML', label: 'Meghalaya' },
+                    { value: 'MZ', label: 'Mizoram' },
+                    { value: 'NL', label: 'Nagaland' },
+                    { value: 'OR', label: 'Odisha' },
+                    { value: 'PB', label: 'Punjab' },
+                    { value: 'RJ', label: 'Rajasthan' },
+                    { value: 'SK', label: 'Sikkim' },
+                    { value: 'TN', label: 'Tamil Nadu' },
+                    { value: 'TG', label: 'Telangana' },
+                    { value: 'TR', label: 'Tripura' },
+                    { value: 'UP', label: 'Uttar Pradesh' },
+                    { value: 'UT', label: 'Uttarakhand' },
+                    { value: 'WB', label: 'West Bengal' },
+                    { value: 'AN', label: 'Andaman & Nicobar' },
+                    { value: 'CH', label: 'Chandigarh' },
+                    { value: 'DN', label: 'Dadra & Nagar Haveli' },
+                    { value: 'DL', label: 'Delhi' },
+                    { value: 'JK', label: 'Jammu & Kashmir' },
+                    { value: 'LA', label: 'Ladakh' },
+                    { value: 'LD', label: 'Lakshadweep' },
+                    { value: 'PY', label: 'Puducherry' }
+                  ]}
+                />
+
+                <CustomSelect
+                  label="Clinical Experience"
+                  value={formData.experience}
+                  onChange={(val) => setFormData(prev => ({ ...prev, experience: val }))}
+                  icon={Briefcase}
+                  placeholder="Experience Range"
+                  options={[
+                    { value: '0-5', label: '0-5 years' },
+                    { value: '5-10', label: '5-10 years' },
+                    { value: '10-20', label: '10-20 years' },
+                    { value: '20+', label: '20+ years' }
+                  ]}
+                />
+
+                <CustomSelect
+                  label="Specialization"
+                  value={formData.specialization}
+                  onChange={(val) => setFormData(prev => ({ ...prev, specialization: val }))}
+                  icon={Activity}
+                  placeholder="Primary Focus"
+                  options={[
+                    { value: 'general', label: 'General Ophthalmology' },
+                    { value: 'retina', label: 'Medical Retina' },
+                    { value: 'surgery', label: 'Vitreoretinal Surgery' },
+                    { value: 'pediatric', label: 'Pediatric Ophthalmology' }
+                  ]}
+                />
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Email ID</label>
                   <div className="relative group">
                     <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+                      <Lock size={18} />
                     </div>
                     <input
                       name="email"
                       value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white"
+                      readOnly
+                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-100/50 text-slate-400 font-bold cursor-not-allowed outline-none transition-all shadow-sm"
                       placeholder="doctor@professional.com"
                       type="email"
                     />
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Mobile Number</label>
                   <div className="relative group">

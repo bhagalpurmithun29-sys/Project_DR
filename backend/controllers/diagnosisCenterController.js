@@ -5,10 +5,17 @@ const DiagnosisCenter = require('../models/DiagnosisCenter');
 // @access  Private/DiagnosisCenter
 exports.getMyCenter = async (req, res) => {
     try {
-        const center = await DiagnosisCenter.findOne({ user: req.user.id });
+        let center = await DiagnosisCenter.findOne({ user: req.user.id });
         if (!center) {
             return res.status(404).json({ success: false, message: 'Diagnosis center profile not found' });
         }
+
+        // Self-Healing: Generate ID if missing
+        if (!center.centerId) {
+            center.centerId = `DC-${Math.floor(100000 + Math.random() * 900000)}`;
+            await center.save();
+        }
+
         res.json({ success: true, data: center });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -7,7 +7,7 @@ import {
     Edit3, CheckCircle2, Plus, Search, Filter, Eye, Trash2, X,
     Lock, User, Bell, Shield, Camera, Loader2, AlertCircle,
     TrendingUp, Clock, RefreshCw, Save, ChevronDown, Hash,
-    Download, Printer, CheckSquare
+    Download, Printer, CheckSquare, Upload, List
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
@@ -26,6 +26,21 @@ const Badge = ({ children, color = 'emerald' }) => {
     const map = { emerald: 'bg-primary/10 text-primary border-primary/20', green: 'bg-primary/10 text-primary border-primary/20', red: 'bg-red-50 text-red-600 border-red-100', amber: 'bg-amber-50 text-amber-600 border-amber-100', slate: 'bg-slate-50 text-slate-500 border-slate-100' };
     return <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${map[color] || map.slate}`}>{children}</span>;
 };
+
+const PrintStyles = () => (
+    <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+            nav, aside, button, .no-print, header, footer { display: none !important; }
+            body, main { background: white !important; margin: 0 !important; padding: 0 !important; min-height: auto !important; }
+            .fixed.inset-0 { position: static !important; display: block !important; padding: 0 !important; z-index: auto !important; }
+            .bg-white, .bg-slate-50 { background-color: white !important; box-shadow: none !important; border: none !important; }
+            .rounded-3xl, .rounded-2xl { border-radius: 0 !important; }
+            img { max-width: 350px !important; border: 1px solid #eee !important; margin: 20px 0 !important; }
+            .text-primary { color: #059669 !important; }
+            .shadow-2xl, .shadow-lg, .shadow-sm { box-shadow: none !important; }
+        }
+    `}} />
+);
 
 const Input = ({ label, icon: Icon, ...props }) => (
     <div className="space-y-1.5">
@@ -103,7 +118,7 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate }) => {
         { label: 'Total Scans', value: scans.length || 0, color: 'text-primary', bg: 'bg-primary/10' },
         { label: 'Patients Served', value: patients.length || 0, color: 'text-primary', bg: 'bg-primary/10' },
         { label: 'Scans This Month', value: scans.filter(s => new Date(s.date || s.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { label: 'Reports Generated', value: scans.filter(s => s.analysis).length, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { label: 'Reports Generated', value: scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed').length, color: 'text-amber-600', bg: 'bg-amber-50' },
     ];
 
     const recentPatients = patients.slice(0, 5);
@@ -200,7 +215,7 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate }) => {
 const PatientsSection = ({ patients, onRefresh }) => {
     const [search, setSearch] = useState('');
     const [showAdd, setShowAdd] = useState(false);
-    const [form, setForm] = useState({ name: '', age: '', gender: 'Male', email: '', phoneNumber: '', diabetesType: 'Type 2' });
+    const [form, setForm] = useState({ name: '', age: '', gender: 'Male', email: '', phoneNumber: '', diabetesType: 'Type 2', password: '' });
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState({ type: '', text: '' });
 
@@ -216,7 +231,7 @@ const PatientsSection = ({ patients, onRefresh }) => {
         try {
             await api.post('/patients', form);
             setMsg({ type: 'success', text: 'Patient registered successfully.' });
-            setForm({ name: '', age: '', gender: 'Male', email: '', phoneNumber: '', diabetesType: 'Type 2' });
+            setForm({ name: '', age: '', gender: 'Male', email: '', phoneNumber: '', diabetesType: 'Type 2', password: '' });
             onRefresh();
             setTimeout(() => setShowAdd(false), 1200);
         } catch (err) {
@@ -314,6 +329,7 @@ const PatientsSection = ({ patients, onRefresh }) => {
                                 </div>
                                 <Input label="Email" icon={Mail} type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="patient@email.com" />
                                 <Input label="Phone Number" icon={Phone} value={form.phoneNumber} onChange={e => setForm(f => ({ ...f, phoneNumber: e.target.value }))} placeholder="+91 9999 999 999" />
+                                <Input label="Create Password" icon={Lock} type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
                                 {msg.text && (
                                     <div className={`flex items-center gap-2 p-3 rounded-xl text-sm font-bold ${msg.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-primary/10 text-primary'}`}>
                                         {msg.type === 'error' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />} {msg.text}
@@ -339,8 +355,35 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
     const [search, setSearch] = useState('');
     const [showNew, setShowNew] = useState(false);
     const [form, setForm] = useState({ patientId: '', eye: 'Right', notes: '' });
+    const [file, setFile] = useState(null);
+    const [preview, setPreview] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [analyzingIds, setAnalyzingIds] = useState([]);
+    const [showReport, setShowReport] = useState(false);
+    const [selectedScan, setSelectedScan] = useState(null);
     const [msg, setMsg] = useState({ type: '', text: '' });
+    const [regenerating, setRegenerating] = useState(false);
+    const [allDoctors, setAllDoctors] = useState([]);
+    const [referring, setReferring] = useState(false);
+    const [referTargetDoc, setReferTargetDoc] = useState('');
+
+    useEffect(() => {
+        const fetchDoctors = async () => {
+            try {
+                const res = await api.get('/auth/doctors');
+                if (res.data.success) setAllDoctors(res.data.data);
+            } catch (err) { console.error('Failed to load doctors', err); }
+        };
+        fetchDoctors();
+    }, []);
+
+    const handleFileChange = (e) => {
+        const f = e.target.files[0];
+        if (f) {
+            setFile(f);
+            setPreview(URL.createObjectURL(f));
+        }
+    };
 
     const filtered = scans.filter(s =>
         s.patientName?.toLowerCase().includes(search.toLowerCase()) ||
@@ -349,18 +392,56 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
 
     const handleNewScan = async (e) => {
         e.preventDefault();
+        if (!file) { setMsg({ type: 'error', text: 'Please upload a retinal image.' }); return; }
         setSaving(true); setMsg({ type: '', text: '' });
+        
+        const formData = new FormData();
+        formData.append('patientId', form.patientId);
+        formData.append('eyeSide', form.eye === 'Right' ? 'OD' : 'OS');
+        formData.append('notes', form.notes);
+        formData.append('image', file);
+
         try {
-            await api.post('/scans', { patient: form.patientId, eye: form.eye, notes: form.notes });
-            setMsg({ type: 'success', text: 'Scan record created.' });
+            const res = await api.post('/scans', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+            setMsg({ type: 'success', text: 'Scan saved. Triggering AI analysis...' });
+            
+            // Automatically trigger analysis
+            if (res.data.data?._id) {
+                await api.post(`/scans/${res.data.data._id}/analyze`);
+                setMsg({ type: 'success', text: 'Scan analyzed successfully.' });
+            }
+
+            setFile(null); setPreview(null);
             onRefresh();
-            setTimeout(() => setShowNew(false), 1200);
+            setTimeout(() => setShowNew(false), 800);
         } catch (err) {
-            setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to create scan.' });
+            setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to create or analyze scan.' });
         } finally { setSaving(false); }
     };
 
-    const statusColor = (s) => s.analysis ? 'emerald' : 'amber';
+    const handleAnalyze = async (id) => {
+        setAnalyzingIds(prev => [...prev, id]);
+        try {
+            await api.post(`/scans/${id}/analyze`);
+            onRefresh();
+        } catch (err) {
+            alert(err.response?.data?.message || 'Analysis failed.');
+        } finally {
+            setAnalyzingIds(prev => prev.filter(a => a !== id));
+        }
+    };
+
+    const handleDeleteScan = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this scan record? This action cannot be undone and will remove the image from the server.')) return;
+        try {
+            await api.delete(`/scans/${id}`);
+            onRefresh();
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to delete scan.');
+        }
+    };
+
+    const statusColor = (s) => s.status === 'Analyzed' || s.status === 'Reviewed' ? 'emerald' : 'amber';
 
     return (
         <div>
@@ -386,7 +467,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                         <table className="w-full text-left">
                             <thead className="border-b border-slate-100 bg-slate-50/50">
                                 <tr>
-                                    {['Scan ID', 'Patient', 'Eye', 'Date', 'Status', 'Risk'].map(h => (
+                                    {['Scan ID', 'Patient', 'Eye', 'Date', 'Source Site', 'Status', 'Risk', 'Actions'].map(h => (
                                         <th key={h} className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
                                     ))}
                                 </tr>
@@ -394,12 +475,50 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                             <tbody>
                                 {filtered.map(s => (
                                     <tr key={s._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-5 py-4 text-xs font-black text-slate-500">{s._id?.slice(-8)}</td>
-                                        <td className="px-5 py-4 text-sm font-black text-slate-900">{s.patientName || '—'}</td>
-                                        <td className="px-5 py-4 text-sm font-bold text-slate-700">{s.eye || '—'}</td>
+                                        <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">{s._id?.slice(-8).toUpperCase()}</td>
+                                        <td className="px-5 py-4 text-sm font-black text-slate-900">{s.patient?.name || '—'}</td>
+                                        <td className="px-5 py-4 text-sm font-bold text-slate-700">{s.eyeSide === 'OD' ? 'Right Eye (OD)' : s.eyeSide === 'OS' ? 'Left Eye (OS)' : '—'}</td>
                                         <td className="px-5 py-4 text-xs font-bold text-slate-500">{s.date ? new Date(s.date).toLocaleDateString() : '—'}</td>
-                                        <td className="px-5 py-4"><Badge color={statusColor(s)}>{s.analysis ? 'Analysed' : 'Pending'}</Badge></td>
-                                        <td className="px-5 py-4"><Badge color={s.analysis?.riskLevel === 'High Risk' ? 'red' : s.analysis?.riskLevel === 'Moderate Risk' ? 'amber' : 'emerald'}>{s.analysis?.riskLevel || '—'}</Badge></td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex flex-col">
+                                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none truncate max-w-[120px]" title={s.diagnosisCenter?.centerName || 'Direct'}>
+                                                    {s.diagnosisCenter?.centerName || 'Direct'}
+                                                </p>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">{s.technician || 'Technician'}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4"><Badge color={statusColor(s)}>{s.status || 'Pending'}</Badge></td>
+                                        <td className="px-5 py-4"><Badge color={s.aiResult === 'High Risk' ? 'red' : s.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>{s.aiResult || '—'}</Badge></td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-1">
+                                                {s.status === 'Pending' && (
+                                                    <button 
+                                                        onClick={() => handleAnalyze(s._id)} 
+                                                        disabled={analyzingIds.includes(s._id)}
+                                                        className={`p-2 rounded-lg transition-all ${analyzingIds.includes(s._id) ? 'text-primary animate-pulse' : 'text-primary hover:bg-primary/5'}`}
+                                                        title="Run AI Analysis"
+                                                    >
+                                                        {analyzingIds.includes(s._id) ? <Loader2 size={16} className="animate-spin" /> : <Activity size={16} />}
+                                                    </button>
+                                                )}
+                                                {s.status === 'Analyzed' && (
+                                                    <button 
+                                                        onClick={() => { setSelectedScan(s); setShowReport(true); }}
+                                                        className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all"
+                                                        title="View AI Report"
+                                                    >
+                                                        <FileText size={16} />
+                                                    </button>
+                                                )}
+                                                <button 
+                                                    onClick={() => handleDeleteScan(s._id)}
+                                                    className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                    title="Delete Scan"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -427,12 +546,28 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                     <option value="">— Choose a patient —</option>
                                     {patients.map(p => <option key={p._id} value={p._id}>{p.name} ({p.patientId})</option>)}
                                 </Select>
-                                <Select label="Eye" value={form.eye} onChange={e => setForm(f => ({ ...f, eye: e.target.value }))}>
-                                    {['Right', 'Left', 'Both'].map(e => <option key={e}>{e}</option>)}
-                                </Select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Select label="Eye" value={form.eye} onChange={e => setForm(f => ({ ...f, eye: e.target.value }))}>
+                                        {['Right', 'Left', 'Both'].map(e => <option key={e}>{e}</option>)}
+                                    </Select>
+                                    <div className="space-y-1.5 text-center">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-left ml-1">Retinal Image</label>
+                                        <label className={`flex flex-col items-center justify-center h-[90px] w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer ${preview ? 'border-primary/40 bg-primary/5' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}>
+                                            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                                            {preview ? (
+                                                <img src={preview} className="h-full object-contain rounded-xl" alt="Preview" />
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <Upload size={18} className="text-slate-300" />
+                                                    <span className="text-[10px] font-bold text-slate-400">Click to upload</span>
+                                                </div>
+                                            )}
+                                        </label>
+                                    </div>
+                                </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notes (optional)</label>
-                                    <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3}
+                                    <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2}
                                         className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all resize-none"
                                         placeholder="Any relevant clinical notes…" />
                                 </div>
@@ -443,9 +578,172 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                 )}
                                 <button type="submit" disabled={saving || !form.patientId}
                                     className="w-full py-4 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:bg-primary/90 flex items-center justify-center gap-2 disabled:opacity-60 transition-all">
-                                    {saving ? <Loader2 size={16} className="animate-spin" /> : <><Scan size={16} /> Create Scan</>}
+                                    {saving ? <Loader2 size={16} className="animate-spin" /> : <><Activity size={16} /> Save & Run AI Analysis</>}
                                 </button>
                             </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* AI Report Modal */}
+            <AnimatePresence>
+                {showReport && selectedScan && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowReport(false)} />
+                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                            className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[90vh]">
+                            
+                            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                <div className="flex items-center gap-3 no-print">
+                                    <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
+                                        <Activity size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-black text-slate-900">AI Diagnostic Report</h3>
+                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">Automated screening complete</p>
+                                    </div>
+                                </div>
+                                {/* Print Header (only visible in print) */}
+                                <div className="hidden print:flex flex-col gap-1">
+                                    <h2 className="text-2xl font-black text-slate-900 uppercase italic">RetinaAI Diagnostic Report</h2>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Autonomous Retinal Screening Results</p>
+                                </div>
+                                <button onClick={() => setShowReport(false)} className="no-print size-9 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all shadow-sm"><X size={18} /></button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+                                <div className="grid grid-cols-5 gap-8">
+                                    <div className="col-span-2 space-y-3">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Retinal Scan</label>
+                                        <div className="aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-900 shadow-inner group relative">
+                                            <img src={`${api.defaults.baseURL.replace('/api','')}${selectedScan.imageUrl}`} alt="Retina" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                                <p className="text-white text-[10px] font-black uppercase tracking-widest">{selectedScan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="col-span-3 space-y-6">
+                                        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-4">
+                                            <div>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Risk Assessment</label>
+                                                <Badge color={selectedScan.aiResult === 'High Risk' ? 'red' : selectedScan.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
+                                                    {selectedScan.aiResult || 'Low Risk'}
+                                                </Badge>
+                                            </div>
+
+                                            {selectedScan.aiReportSummary && (
+                                                <div className="pt-4 border-t border-slate-200">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block text-primary">Clinical Summary (Generative AI)</label>
+                                                    <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-inner">
+                                                        <p className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-wrap italic">
+                                                            {selectedScan.aiReportSummary}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* --- Referral Section --- */}
+                                            {selectedScan.status === 'Analyzed' && (
+                                                <div className="pt-6 border-t border-slate-200 no-print">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Refer to Specialist</label>
+                                                    
+                                                    {selectedScan.referredDoctor ? (
+                                                        <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between">
+                                                            <div>
+                                                                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Successfully Referred to</p>
+                                                                <p className="text-sm font-black text-indigo-900 mt-0.5">Dr. {selectedScan.referredDoctor.name || 'Practitioner'}</p>
+                                                            </div>
+                                                            <CheckCircle2 className="text-indigo-500" size={20} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col gap-3">
+                                                            <select 
+                                                                value={referTargetDoc}
+                                                                onChange={e => setReferTargetDoc(e.target.value)}
+                                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-white text-slate-900 font-bold text-sm outline-none focus:border-primary/20 transition-all"
+                                                            >
+                                                                <option value="">Select a Doctor...</option>
+                                                                {allDoctors.map(d => <option key={d._id} value={d._id}>Dr. {d.name}</option>)}
+                                                            </select>
+                                                            <button 
+                                                                onClick={async () => {
+                                                                    if (!referTargetDoc) return;
+                                                                    setReferring(true);
+                                                                    try {
+                                                                        const res = await api.post(`/scans/${selectedScan._id}/refer`, { doctorId: referTargetDoc });
+                                                                        if (res.data.success) {
+                                                                            setSelectedScan(res.data.data);
+                                                                            onRefresh();
+                                                                            alert('Report has been securely referred.');
+                                                                        }
+                                                                    } catch (err) {
+                                                                        alert(err.response?.data?.message || 'Referral failed.');
+                                                                    } finally {
+                                                                        setReferring(false);
+                                                                    }
+                                                                }}
+                                                                disabled={!referTargetDoc || referring}
+                                                                className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
+                                                            >
+                                                                {referring ? <Loader2 size={16} className="animate-spin" /> : <Link size={16} />}
+                                                                Refer Report to Doctor
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            
+                                            <div className="pt-4 border-t border-slate-200">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Detected Findings</label>
+                                                <div className="space-y-2">
+                                                    {selectedScan.findings && selectedScan.findings.length > 0 ? selectedScan.findings.map((f, i) => (
+                                                        <div key={i} className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                                            <div className="size-1.5 rounded-full bg-primary" />
+                                                            {f}
+                                                        </div>
+                                                    )) : (
+                                                        <p className="text-sm font-bold text-slate-400 italic">No significant lesions detected.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 no-print">
+                                {(!selectedScan.aiReportSummary || selectedScan.aiReportSummary.includes('unavailable')) ? (
+                                    <button 
+                                        onClick={async () => {
+                                            setRegenerating(true);
+                                            try {
+                                                const res = await api.post(`/scans/${selectedScan._id}/generate-report`);
+                                                setSelectedScan(res.data.data);
+                                                onRefresh();
+                                            } catch (err) {
+                                                alert('Regeneration failed. Please try again.');
+                                            } finally {
+                                                setRegenerating(false);
+                                            }
+                                        }} 
+                                        disabled={regenerating}
+                                        className="px-6 py-3 bg-amber-500 text-white rounded-xl font-black text-sm hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 flex items-center gap-2"
+                                    >
+                                        {regenerating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                                        Generate AI Summary
+                                    </button>
+                                ) : (
+                                    <button onClick={() => window.print()} className="px-6 py-3 bg-primary text-white rounded-xl font-black text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
+                                        <Download size={16} /> Print Diagnostic Report
+                                    </button>
+                                )}
+                                <button onClick={() => setShowReport(false)} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-black text-sm hover:bg-slate-100 transition-all shadow-sm">
+                                    Close
+                                </button>
+                            </div>
                         </motion.div>
                     </div>
                 )}
@@ -458,10 +756,10 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
    SECTION: REPORTS
 ═══════════════════════════════════════════════════ */
 const ReportsSection = ({ scans }) => {
-    const analysed = scans.filter(s => s.analysis);
+    const analysed = scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed');
     const [search, setSearch] = useState('');
     const filtered = analysed.filter(s =>
-        s.patientName?.toLowerCase().includes(search.toLowerCase())
+        s.patient?.name?.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -487,12 +785,17 @@ const ReportsSection = ({ scans }) => {
                             <tbody>
                                 {filtered.map(s => (
                                     <tr key={s._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-5 py-4 text-xs font-black text-slate-500">RPT-{s._id?.slice(-6).toUpperCase()}</td>
-                                        <td className="px-5 py-4 text-sm font-black text-slate-900">{s.patientName || '—'}</td>
-                                        <td className="px-5 py-4 text-sm font-bold text-slate-700">{s.eye || '—'}</td>
+                                        <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">RPT-{s._id?.slice(-6).toUpperCase()}</td>
+                                        <td className="px-5 py-4 text-sm font-black text-slate-900">{s.patient?.name || '—'}</td>
+                                        <td className="px-5 py-4 text-sm font-bold text-slate-700">{s.eyeSide === 'OD' ? 'Right (OD)' : s.eyeSide === 'OS' ? 'Left (OS)' : '—'}</td>
                                         <td className="px-5 py-4 text-xs font-bold text-slate-500">{s.date ? new Date(s.date).toLocaleDateString() : '—'}</td>
-                                        <td className="px-5 py-4"><Badge color={s.analysis?.riskLevel?.includes('High') ? 'red' : s.analysis?.riskLevel?.includes('Moderate') ? 'amber' : 'emerald'}>{s.analysis?.riskLevel || '—'}</Badge></td>
-                                        <td className="px-5 py-4 text-sm font-bold text-slate-700">{s.analysis?.drGrade || '—'}</td>
+                                        <td className="px-5 py-4"><Badge color={s.aiResult === 'High Risk' ? 'red' : s.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>{s.aiResult || '—'}</Badge></td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex flex-col gap-0.5">
+                                                <p className="text-[10px] font-black text-slate-900">{s.findings?.[0] || 'No lesions'}</p>
+                                                {s.findings?.length > 1 && <p className="text-[9px] font-bold text-slate-400">+{s.findings.length - 1} more</p>}
+                                            </div>
+                                        </td>
                                         <td className="px-5 py-4">
                                             <Link to={`/report/${s._id}`}
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-xl text-xs font-black hover:bg-primary hover:text-white transition-all">
@@ -513,9 +816,9 @@ const ReportsSection = ({ scans }) => {
    SECTION: ANALYTICS
 ═══════════════════════════════════════════════════ */
 const AnalyticsSection = ({ scans, patients }) => {
-    const analysed = scans.filter(s => s.analysis);
-    const high = analysed.filter(s => s.analysis?.riskLevel?.includes('High')).length;
-    const moderate = analysed.filter(s => s.analysis?.riskLevel?.includes('Moderate')).length;
+    const analysed = scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed');
+    const high = analysed.filter(s => s.aiResult === 'High Risk').length;
+    const moderate = analysed.filter(s => s.aiResult === 'Moderate Risk').length;
     const low = analysed.length - high - moderate;
 
     const byMonth = {};
@@ -686,7 +989,7 @@ const SettingsSection = ({ center, user, onCenterUpdate }) => {
 
     return (
         <div>
-            <SectionHeader title="Settings" subtitle="Manage your center profile, security and preferences." />
+            <SectionHeader title="Settings" subtitle="Manage your Diagnosis Center profile and security." />
             <div className="flex gap-6">
                 {/* Sidebar */}
                 <div className="w-52 flex-shrink-0 space-y-1">
@@ -703,7 +1006,7 @@ const SettingsSection = ({ center, user, onCenterUpdate }) => {
                     {/* ── Profile Tab ── */}
                     {tab === 'profile' && (
                         <form onSubmit={saveProfile} className="space-y-5">
-                            <h3 className="text-base font-black text-slate-900 mb-6">Center Profile</h3>
+                            <h3 className="text-base font-black text-slate-900 mb-6">Diagnosis Center Profile</h3>
                             <Input label="Center Name" icon={Building2} required value={profile.centerName} onChange={e => setProfile(p => ({ ...p, centerName: e.target.value }))} placeholder="My Diagnosis Center" />
                             <div className="grid grid-cols-2 gap-4">
                                 <Select label="Center Type" value={profile.centerType} onChange={e => setProfile(p => ({ ...p, centerType: e.target.value }))}>
@@ -886,6 +1189,7 @@ const DiagnosisCenterDashboard = () => {
 
     return (
         <div className="font-display min-h-screen bg-main flex">
+            <PrintStyles />
             {/* ── Sidebar ── */}
             <aside className="w-60 bg-sidebar border-r border-white/5 flex flex-col fixed h-full z-20 shadow-xl">
                 <div className="px-5 py-6 border-b border-white/5">

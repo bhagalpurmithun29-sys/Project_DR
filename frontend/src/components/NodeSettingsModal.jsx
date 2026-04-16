@@ -151,7 +151,7 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
                     transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                    className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[520px] border border-transparent dark:border-slate-800"
+                    className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto max-h-[90vh] md:h-[680px] border border-transparent dark:border-slate-800"
                 >
                     {/* Sidebar Nav */}
                     <div className="w-full md:w-56 bg-slate-50 dark:bg-slate-950/50 border-r border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-6">
@@ -178,7 +178,7 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                     </div>
 
                     {/* Content Area */}
-                    <div className="flex-1 flex flex-col max-h-[70vh] md:max-h-full">
+                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                         <div className="px-8 py-5 flex items-center justify-end sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl z-20 border-b md:border-b-0 border-slate-100 dark:border-slate-800">
                             <button
                                 onClick={onClose}
@@ -254,12 +254,12 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                                 <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
                                     <div className="space-y-4">
                                         <h4 className="text-sm font-black text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">{t('settings.theme.title')}</h4>
-                                        <div className="grid grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-2 gap-4">
                                             {[
-                                                { id: 'system', label: t('settings.theme.system'), Icon: MonitorSmartphone },
                                                 { id: 'light', label: t('settings.theme.light'), Icon: Sun },
                                                 { id: 'dark', label: t('settings.theme.dark'), Icon: Moon },
                                             ].map(({ id, label, Icon }) => (
+
                                                 <button
                                                     key={id}
                                                     onClick={() => setTheme(id)}

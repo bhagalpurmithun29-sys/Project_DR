@@ -7,7 +7,10 @@ const User = require('../models/User');
 // @access  Private/Doctor
 exports.getPatients = async (req, res) => {
     try {
-        const patients = await Patient.find().populate('user', 'name email').sort('-createdAt');
+        let query = {};
+        // Note: diagnosis_center used to be isolated, now reverted to global for inter-center report checks
+        
+        const patients = await Patient.find(query).populate('user', 'name email').sort('-createdAt');
         res.json({
             success: true,
             count: patients.length,
@@ -79,7 +82,7 @@ exports.getMyProfile = async (req, res) => {
 // @access  Private/Doctor
 exports.createPatient = async (req, res) => {
     try {
-        const { name, age, gender, email, phoneNumber } = req.body;
+        const { name, email, age, phoneNumber, gender, password } = req.body;
 
         // Check if patient with this email already exists (if email provided)
         if (email) {
@@ -103,18 +106,18 @@ exports.createPatient = async (req, res) => {
                     existingPatient.phoneNumber = phoneNumber;
                     updated = true;
                 }
-                
+
                 if (updated) await existingPatient.save();
-                
+
                 // Return existing patient to allow multiple scans for the same person
                 return res.status(200).json({ success: true, data: existingPatient });
             }
         }
 
         // Create a temporary user for the patient so they can login later
-        // Default password could be their phone number or a random one
-        const tempPassword = phoneNumber || 'RetinaAI@2024';
-        
+        // Use provided password or fallback to phoneNumber / default
+        const tempPassword = password || phoneNumber || 'RetinaAI@2024';
+
         // We check if a user with this email already exists but possibly not a patient
         let user;
         if (email) {
@@ -135,6 +138,7 @@ exports.createPatient = async (req, res) => {
 
         const patient = await Patient.create({
             user: user._id,
+            diagnosisCenter: req.user.role === 'diagnosis_center' ? req.user._id : undefined,
             name,
             patientId,
             age,
@@ -160,7 +164,7 @@ exports.createPatient = async (req, res) => {
 exports.uploadPatientPhoto = async (req, res) => {
     try {
         let patient = await Patient.findById(req.params.id);
-        
+
         // If patient id in URL is 'me', find by req.user.id
         if (req.params.id === 'me') {
             patient = await Patient.findOne({ user: req.user.id });
@@ -196,8 +200,8 @@ exports.updateMyProfile = async (req, res) => {
         if (!patient) {
             return res.status(404).json({ success: false, message: 'Patient profile not found' });
         }
-        if (name)  patient.name  = name;
-        if (age)   patient.age   = Number(age);
+        if (name) patient.name = name;
+        if (age) patient.age = Number(age);
         if (phone) patient.phoneNumber = phone;
         if (email) patient.email = email;
         await patient.save();

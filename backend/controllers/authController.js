@@ -209,7 +209,7 @@ exports.changePassword = async (req, res) => {
             if (!Array.isArray(securityQuestions) || securityQuestions.length !== 2) {
                 return res.status(400).json({ success: false, message: 'Exactly 2 security questions are required' });
             }
-            
+
             const salt = await bcrypt.genSalt(10);
             const hashedQuestions = await Promise.all(securityQuestions.map(async (sq) => {
                 if (!sq.question || !sq.answer) {
@@ -630,6 +630,23 @@ exports.deleteAccount = async (req, res) => {
         res.json({
             success: true,
             message: 'Your account and all associated data have been permanently deleted.'
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * @desc    Get all users with the role 'doctor'
+ * @route   GET /api/auth/doctors
+ * @access  Private/DiagnosisCenter
+ */
+exports.getDoctorsList = async (req, res) => {
+    try {
+        const doctors = await User.find({ role: 'doctor' }).select('name email avatar');
+        res.json({
+            success: true,
+            data: doctors
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

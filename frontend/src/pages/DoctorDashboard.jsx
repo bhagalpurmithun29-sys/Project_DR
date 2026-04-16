@@ -20,7 +20,7 @@ import {
     MoreHorizontal,
     Filter,
     ArrowUpRight,
-    Zap, PlusCircle, X
+    Zap, X
 } from 'lucide-react';
 import CentralAlertsModal from '../components/CentralAlertsModal';
 import NodeSettingsModal from '../components/NodeSettingsModal';
@@ -31,6 +31,8 @@ import patientService from '../services/patientService';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
+import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
+
 
 const DoctorDashboard = () => {
     const { logout, user } = useContext(AuthContext);
@@ -39,40 +41,38 @@ const DoctorDashboard = () => {
     const [scans, setScans] = useState([]);
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [search, setSearch] = useState('');
-    const [selectedFile, setSelectedFile] = useState(null);
     const [isAlertsOpen, setIsAlertsOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
-
-    // Modal Form State
-    const [newScanForm, setNewScanForm] = useState({
-        name: '',
-        age: '',
-        gender: 'Male',
-        email: '',
-        phoneNumber: '',
-        eyeSide: 'OD',
-        notes: ''
-    });
+    const [search, setSearch] = useState('');
+    const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
 
     const fetchData = async () => {
         try {
-            const [profileRes, scansRes, patientsRes, notificationsRes] = await Promise.all([
+            const [profileRes, scansRes, patientsRes, notificationsRes] = await Promise.allSettled([
                 doctorService.getProfile(),
                 scanService.getScans(),
                 patientService.getAllPatients(),
                 api.get('/notifications')
             ]);
-            setProfile(profileRes.data);
-            setScans(scansRes.data);
-            setPatients(patientsRes.data);
-            const unread = (notificationsRes.data.data || []).filter(n => !n.isRead).length;
-            setUnreadNotifications(unread);
+
+            if (profileRes.status === 'fulfilled') {
+                setProfile(profileRes.value.data);
+                setIsProfileIncomplete(false);
+            } else {
+                console.error('Profile fetch failed', profileRes.reason);
+                setIsProfileIncomplete(true);
+                setProfile(null);
+            }
+
+            if (scansRes.status === 'fulfilled') setScans(scansRes.value.data);
+            if (patientsRes.status === 'fulfilled') setPatients(patientsRes.value.data);
+            if (notificationsRes.status === 'fulfilled') {
+                const unread = (notificationsRes.value.data.data || []).filter(n => !n.isRead).length;
+                setUnreadNotifications(unread);
+            }
         } catch (err) {
-            console.error('Failed to fetch dashboard data', err);
+            console.error('Unexpected error during dashboard fetch', err);
         } finally {
             setLoading(false);
         }
@@ -103,59 +103,7 @@ const DoctorDashboard = () => {
         }
     }, [isAlertsOpen]);
 
-    const handleCreateScan = async (e) => {
-        e.preventDefault();
-        if (!selectedFile) {
-            alert('Please select a retinal image for analysis.');
-            return;
-        }
 
-        setIsSubmitting(true);
-        try {
-            // 1. Create Patient first
-            const patientData = {
-                name: newScanForm.name,
-                age: newScanForm.age,
-                gender: newScanForm.gender,
-                email: newScanForm.email,
-                phoneNumber: newScanForm.phoneNumber
-            };
-
-            const patientRes = await patientService.createPatient(patientData);
-
-            if (patientRes.success) {
-                const patientId = patientRes.data._id;
-
-                // 2. Create Scan
-                const formData = new FormData();
-                formData.append('patientId', patientId);
-                formData.append('eyeSide', newScanForm.eyeSide);
-                formData.append('notes', newScanForm.notes);
-                formData.append('image', selectedFile);
-                formData.append('technician', `Dr. ${user.name}`);
-
-                await scanService.createScan(formData);
-
-                setIsModalOpen(false);
-                setNewScanForm({
-                    name: '',
-                    age: '',
-                    gender: 'Male',
-                    email: '',
-                    phoneNumber: '',
-                    eyeSide: 'OD',
-                    notes: ''
-                });
-                setSelectedFile(null);
-                await fetchData();
-            }
-        } catch (err) {
-            console.error('Failed to initialize scan', err);
-            alert(err.response?.data?.message || 'Failed to initialize scan');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
 
     const handleLogout = () => {
         logout();
@@ -240,6 +188,7 @@ const DoctorDashboard = () => {
     ];
 
     const RECENT_ACTIVITY = scans.slice(0, 5).map(scan => ({
+        _id: scan._id,
         name: scan.patient?.name || "Unknown Patient",
         initials: (scan.patient?.name || "UP").split(' ').map(n => n[0]).join(''),
         time: new Date(scan.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -251,6 +200,8 @@ const DoctorDashboard = () => {
         statusStyle: scan.status === 'Pending' ? "text-amber-600" : "text-primary",
         statusDot: scan.status === 'Pending' ? "bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.4)] animate-pulse" : "bg-primary",
         action: scan.status === 'Pending' ? "Analyze" : "Details",
+        source: scan.diagnosisCenter?.name || "Self",
+        diagnosor: scan.technician || "Direct Entry"
     }));
 
     const filteredPatients = patients.filter(p =>
@@ -380,7 +331,7 @@ const DoctorDashboard = () => {
                     </Link>
                     <Link to="/doctor/scan-history" className="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
                         <Activity size={18} />
-                        <span className="text-sm">Patient Archive</span>
+                        <span className="text-sm">Scan History</span>
                     </Link>
                     <Link to="/doctor-profile" className="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
                         <User size={18} />
@@ -464,6 +415,8 @@ const DoctorDashboard = () => {
                     </div>
                 </header>
 
+                {isProfileIncomplete && <ProfileIncompleteBanner />}
+
                 <motion.div
                     variants={containerVariants}
                     initial="hidden"
@@ -476,12 +429,7 @@ const DoctorDashboard = () => {
                             <h3 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none italic">Active <span className="text-primary not-italic">Clinical Environment</span></h3>
                             <p className="text-lg font-medium text-slate-500 dark:text-slate-400 max-w-xl">Diagnostic metrics sync completed. You have 3 urgent reviews remaining in your queue.</p>
                         </div>
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="h-14 px-10 bg-slate-900 dark:bg-white dark:text-slate-900 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-2xl shadow-slate-900/40 hover:-translate-y-1 transition-all flex items-center gap-3">
-                            <PlusCircle size={18} strokeWidth={2.5} />
-                            Initialize New Scan
-                        </button>
+
                     </motion.div>
 
                     {/* KPI Section */}
@@ -533,6 +481,7 @@ const DoctorDashboard = () => {
                                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Patient Entity</th>
                                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Time Sync</th>
                                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">AI Scoring</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Source Portal</th>
                                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Vitals</th>
                                             <th className="px-8 py-6"></th>
                                         </tr>
@@ -560,6 +509,12 @@ const DoctorDashboard = () => {
                                                     <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.risk === 'High Risk' ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20' : row.risk === 'Moderate' ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
                                                         {row.risk}
                                                     </span>
+                                                </td>
+                                                <td className="px-8 py-8">
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-wider">{row.source}</p>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Lab: {row.diagnosor}</p>
+                                                    </div>
                                                 </td>
                                                 <td className="px-8 py-8">
                                                     <div className={`flex items-center gap-2.5 text-[10px] font-black uppercase tracking-widest ${row.statusStyle}`}>
@@ -695,158 +650,7 @@ const DoctorDashboard = () => {
                 </footer>
             </main>
 
-            {/* New Scan Modal */}
-            <AnimatePresence>
-                {isModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsModalOpen(false)}
-                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden"
-                        >
-                            <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                <div>
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight italic">Initialize <span className="text-primary not-italic">Diagnostic Scan</span></h3>
-                                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">AI-Powered Retinal Screening Node</p>
-                                </div>
-                                <button onClick={() => setIsModalOpen(false)} className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center font-bold">✕</button>
-                            </div>
 
-                            <form onSubmit={handleCreateScan} className="p-8 space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2">Patient Name</label>
-                                        <input
-                                            required
-                                            type="text"
-                                            className="w-full h-14 bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-6 font-bold text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-primary/5 transition-all"
-                                            placeholder="Enter full name..."
-                                            value={newScanForm.name}
-                                            onChange={(e) => setNewScanForm({ ...newScanForm, name: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2">Patient Age</label>
-                                        <input
-                                            required
-                                            type="number"
-                                            className="w-full h-14 bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-6 font-bold text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-primary/5 transition-all"
-                                            placeholder="Years..."
-                                            value={newScanForm.age}
-                                            onChange={(e) => setNewScanForm({ ...newScanForm, age: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2">Gender Identity</label>
-                                        <select
-                                            className="w-full h-14 bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-6 font-bold text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-primary/5 transition-all"
-                                            value={newScanForm.gender}
-                                            onChange={(e) => setNewScanForm({ ...newScanForm, gender: e.target.value })}
-                                        >
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2">Contact Number</label>
-                                        <input
-                                            required
-                                            type="tel"
-                                            className="w-full h-14 bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-6 font-bold text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-primary/5 transition-all"
-                                            placeholder="+1 (xxx) xxx-xxxx"
-                                            value={newScanForm.phoneNumber}
-                                            onChange={(e) => setNewScanForm({ ...newScanForm, phoneNumber: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2">Electronic Mail (Optional)</label>
-                                    <input
-                                        type="email"
-                                        className="w-full h-14 bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-6 font-bold text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-primary/5 transition-all"
-                                        placeholder="patient@domain.com"
-                                        value={newScanForm.email}
-                                        onChange={(e) => setNewScanForm({ ...newScanForm, email: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2">Ocular Node</label>
-                                        <div className="flex p-1.5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                            {['OD', 'OS'].map(eye => (
-                                                <button
-                                                    key={eye}
-                                                    type="button"
-                                                    onClick={() => setNewScanForm({ ...newScanForm, eyeSide: eye })}
-                                                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all ${newScanForm.eyeSide === eye ? 'bg-white dark:bg-slate-800 text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                                                >
-                                                    {eye === 'OD' ? 'RIGHT EYE (OD)' : 'LEFT EYE (OS)'}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2">Retinal Fundus Image</label>
-                                        <div className="relative h-14 bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group overflow-hidden">
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={(e) => setSelectedFile(e.target.files[0])}
-                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                            />
-                                            <div className="flex items-center gap-2 px-6">
-                                                <Microscope size={18} className="text-slate-400" />
-                                                <span className="text-xs font-bold text-slate-500 truncate">
-                                                    {selectedFile ? selectedFile.name : 'Click to upload scan...'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2">Clinical Observations</label>
-                                    <textarea
-                                        className="w-full h-24 bg-slate-50 dark:bg-slate-950 border-none rounded-2xl p-6 font-bold text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-primary/5 transition-all resize-none"
-                                        placeholder="Add any symptoms or clinical notes (optional)..."
-                                        value={newScanForm.notes}
-                                        onChange={(e) => setNewScanForm({ ...newScanForm, notes: e.target.value })}
-                                    />
-                                </div>
-
-                                <button
-                                    disabled={isSubmitting}
-                                    type="submit"
-                                    className="w-full h-16 bg-primary text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 hover:bg-primary/90 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isSubmitting ? (
-                                        <div className="size-5 border-2 border-white/30 border-t-white animate-spin rounded-full" />
-                                    ) : (
-                                        <>
-                                            Save Patient Record
-                                            <ArrowUpRight size={18} strokeWidth={2.5} />
-                                        </>
-                                    )}
-                                </button>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
 
             {/* System Modals */}
             <CentralAlertsModal isOpen={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />

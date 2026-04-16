@@ -29,6 +29,8 @@ import doctorService from '../services/doctorService';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
+import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
+
 
 const DoctorScanHistory = () => {
     const { logout, user } = useContext(AuthContext);
@@ -49,6 +51,8 @@ const DoctorScanHistory = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [profile, setProfile] = useState(null);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+
 
     useEffect(() => {
         fetchScans();
@@ -82,8 +86,10 @@ const DoctorScanHistory = () => {
         try {
             const res = await doctorService.getProfile();
             setProfile(res.data);
+            setIsProfileIncomplete(false);
         } catch (err) {
             console.error('Failed to fetch profile', err);
+            setIsProfileIncomplete(true);
         }
     };
 
@@ -104,7 +110,9 @@ const DoctorScanHistory = () => {
                 imageUrl: scan.imageUrl,
                 lesionCount: scan.lesionCount,
                 insights: scan.insights,
-                notes: scan.clinicalNotes
+                notes: scan.clinicalNotes,
+                diagnosisCenter: scan.diagnosisCenter?.name || "Self-Uploaded",
+                technician: scan.technician || "Direct"
             })));
         } catch (err) {
             console.error('Failed to fetch scans', err);
@@ -239,7 +247,7 @@ const DoctorScanHistory = () => {
                     </Link>
                     <Link to="/doctor/scan-history" className="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-black shadow-lg shadow-primary/20 transition-all">
                         <Activity size={16} strokeWidth={2.5} />
-                        <span className="text-sm">Patient Archive</span>
+                        <span className="text-sm">Scan History</span>
                     </Link>
                     <Link to="/doctor-profile" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
                         <User size={16} />
@@ -265,10 +273,11 @@ const DoctorScanHistory = () => {
                     <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5">
                         <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${profile?.photo && profile.photo !== 'default-doctor.jpg' ? profile.photo : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
                         <div className="flex-1 min-w-0 text-left">
-                            <p className="text-xs font-black truncate text-white">Dr. {user?.name?.split(' ').pop() || 'Provider'}</p>
+                            <p className="text-xs font-black truncate text-white">Dr. {user?.name || 'Provider'}</p>
                             <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest text-left">Retina Specialist</p>
                         </div>
                     </div>
+
                     <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-500/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
                         <LogOut size={16} strokeWidth={2.5} />
                         Sign Out
@@ -290,6 +299,8 @@ const DoctorScanHistory = () => {
 
                     </div>
                 </header>
+
+                {isProfileIncomplete && <ProfileIncompleteBanner />}
 
                 <motion.div
                     variants={containerVariants}
@@ -433,6 +444,7 @@ const DoctorScanHistory = () => {
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Patient Name</th>
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Age</th>
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Scan Date</th>
+                                        <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Source Portfolio</th>
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Status</th>
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Actions</th>
                                     </tr>
@@ -463,6 +475,12 @@ const DoctorScanHistory = () => {
                                                 </td>
                                                 <td className="px-10 py-8">
                                                     <p className="text-sm font-black text-slate-700">{scan.date}</p>
+                                                </td>
+                                                <td className="px-10 py-8">
+                                                    <div className="flex flex-col">
+                                                        <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none">{scan.diagnosisCenter}</p>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">Lab: {scan.technician}</p>
+                                                    </div>
                                                 </td>
                                                 <td className="px-10 py-8">
                                                     <div className={`flex items-center gap-2.5 text-[10px] font-black uppercase tracking-widest ${scan.status === 'Pending' ? 'text-amber-500' : 'text-primary'}`}>

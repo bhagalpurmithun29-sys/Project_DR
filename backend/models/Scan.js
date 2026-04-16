@@ -59,6 +59,24 @@ const scanSchema = new mongoose.Schema({
     doctorSignature: {
         type: String,
     },
+    findings: {
+        type: [String],
+        default: [],
+    },
+    aiReportSummary: {
+        type: String,
+    },
+    diagnosisCenter: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    },
+    referredDoctor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    },
+    referredAt: {
+        type: Date,
+    },
     createdAt: {
         type: Date,
         default: Date.now,

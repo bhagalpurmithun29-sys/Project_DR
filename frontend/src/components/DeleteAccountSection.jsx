@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    AlertTriangle, Trash2, Lock, Loader2, X, 
-    ShieldAlert, ChevronRight, AlertCircle 
+import {
+    AlertTriangle, Trash2, Lock, Loader2, X,
+    ShieldAlert, ChevronRight, AlertCircle
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import api from '../services/api';
 const DeleteAccountSection = () => {
     const { logout } = useContext(AuthContext);
     const navigate = useNavigate();
-    
+
     // UI State
     const [confirmText, setConfirmText] = useState('');
     const [password, setPassword] = useState('');
@@ -21,14 +21,14 @@ const DeleteAccountSection = () => {
 
     const handleDelete = async () => {
         if (confirmText !== 'DELETE') return;
-        
+
         setLoading(true);
         setError('');
         try {
             const res = await api.delete('/auth/delete-account', {
                 data: { password }
             });
-            
+
             if (res.data.success) {
                 // Logout and redirect
                 logout();
@@ -54,7 +54,7 @@ const DeleteAccountSection = () => {
                     <div className="flex-1">
                         <h3 className="text-xl font-black text-rose-600 dark:text-rose-500 tracking-tight leading-none mb-2">Delete My Account</h3>
                         <p className="text-sm font-bold text-rose-500/80 leading-relaxed">
-                            This action is permanent and cannot be undone. All your patient data, reports, 
+                            This action is permanent and cannot be undone. All your patient data, reports,
                             medical scans, and account settings will be erased from our servers immediately.
                         </p>
                     </div>
@@ -66,7 +66,7 @@ const DeleteAccountSection = () => {
                         <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Type <span className="text-rose-500 italic">DELETE</span> to confirm</label>
                         <div className="relative group">
                             <Trash2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-rose-500 transition-colors" size={16} />
-                            <input 
+                            <input
                                 type="text"
                                 value={confirmText}
                                 onChange={(e) => setConfirmText(e.target.value)}
@@ -81,7 +81,7 @@ const DeleteAccountSection = () => {
                         <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Verify Password</label>
                         <div className="relative group">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={16} />
-                            <input 
+                            <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -98,7 +98,7 @@ const DeleteAccountSection = () => {
                         </div>
                     )}
 
-                    <button 
+                    <button
                         onClick={() => setShowConfirmModal(true)}
                         disabled={!isReady || loading}
                         className="w-full h-14 rounded-2xl bg-rose-500 text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-rose-500/20 hover:bg-rose-600 disabled:opacity-30 disabled:grayscale transition-all flex items-center justify-center gap-2"
@@ -112,14 +112,14 @@ const DeleteAccountSection = () => {
             <AnimatePresence>
                 {showConfirmModal && (
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
                             onClick={() => setShowConfirmModal(false)}
                         />
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -128,21 +128,21 @@ const DeleteAccountSection = () => {
                             <div className="size-20 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mx-auto mb-6">
                                 <AlertTriangle size={40} strokeWidth={2.5} />
                             </div>
-                            
+
                             <h4 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Are you 100% sure?</h4>
                             <p className="text-sm font-bold text-slate-500 dark:text-slate-400 leading-relaxed mb-8">
                                 This action is permanent. You will lose access to all your diagnostic patterns and patient data forever.
                             </p>
-                            
+
                             <div className="space-y-3">
-                                <button 
+                                <button
                                     onClick={handleDelete}
                                     disabled={loading}
                                     className="w-full h-14 rounded-2xl bg-rose-500 text-white text-xs font-black uppercase tracking-widest hover:bg-rose-600 transition-all flex items-center justify-center gap-2"
                                 >
                                     {loading ? <Loader2 className="animate-spin" size={16} /> : "Yes, Delete Everything"}
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setShowConfirmModal(false)}
                                     disabled={loading}
                                     className="w-full h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
