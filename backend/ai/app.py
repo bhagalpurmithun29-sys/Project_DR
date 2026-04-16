@@ -7,13 +7,14 @@ from dotenv import load_dotenv
 
 # Load API key
 load_dotenv()
-genai.configure(api_key=os.getenv("AIzaSyCH5e4OBCe9d9b-ecDdU6ysU4UvBjhVmuw"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Load Gemini model
-gemini_model = genai.GenerativeModel("gemini-3-flash-preview")
+gemini_model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Load YOLO model
-model = YOLO("best.pt")
+# Load YOLO model from the centralized models directory
+model_path = os.path.join(os.path.dirname(__file__), 'models', 'best.pt')
+model = YOLO(model_path)
 
 # DR classes
 class_names = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe']

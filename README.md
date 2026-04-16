@@ -98,12 +98,38 @@ graph TD
 
 ---
 
-## 📂 Project Structure
+## 🚀 Deployment Guide
+
+### 1. Backend (Render)
+Follow these steps to deploy the API and AI Engine:
+1. **Create a Web Service** on [Render](https://render.com).
+2. **Connect your Repository**.
+3. **Environment**: Select `Node`.
+4. **Build Command**: `npm run build` (This runs our custom `build.sh` to install both Node and Python dependencies).
+5. **Start Command**: `npm start`.
+6. **Environment Variables**:
+   - `MONGO_URI`: Your MongoDB Atlas connection string.
+   - `JWT_SECRET`: A secure random string.
+   - `GROQ_API_KEY`: Your key for AI reports.
+   - `PORT`: 5001 (or as needed).
+   - `PYTHON_VERSION`: `3.9.0` (Ensures YOLOv8 compatibility).
+
+### 2. Frontend (Vercel)
+Launch the user interface:
+1. **Import Project** on [Vercel](https://vercel.com).
+2. **Framework Preset**: `Vite`.
+3. **Root Directory**: `frontend`.
+4. **Environment Variables**:
+   - `VITE_API_BASE_URL`: The URL of your Render backend (e.g., `https://your-app.onrender.com`).
+   - `VITE_GOOGLE_CLIENT_ID`: (Optional) For Google Auth.
+
+---
 
 - `frontend/`: React source code, components, and pages.
-- `backend/`: Express server, controllers, models, and routes.
+- `backend/`: Express server, controllers, models, and routes (with `build.sh` for Render).
 - `backend/ai/`: Python scripts for AI model inference.
-- `backend/uploads/`: Storage for uploaded retinal images.
+- `backend/ai/models/`: Centralized storage for YOLO weights (`best.pt`).
+- `backend/uploads/`: Storage for uploaded retinal images (excluded from Git).
 
 ---
 

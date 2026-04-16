@@ -17,18 +17,14 @@ def main():
 
         image_path = sys.argv[1]
         
-        # YOLO Model Path
-        model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
+        # YOLO Model Path - Centralized Repository
+        model_path = os.path.join(os.path.dirname(__file__), 'models', 'best.pt')
         
         # DR classes from user's app.py
         class_names = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe']
 
         if not os.path.exists(model_path):
-            # Try root fallback if not in ai/ folder
-            model_path = os.path.join(os.path.dirname(__file__), '../../best.pt')
-            
-        if not os.path.exists(model_path):
-            print(json.dumps({"error": f"Model file best.pt not found."}))
+            print(json.dumps({"error": f"Model file not found at {model_path}."}))
             sys.exit(1)
 
         from ultralytics import YOLO
