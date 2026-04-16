@@ -1,67 +1,79 @@
-# Logs
-logs
-*.log
+# --- Node.js / Javascript ---
+node_modules/
+**/node_modules/
+package-lock.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
-
-# Node modules
-node_modules/
-backend/node_modules/
-frontend/node_modules/
 .npm/
+.eslintcache
 
-# Environment variables
+# --- Frontend (Vite/React) ---
+dist/
+dist-ssr/
+**/dist/
+build/
+out/
+coverage/
+.next/
+.serverless/
+
+# --- Environment Secrets ---
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-backend/.env
-frontend/.env
+**/.env
+**/.env.local
 
-# MacOS
-.DS_Store
-
-# Frontend build
-dist/
-dist-ssr/
-frontend/dist/
-frontend/dist-ssr/
-build/
-out/
-coverage/
-
-
-# Python
+# --- Python ---
 venv/
 .venv/
 env/
-__pycache__/
+**/venv/
+**/env/
+**/__pycache__/
 *.py[cod]
 *$py.class
 .Python
-backend/backend/ai/venv/
+.pytest_cache/
+.mypy_cache/
 
-# IDE
+# --- OS Specific ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+
+# --- IDEs / Editors ---
 .vscode/
 .idea/
+.zed/
+.project
+.classpath
+.settings/
+*.swp
+*.swo
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
 
-# Scratch & Dev Artifacts
+# --- Project Specific Artifacts ---
 scratch/
+**/scratch/
+lint_output.txt
 *.png
 *.jpg
 *.jpeg
 *.gif
 *.pdf
-lint_output.txt
+*.svg
+!frontend/public/*.svg
+!frontend/src/assets/**/*
 
-# Clinical Data
-backend/uploads/*
-!backend/uploads/.gitkeep
+# --- Clinical Data (HIPAA) ---
+**/uploads/*
+!**/uploads/.gitkeep
