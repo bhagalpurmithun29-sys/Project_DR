@@ -308,6 +308,26 @@ const PatientReport = () => {
                             </div>
                         </motion.div>
 
+                        {/* Clinical Summary Section */}
+                        {scan.aiReportSummary && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.15 }}
+                                className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-xl shadow-slate-200/30 space-y-4"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                        <FileText size={18} />
+                                    </div>
+                                    <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Clinical Summary (Generative AI)</h3>
+                                </div>
+                                <div className="p-8 bg-slate-50 border border-slate-100 rounded-3xl italic text-sm font-bold text-slate-600 leading-relaxed shadow-inner">
+                                    {scan.aiReportSummary}
+                                </div>
+                            </motion.div>
+                        )}
+
                         {/* Diagnostic Findings */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}

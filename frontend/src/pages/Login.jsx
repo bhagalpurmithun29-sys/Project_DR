@@ -85,7 +85,7 @@ export default function Login() {
     e.preventDefault();
     try {
       // AuthContext.login() returns res.data directly, so role lives at res.role (not res.data.role)
-      const res = await login(email, password);
+      const res = await login(email, password, role);
       const userRole = res?.data?.role;
       if (userRole === 'doctor' || userRole === 'technician') {
         navigate("/doctor-dashboard");

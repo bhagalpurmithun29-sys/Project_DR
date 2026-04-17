@@ -37,8 +37,8 @@ export const AuthProvider = ({ children }) => {
         fetchUser();
     }, [token, logout]);
 
-    const login = async (email, password) => {
-        const res = await api.post('/auth/login', { email, password });
+    const login = async (email, password, role) => {
+        const res = await api.post('/auth/login', { email, password, role });
         if (res.data.success) {
             setToken(res.data.data.token);
             setUser(res.data.data);

@@ -109,7 +109,7 @@ exports.registerUser = async (req, res) => {
 // @access  Public
 exports.loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, role } = req.body;
 
         // Validate email and password presence
         if (!email || !password) {
@@ -129,6 +129,31 @@ exports.loginUser = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
+
+        // --- Role Validation Check ---
+        if (role) {
+            let isRoleValid = false;
+            if (role === 'doctor') {
+                // 'doctor' tab allows both 'doctor' and 'technician' roles
+                isRoleValid = (user.role === 'doctor' || user.role === 'technician');
+            } else {
+                // For 'patient' and 'diagnosis_center', roles must match exactly
+                isRoleValid = (user.role === role);
+            }
+
+            if (!isRoleValid) {
+                const roleLabels = {
+                    'doctor': 'Clinician',
+                    'patient': 'Patient',
+                    'diagnosis_center': 'Diagnosis Center'
+                };
+                return res.status(401).json({
+                    success: false,
+                    message: `This account is registered as a ${user.role.replace('_', ' ')}. Please use the correct tab to sign in.`
+                });
+            }
+        }
+        // -----------------------------
 
         res.json({
             success: true,
@@ -473,6 +498,24 @@ exports.googleLogin = async (req, res) => {
                 });
             }
         } else {
+            // --- Role Validation Check for existing Google users ---
+            if (role) {
+                let isRoleValid = false;
+                if (role === 'doctor') {
+                    isRoleValid = (user.role === 'doctor' || user.role === 'technician');
+                } else {
+                    isRoleValid = (user.role === role);
+                }
+
+                if (!isRoleValid) {
+                    return res.status(401).json({
+                        success: false,
+                        message: `This account is already registered as a ${user.role.replace('_', ' ')}. Please use the correct tab to sign in.`
+                    });
+                }
+            }
+            // -------------------------------------------------------
+
             // Update social info if not present
             let updated = false;
             if (!user.googleId) {

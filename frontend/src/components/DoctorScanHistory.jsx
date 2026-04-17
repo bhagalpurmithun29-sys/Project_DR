@@ -111,6 +111,7 @@ const DoctorScanHistory = () => {
                 lesionCount: scan.lesionCount,
                 insights: scan.insights,
                 notes: scan.clinicalNotes,
+                aiReportSummary: scan.aiReportSummary,
                 diagnosisCenter: scan.diagnosisCenter?.name || "Self-Uploaded",
                 technician: scan.technician || "Direct"
             })));
@@ -151,7 +152,8 @@ const DoctorScanHistory = () => {
                         imageUrl: updatedScan.imageUrl,
                         lesionCount: updatedScan.lesionCount,
                         insights: updatedScan.insights,
-                        notes: updatedScan.clinicalNotes
+                        notes: updatedScan.clinicalNotes,
+                        aiReportSummary: updatedScan.aiReportSummary
                     });
                     setIsAnalysisModalOpen(true);
                 }
@@ -615,6 +617,16 @@ const DoctorScanHistory = () => {
                                                 <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-1">Ref: {selectedScan.lesionCount} Pixels</p>
                                             </div>
                                         </div>
+
+                                        {/* Clinical Summary */}
+                                        {selectedScan.aiReportSummary && (
+                                            <div className="space-y-3 pt-2">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 text-primary">Clinical Summary (Generative AI)</p>
+                                                <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-inner italic text-xs font-bold text-slate-600 leading-relaxed">
+                                                    {selectedScan.aiReportSummary}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Insights */}
                                         <div className="space-y-4">
