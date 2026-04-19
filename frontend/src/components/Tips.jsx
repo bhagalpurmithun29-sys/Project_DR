@@ -41,7 +41,8 @@ import {
   Layers,
   Brain,
   Check,
-  AlertTriangle
+  AlertTriangle,
+  ZoomIn
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from './PatientPreferencesModal';
@@ -56,6 +57,7 @@ const EducationalResources = () => {
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState(null);
   const [patient, setPatient] = useState(null);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   React.useEffect(() => {
     const loadProfile = async () => {
@@ -110,7 +112,7 @@ const EducationalResources = () => {
       iconColor: "text-amber-600",
       title: "AI Methodology",
       desc: "RetinaAI leverages deep convolutional neural networks to identify subtle lesion patterns with 98.4% clinical validation accuracy.",
-      linkText: "Whitepaper v2.4",
+      linkText: " ",
     },
   ];
 
@@ -119,28 +121,38 @@ const EducationalResources = () => {
       stage: "STAGE 01",
       title: "Mild NPDR",
       desc: "Presence of isolated microaneurysms; early-stage focal ballooning of retinal capillaries.",
-      image: "https://images.unsplash.com/photo-1576091160550-2173599211d0?w=500&auto=format",
+      image: "/stage1.jpeg",
     },
     {
       stage: "STAGE 02",
       title: "Moderate NPDR",
       desc: "Widespread vascular distortion and incipient leakage; compromised retinal perfusion identified.",
-      image: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=500&auto=format",
+      image: "/stage2.jpeg",
     },
     {
       stage: "STAGE 03",
       title: "Severe NPDR",
       desc: "Extensive capillary non-perfusion; significant increase in intraretinal microvascular abnormalities.",
-      image: "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=500&auto=format",
+      image: "/stage3.jpeg",
     },
     {
       stage: "STAGE 04",
       highlight: true,
       title: "Proliferative DR",
       desc: "Advanced neovascularization; fragile vessels prone to vitreous hemorrhage and tractional detachment.",
-      image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?w=500&auto=format",
+      image: "/stage4.jpeg",
     },
   ];
+
+  const filteredInfoCards = infoCards.filter(card => 
+    card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    card.desc.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredDrStages = drStages.filter(stage => 
+    stage.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    stage.desc.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-main font-display text-slate-900 antialiased flex flex-col lg:flex-row overflow-x-hidden">
@@ -208,7 +220,7 @@ const EducationalResources = () => {
         <header className="sticky top-0 z-40 h-24 bg-white/70 backdrop-blur-xl border-b border-white flex items-center justify-between px-10">
           <div className="flex flex-col">
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1">Knowledge Hub / <span className="text-primary italic">Library</span></h2>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Medical <span className="text-primary not-italic">Resources</span></h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Medical <span className="text-primary not-italic">Library</span></h1>
           </div>
 
           <div className="flex items-center gap-6">
@@ -221,10 +233,6 @@ const EducationalResources = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <button className="h-12 px-6 bg-white border-2 border-slate-100 text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm text-slate-600">
-              <Download size={16} />
-              Archive Guidelines
-            </button>
           </div>
         </header>
 
@@ -245,7 +253,7 @@ const EducationalResources = () => {
 
           {/* Feature Grid */}
           <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {infoCards.map((card, idx) => (
+            {filteredInfoCards.map((card, idx) => (
               <div key={idx} className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/30 hover:shadow-2xl hover:shadow-primary/10 transition-all group relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity">
                   <card.icon size={100} />
@@ -274,14 +282,14 @@ const EducationalResources = () => {
           <motion.section variants={itemVariants} className="space-y-10">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-2xl font-black text-slate-900 tracking-tight italic">Progression <span className="text-primary">Taxonomy</span></h4>
+                <h4 className="text-2xl font-black text-slate-900 tracking-tight italic">TYPES OF <span className="text-primary">STAGES</span></h4>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Staging classification according to ETDRS criteria</p>
               </div>
               <button className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors cursor-help">Technical Metadata</button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {drStages.map((stage, idx) => (
+              {filteredDrStages.map((stage, idx) => (
                 <div 
                   key={idx} 
                   onClick={() => setSelectedStage(stage.title)}
@@ -308,82 +316,12 @@ const EducationalResources = () => {
             </div>
           </motion.section>
 
-          {/* Deep Focus Section */}
-          <motion.div variants={itemVariants} className="bg-slate-900 rounded-[3rem] p-12 lg:p-20 text-white flex flex-col lg:flex-row items-center gap-16 overflow-hidden relative group">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px] -translate-y-12 translate-x-12 opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[150px] translate-y-24 -translate-x-24" />
-
-            <div className="relative z-10 flex-1 space-y-10">
-              <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border border-white/10">
-                <Stethoscope size={16} className="text-primary" />
-                Clinical Protocols
-              </div>
-              <div className="space-y-6">
-                <h2 className="text-5xl font-black tracking-tighter leading-[0.9] italic">2024 Practice <br /><span className="text-primary not-italic">Standards</span></h2>
-                <p className="text-white/40 text-lg font-medium max-w-xl leading-relaxed italic">
-                  Complete access to the 2024 AAO Diabetic Retinopathy Preferred Practice Patterns used to calibrate our AI neural architecture.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 pt-4 border-t border-white/5">
-                {[
-                  "Screening frequency matrix",
-                  "Anti-VEGF clinical indicators",
-                  "Laser photocoagulation standards",
-                  "Hemoglobin A1c correlation"
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-4 text-white/60 group/item">
-                    <CheckCircle size={18} className="text-primary group-hover/item:scale-125 transition-transform" />
-                    <span className="text-xs font-black uppercase tracking-widest">{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap gap-6 pt-6">
-                <button className="h-14 px-10 bg-white text-slate-900 font-black rounded-2xl shadow-2xl shadow-black/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center gap-3 text-[11px] uppercase tracking-widest">
-                  <Download size={18} strokeWidth={2.5} />
-                  Download PDF
-                </button>
-                <button className="h-14 px-10 bg-white/5 text-white font-black rounded-2xl border border-white/10 hover:bg-white/10 transition-all flex items-center gap-3 text-[11px] uppercase tracking-widest group/play">
-                  <Play size={18} className="group-hover/play:fill-white transition-all" />
-                  Clinical Briefing
-                </button>
-              </div>
-            </div>
-
-            <div className="w-full lg:w-96 relative perspective-1000 hidden xl:block">
-              <motion.div
-                animate={{ rotateY: [0, 5, 0], rotateX: [2, 0, 2] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="aspect-[3/4] bg-white text-slate-900 rounded-[2.5rem] p-10 shadow-[0_50px_100px_rgba(0,0,0,0.5)] flex flex-col group/doc relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-                <div className="flex-1 border-2 border-dashed border-slate-100 rounded-3xl flex flex-col items-center justify-center gap-6 text-center group-hover/doc:border-primary/20 transition-colors">
-                  <div className="size-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-200 group-hover/doc:text-primary group-hover/doc:bg-primary/5 transition-all">
-                    <FileText size={40} />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Protected Draft</p>
-                    <p className="text-lg font-black tracking-tight leading-tight italic">Clinical Guidelines<br />Revision 2024.4</p>
-                  </div>
-                </div>
-                <div className="mt-10 flex items-center justify-between">
-                  <div className="flex -space-x-3">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="size-8 rounded-full bg-slate-100 border-2 border-white shadow-sm" />
-                    ))}
-                  </div>
-                  <ShieldCheck className="text-primary opacity-20" size={24} />
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
         </motion.div>
 
         {/* Footer */}
         <footer className="mt-auto px-10 py-12 text-center border-t border-slate-100 bg-white/50 backdrop-blur-sm">
           <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
-            © 2024 RetinaAI Medical Systems / v2.4.1-STABLE / Node {user?._id?.substring(0, 8) || "882B-7"}
+            © 2024 RetinaAI Medical Systems 
           </p>
         </footer>
       </main>
@@ -538,6 +476,31 @@ const EducationalResources = () => {
                     </div>
                   </section>
                 </div>
+
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+                      <Layers size={18} />
+                    </div>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📸 Retinal Imaging Gallery</h4>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {['dpp1.jpeg', 'dpp2.jpeg', 'dpp3.jpeg', 'dpp4.jpeg'].map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(`/images/${img}`)}
+                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={`/images/${img}`} alt={`Retinal Scan ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-primary shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               </div>
 
               {/* Modal Footer */}
@@ -744,6 +707,31 @@ const EducationalResources = () => {
                     </div>
                   </div>
                 </section>
+
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-teal-500/10 text-teal-600 flex items-center justify-center border border-teal-500/20">
+                      <Video size={18} />
+                    </div>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📹 Prevention Clinical Gallery</h4>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    {['ppp1.jpeg', 'ppp2.jpeg', 'ppp3.jpeg', 'ppp4.jpeg', 'ppp5.jpeg', 'ppp6.jpeg'].map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(`/images/${img}`)}
+                        className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-teal-500/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={`/images/${img}`} alt={`Management Protocol ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-teal-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               </div>
 
               {/* Modal Footer */}
@@ -943,6 +931,31 @@ const EducationalResources = () => {
                       <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Metric</p>
                       <p className="text-xs font-bold">mAP @0.5</p>
                     </div>
+                  </div>
+                </section>
+
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20">
+                      <Cpu size={18} />
+                    </div>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">🏗️ Neural Architecture Gallery</h4>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {['aim1.jpeg', 'aim2.jpeg', 'aim3.jpeg', 'aim4.jpeg', 'aim5.jpeg', 'aim6.jpeg', 'aim7.jpeg', 'aim8.jpeg'].map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(`/images/${img}`)}
+                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={`/images/${img}`} alt={`AI Model Pipeline ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </section>
               </div>
@@ -1149,6 +1162,31 @@ const EducationalResources = () => {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </section>
+
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-500/20">
+                      <Activity size={18} />
+                    </div>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📸 Clinical Manifestations Gallery</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {['npdr1.jpeg', 'npdr2.jpeg', 'npdr3.jpeg'].map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(`/images/${img}`)}
+                        className="aspect-[4/3] rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={`/images/${img}`} alt={`Mild NPDR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-emerald-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </section>
               </div>
@@ -1374,6 +1412,31 @@ const EducationalResources = () => {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </section>
+
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20">
+                      <History size={18} />
+                    </div>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📸 Clinical Progression Gallery</h4>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {['mndpr1.jpeg', 'mndpr2.jpeg', 'mndpr3.jpeg', 'mndpr4.jpeg', 'mndpr5.jpeg'].map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(`/images/${img}`)}
+                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={`/images/${img}`} alt={`Moderate NPDR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </section>
               </div>
@@ -1603,6 +1666,31 @@ const EducationalResources = () => {
                     </div>
                   </div>
                 </section>
+
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center border border-rose-500/20">
+                      <AlertCircle size={18} />
+                    </div>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📸 Pre-Proliferative Clinical Gallery</h4>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    {['sndpr2.jpeg', 'sndpr3.jpeg', 'sndpr4.jpeg', 'sndpr5.jpeg', 'sndpr6.jpeg', 'snpdr1.jpeg'].map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(`/images/${img}`)}
+                        className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-rose-500/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={`/images/${img}`} alt={`Severe NPDR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-rose-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-rose-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               </div>
 
               {/* Modal Footer */}
@@ -1817,6 +1905,31 @@ const EducationalResources = () => {
                     </div>
                   </div>
                 </section>
+
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-red-500/10 text-red-600 flex items-center justify-center border border-red-500/20">
+                      <AlertCircle size={18} />
+                    </div>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📸 Advanced Clinical Gallery</h4>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    {['pdr1.jpeg', 'pdr2.jpeg', 'pdr3.jpeg', 'pdr4.jpeg', 'pdr5.jpeg', 'pdr6.jpeg'].map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(`/images/${img}`)}
+                        className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-red-500/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={`/images/${img}`} alt={`Proliferative DR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-red-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               </div>
 
               {/* Modal Footer */}
@@ -1832,6 +1945,45 @@ const EducationalResources = () => {
                   Return to Taxonomy
                 </button>
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Zoomed Image Lightbox */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-10 cursor-zoom-out"
+              onClick={() => setZoomedImage(null)}
+            >
+              <motion.button
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute top-10 right-10 size-14 rounded-2xl bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all z-[210]"
+                onClick={(e) => { e.stopPropagation(); setZoomedImage(null); }}
+              >
+                <X size={28} />
+              </motion.button>
+              
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="relative max-w-5xl w-full h-full flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img 
+                  src={zoomedImage} 
+                  alt="Zoomed Retinal Asset" 
+                  className="max-w-full max-h-full object-contain rounded-[2rem] shadow-2xl border border-white/10"
+                />
+              </motion.div>
             </motion.div>
           </>
         )}

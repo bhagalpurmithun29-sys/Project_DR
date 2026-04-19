@@ -561,7 +561,7 @@ const PatientDashboard = () => {
                                     Latest Fundus Scan
                                 </h4>
                                 <div className="aspect-[4/5] w-full rounded-[2rem] bg-slate-100 dark:bg-slate-800 relative overflow-hidden group/img cursor-zoom-in">
-                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url('${scans[0]?.imageUrl || "https://images.unsplash.com/photo-1576091160550-217359f4ecf8?auto=format&fit=crop&q=80&w=800"}')` }}></div>
+                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url('${scans[0]?.imageUrl || "/stage1.jpeg"}')` }}></div>
                                     <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                                         <div className="bg-white dark:bg-slate-900 text-primary p-4 rounded-2xl shadow-2xl scale-50 group-hover/img:scale-100 transition-transform duration-500">
                                             <ZoomIn size={24} strokeWidth={2.5} />
