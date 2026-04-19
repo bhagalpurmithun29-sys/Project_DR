@@ -113,7 +113,8 @@ const DoctorScanHistory = () => {
                 notes: scan.clinicalNotes,
                 aiReportSummary: scan.aiReportSummary,
                 diagnosisCenter: scan.diagnosisCenter?.name || "Self-Uploaded",
-                technician: scan.technician || "Direct"
+                technician: scan.technician || "Direct",
+                doctorName: scan.referredDoctor?.name
             })));
         } catch (err) {
             console.error('Failed to fetch scans', err);
@@ -153,7 +154,8 @@ const DoctorScanHistory = () => {
                         lesionCount: updatedScan.lesionCount,
                         insights: updatedScan.insights,
                         notes: updatedScan.clinicalNotes,
-                        aiReportSummary: updatedScan.aiReportSummary
+                        aiReportSummary: updatedScan.aiReportSummary,
+                        doctorName: updatedScan.referredDoctor?.name
                     });
                     setIsAnalysisModalOpen(true);
                 }
@@ -608,13 +610,13 @@ const DoctorScanHistory = () => {
                                                     selectedScan.risk === 'Moderate' ? 'text-amber-500' : 'text-primary'
                                                     }`}>{selectedScan.risk}</h5>
                                             </div>
-                                            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+
+                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
                                                 <div className="absolute top-0 right-0 p-3">
                                                     <Shield className="text-slate-50" size={40} />
                                                 </div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Lesion Density</p>
-                                                <h5 className="text-xl font-black text-slate-900 relative z-10">{selectedScan.lesionPercent?.toFixed(3)} <span className="text-[10px] uppercase not-italic opacity-40">% Area</span></h5>
-                                                <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-1">Ref: {selectedScan.lesionCount} Pixels</p>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Physician</p>
+                                                <h5 className="text-xl font-black text-slate-900 relative z-10">Dr. {selectedScan.doctorName || "Review Pending"}</h5>
                                             </div>
                                         </div>
 

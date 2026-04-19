@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
-const { registerUser, loginUser, googleLogin, getMe, changePassword, forgotPassword, resetPassword, getSecurityQuestions, verifySecurityQuestions, updateSecurityQuestions, uploadUserPhoto, deleteAccount, getDoctorsList } = require('../controllers/authController');
+const { registerUser, loginUser, googleLogin, getMe, changePassword, setPassword, forgotPassword, resetPassword, getSecurityQuestions, verifySecurityQuestions, updateSecurityQuestions, uploadUserPhoto, deleteAccount, getDoctorsList } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
 // Multer Storage Configuration
@@ -23,6 +23,7 @@ router.post('/login', loginUser);
 router.post('/google', googleLogin);
 router.get('/me', protect, getMe);
 router.put('/change-password', protect, changePassword);
+router.put('/set-password', protect, setPassword);
 router.put('/security-questions', protect, updateSecurityQuestions);
 router.post('/photo', protect, upload.single('photo'), uploadUserPhoto);
 router.delete('/delete-account', protect, deleteAccount);

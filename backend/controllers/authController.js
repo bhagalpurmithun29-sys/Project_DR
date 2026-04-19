@@ -175,16 +175,18 @@ exports.loginUser = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
     try {
-        // req.user is set in authMiddleware wrapper
-        const user = await User.findById(req.user.id);
-
+        const user = await User.findById(req.user.id).select('+password');
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
+        const userObj = user.toObject();
+        userObj.hasPassword = !!user.password;
+        delete userObj.password;
+
         res.json({
             success: true,
-            data: user,
+            data: userObj,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -547,6 +549,35 @@ exports.googleLogin = async (req, res) => {
             success: false,
             message: 'Google authentication failed: ' + (error.response?.data?.error_description || error.message)
         });
+    }
+};
+
+// @desc    Set password for Google user for the first time
+// @route   PUT /api/auth/set-password
+// @access  Private
+exports.setPassword = async (req, res) => {
+    try {
+        const { newPassword } = req.body;
+
+        if (!newPassword || newPassword.length < 8) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+        }
+
+        const user = await User.findById(req.user.id).select('+password');
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.password) {
+            return res.status(400).json({ success: false, message: 'Password already set. Use change password instead.' });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ success: true, message: 'Password set successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 

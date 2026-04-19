@@ -13,7 +13,7 @@ const ProfileIncompleteBanner = () => {
             <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 p-6 flex flex-col md:flex-row items-center justify-between gap-6 group hover:border-amber-500/40 transition-all shadow-xl shadow-amber-500/5">
                 {/* Decorative Background Elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:bg-amber-500/10 transition-colors" />
-                
+
                 <div className="flex items-center gap-5 relative z-10">
                     <div className="size-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/30">
                         <UserPlus size={24} strokeWidth={2.5} />

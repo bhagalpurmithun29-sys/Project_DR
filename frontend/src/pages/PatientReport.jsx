@@ -276,6 +276,10 @@ const PatientReport = () => {
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician</span>
                                     <span className="text-sm font-black text-slate-900 truncate max-w-[120px]">{scan.technician || 'Automatic AI'}</span>
                                 </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Doctor Name</span>
+                                    <span className="text-sm font-black text-slate-900 truncate max-w-[120px]">Dr. {scan.referredDoctor?.name || 'Review Pending'}</span>
+                                </div>
                             </div>
                         </motion.div>
                     </div>
@@ -344,18 +348,7 @@ const PatientReport = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500">
-                                            <AlertTriangle size={18} />
-                                        </div>
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Lesion Density</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-3xl font-black text-slate-900">{scan.lesionPercent?.toFixed(3) || 0}%</p>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{scan.lesionCount || 0} Pixel Anomalies</p>
-                                    </div>
-                                </div>
+
                                 <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 space-y-4">
                                     <div className="flex items-center gap-3">
                                          <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">

@@ -397,7 +397,7 @@ const DoctorProfile = () => {
 
                         {/* Identity Meta */}
                         <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/20 text-slate-900 relative overflow-hidden group">
-                           <h4 className="text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 mb-8">
+                            <h4 className="text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 mb-8">
                                 <div className="size-8 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100">
                                     <Shield size={16} className="text-primary" />
                                 </div>

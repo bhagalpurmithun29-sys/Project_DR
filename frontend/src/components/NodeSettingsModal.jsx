@@ -16,7 +16,7 @@ import DeleteAccountSection from './DeleteAccountSection';
 
 const NodeSettingsModal = ({ isOpen, onClose }) => {
     const { t } = useTranslation();
-    const { user } = useContext(AuthContext);
+    const { user, setUser } = useContext(AuthContext);
     const [activeTab, setActiveTab] = useState('general');
 
     // General tab state
@@ -32,6 +32,13 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
     const [pwLoading, setPwLoading] = useState(false);
     const [pwError, setPwError] = useState('');
     const [pwSuccess, setPwSuccess] = useState(false);
+
+    // Set Password state
+    const [spForm, setSpForm] = useState({ newPw: '', confirm: '' });
+    const [showSp, setShowSp] = useState({ newPw: false, confirm: false });
+    const [spLoading, setSpLoading] = useState(false);
+    const [spError, setSpError] = useState('');
+    const [spSuccess, setSpSuccess] = useState(false);
 
     // Security Questions state
     const [sqForm, setSqForm] = useState([
@@ -92,6 +99,36 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
             setPwError(err.response?.data?.message || 'Failed to update password.');
         } finally {
             setPwLoading(false);
+        }
+    };
+
+    const handleSetPassword = async (e) => {
+        e.preventDefault();
+        setSpError('');
+        setSpSuccess(false);
+
+        if (spForm.newPw.length < 8) {
+            setSpError('Password must be at least 8 characters.');
+            return;
+        }
+        if (spForm.newPw !== spForm.confirm) {
+            setSpError('Passwords do not match.');
+            return;
+        }
+
+        setSpLoading(true);
+        try {
+            await api.put('/auth/set-password', {
+                newPassword: spForm.newPw,
+            });
+            setSpSuccess(true);
+            setSpForm({ newPw: '', confirm: '' });
+            setUser({ ...user, hasPassword: true });
+            setTimeout(() => setSpSuccess(false), 4000);
+        } catch (err) {
+            setSpError(err.response?.data?.message || 'Failed to set password.');
+        } finally {
+            setSpLoading(false);
         }
     };
 
@@ -289,72 +326,74 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                             {activeTab === 'security' && (
                                 <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
 
-                                    {/* Change Password */}
-                                    <div className="space-y-4">
-                                        <h4 className="text-sm font-black text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">{t('settings.security.changePassword')}</h4>
-                                        <form onSubmit={handleChangePassword} className="space-y-3">
-                                            {/* Current Password */}
-                                            {[{ id: 'current', label: t('settings.security.currentPassword') }, { id: 'newPw', label: t('settings.security.newPassword') }, { id: 'confirm', label: t('settings.security.confirmPassword') }].map(({ id, label }) => (
-                                                <div key={id} className="relative">
-                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300">
-                                                        <Lock size={14} />
+                                    {/* Change Password (Only if password exists) */}
+                                    {user?.hasPassword && (
+                                        <div className="space-y-4">
+                                            <h4 className="text-sm font-black text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">{t('settings.security.changePassword')}</h4>
+                                            <form onSubmit={handleChangePassword} className="space-y-3">
+                                                {/* Current Password */}
+                                                {[{ id: 'current', label: t('settings.security.currentPassword') }, { id: 'newPw', label: t('settings.security.newPassword') }, { id: 'confirm', label: t('settings.security.confirmPassword') }].map(({ id, label }) => (
+                                                    <div key={id} className="relative">
+                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300">
+                                                            <Lock size={14} />
+                                                        </div>
+                                                        <input
+                                                            type={showPw[id] ? 'text' : 'password'}
+                                                            placeholder={label}
+                                                            value={pwForm[id]}
+                                                            onChange={e => setPwForm(prev => ({ ...prev, [id]: e.target.value }))}
+                                                            required
+                                                            className="w-full h-11 bg-slate-50 dark:bg-slate-950/30 rounded-xl pl-10 pr-10 text-xs font-bold text-slate-800 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-primary/20 transition-all border border-transparent focus:border-primary/20"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowPw(prev => ({ ...prev, [id]: !prev[id] }))}
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors"
+                                                        >
+                                                            {showPw[id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                        </button>
                                                     </div>
-                                                    <input
-                                                        type={showPw[id] ? 'text' : 'password'}
-                                                        placeholder={label}
-                                                        value={pwForm[id]}
-                                                        onChange={e => setPwForm(prev => ({ ...prev, [id]: e.target.value }))}
-                                                        required
-                                                        className="w-full h-11 bg-slate-50 dark:bg-slate-950/30 rounded-xl pl-10 pr-10 text-xs font-bold text-slate-800 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-primary/20 transition-all border border-transparent focus:border-primary/20"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowPw(prev => ({ ...prev, [id]: !prev[id] }))}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors"
-                                                    >
-                                                        {showPw[id] ? <EyeOff size={14} /> : <Eye size={14} />}
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                ))}
 
-                                            {/* Strength hint */}
-                                            {pwForm.newPw && (
-                                                <div className="flex items-center gap-2 px-1">
-                                                    {[1, 2, 3, 4].map(lvl => (
-                                                        <div key={lvl} className={`h-1 flex-1 rounded-full transition-all ${pwForm.newPw.length >= lvl * 3
-                                                            ? lvl <= 1 ? 'bg-rose-400' : lvl === 2 ? 'bg-amber-400' : lvl === 3 ? 'bg-teal-400' : 'bg-primary'
-                                                            : 'bg-slate-100 dark:bg-slate-800'
-                                                            }`} />
-                                                    ))}
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                                                        {pwForm.newPw.length < 4 ? t('settings.security.weak') : pwForm.newPw.length < 7 ? t('settings.security.fair') : pwForm.newPw.length < 10 ? t('settings.security.good') : t('settings.security.strong')}
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            <AnimatePresence>
-                                                {pwError && (
-                                                    <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-xs font-bold text-rose-500 px-1 flex items-center gap-1.5">
-                                                        <span className="size-3 rounded-full bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center text-[8px]">!</span>
-                                                        {pwError}
-                                                    </motion.p>
+                                                {/* Strength hint */}
+                                                {pwForm.newPw && (
+                                                    <div className="flex items-center gap-2 px-1">
+                                                        {[1, 2, 3, 4].map(lvl => (
+                                                            <div key={lvl} className={`h-1 flex-1 rounded-full transition-all ${pwForm.newPw.length >= lvl * 3
+                                                                ? lvl <= 1 ? 'bg-rose-400' : lvl === 2 ? 'bg-amber-400' : lvl === 3 ? 'bg-teal-400' : 'bg-primary'
+                                                                : 'bg-slate-100 dark:bg-slate-800'
+                                                                }`} />
+                                                        ))}
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                                                            {pwForm.newPw.length < 4 ? t('settings.security.weak') : pwForm.newPw.length < 7 ? t('settings.security.fair') : pwForm.newPw.length < 10 ? t('settings.security.good') : t('settings.security.strong')}
+                                                        </span>
+                                                    </div>
                                                 )}
-                                                {pwSuccess && (
-                                                    <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-xs font-bold text-primary px-1 flex items-center gap-1.5">
-                                                        <Check size={12} /> Password updated successfully!
-                                                    </motion.p>
-                                                )}
-                                            </AnimatePresence>
 
-                                            <button
-                                                type="submit"
-                                                disabled={pwLoading}
-                                                className="w-full h-11 bg-primary text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                                            >
-                                                {pwLoading ? <Loader2 size={14} className="animate-spin" /> : <><Lock size={13} /> {t('settings.security.updateBtn')}</>}
-                                            </button>
-                                        </form>
-                                    </div>
+                                                <AnimatePresence>
+                                                    {pwError && (
+                                                        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-xs font-bold text-rose-500 px-1 flex items-center gap-1.5">
+                                                            <span className="size-3 rounded-full bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center text-[8px]">!</span>
+                                                            {pwError}
+                                                        </motion.p>
+                                                    )}
+                                                    {pwSuccess && (
+                                                        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-xs font-bold text-primary px-1 flex items-center gap-1.5">
+                                                            <Check size={12} /> Password updated successfully!
+                                                        </motion.p>
+                                                    )}
+                                                </AnimatePresence>
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={pwLoading}
+                                                    className="w-full h-11 bg-primary text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                                                >
+                                                    {pwLoading ? <Loader2 size={14} className="animate-spin" /> : <><Lock size={13} /> {t('settings.security.updateBtn')}</>}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    )}
 
                                     {/* Update Security Questions */}
                                     <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
@@ -378,7 +417,11 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                                                             }}
                                                             className="w-full h-11 bg-white dark:bg-slate-900 rounded-xl pl-10 pr-4 text-xs font-bold text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-800 focus:border-primary/20 outline-none transition-all appearance-none cursor-pointer"
                                                         >
-                                                            <option value="" disabled>Select a security question</option>
+                                                            <option value="" disabled>
+                                                                {user?.securityQuestions?.[i]?.question 
+                                                                    ? `Current: ${user.securityQuestions[i].question}` 
+                                                                    : "Select a security question"}
+                                                            </option>
                                                             {SECURITY_QUESTIONS.map((q, idx) => (
                                                                 <option key={idx} value={q}>{q}</option>
                                                             ))}
@@ -404,17 +447,19 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                                                 </div>
                                             ))}
 
-                                            <div className="relative group">
-                                                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
-                                                <input
-                                                    type="password"
-                                                    placeholder="Confirm account password"
-                                                    value={sqConfirmPw}
-                                                    onChange={e => setSqConfirmPw(e.target.value)}
-                                                    required
-                                                    className="w-full h-11 bg-slate-50 dark:bg-slate-950/30 rounded-xl pl-10 pr-4 text-xs font-bold text-slate-800 dark:text-slate-200 border border-transparent focus:border-primary/20 outline-none transition-all ring-1 ring-slate-100 dark:ring-slate-800"
-                                                />
-                                            </div>
+                                            {user?.hasPassword && (
+                                                <div className="relative group">
+                                                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                                                    <input
+                                                        type="password"
+                                                        placeholder="Confirm account password"
+                                                        value={sqConfirmPw}
+                                                        onChange={e => setSqConfirmPw(e.target.value)}
+                                                        required
+                                                        className="w-full h-11 bg-slate-50 dark:bg-slate-950/30 rounded-xl pl-10 pr-4 text-xs font-bold text-slate-800 dark:text-slate-200 border border-transparent focus:border-primary/20 outline-none transition-all ring-1 ring-slate-100 dark:ring-slate-800"
+                                                    />
+                                                </div>
+                                            )}
 
                                             <AnimatePresence>
                                                 {sqError && (
@@ -439,6 +484,62 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                                             </button>
                                         </form>
                                     </div>
+
+                                    {/* Set Password (For Google users without a password) */}
+                                    {!!user?.googleId && !user?.hasPassword && (
+                                        <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                                            <h4 className="text-sm font-black text-slate-900 dark:text-white pb-1">Set Account Password</h4>
+                                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none mb-2">Create a password to enable traditional login alongside Google.</p>
+                                            <form onSubmit={handleSetPassword} className="space-y-3">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {[{ id: 'newPw', label: 'New Password' }, { id: 'confirm', label: 'Confirm Password' }].map(({ id, label }) => (
+                                                        <div key={id} className="relative">
+                                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300">
+                                                                <Lock size={14} />
+                                                            </div>
+                                                            <input
+                                                                type={showSp[id] ? 'text' : 'password'}
+                                                                placeholder={label}
+                                                                value={spForm[id]}
+                                                                onChange={e => setSpForm(prev => ({ ...prev, [id]: e.target.value }))}
+                                                                required
+                                                                className="w-full h-11 bg-slate-50 dark:bg-slate-950/30 rounded-xl pl-10 pr-10 text-xs font-bold text-slate-800 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-primary/20 transition-all border border-transparent focus:border-primary/20"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowSp(prev => ({ ...prev, [id]: !prev[id] }))}
+                                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors"
+                                                            >
+                                                                {showSp[id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <AnimatePresence>
+                                                    {spError && (
+                                                        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-xs font-bold text-rose-500 px-1 flex items-center gap-1.5">
+                                                            <span className="size-3 rounded-full bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center text-[8px]">!</span>
+                                                            {spError}
+                                                        </motion.p>
+                                                    )}
+                                                    {spSuccess && (
+                                                        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-xs font-bold text-primary px-1 flex items-center gap-1.5">
+                                                            <Check size={12} /> Password set successfully!
+                                                        </motion.p>
+                                                    )}
+                                                </AnimatePresence>
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={spLoading}
+                                                    className="w-full h-11 bg-primary text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                                                >
+                                                    {spLoading ? <Loader2 size={14} className="animate-spin" /> : <><Key size={13} /> Set Password</>}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    )}
 
                                     {/* Danger Zone: Delete Account */}
                                     <div className="pt-8 border-t border-slate-100 dark:border-slate-800">

@@ -282,7 +282,9 @@ exports.getScans = async (req, res) => {
 // @access  Private
 exports.getScan = async (req, res) => {
     try {
-        const scan = await Scan.findById(req.params.id).populate('patient', 'name email patientId age gender');
+        const scan = await Scan.findById(req.params.id)
+            .populate('patient', 'name email patientId age gender')
+            .populate('referredDoctor', 'name');
         if (!scan) {
             return res.status(404).json({ success: false, message: 'Scan not found' });
         }

@@ -28,7 +28,8 @@ const Badge = ({ children, color = 'emerald' }) => {
 };
 
 const PrintStyles = () => (
-    <style dangerouslySetInnerHTML={{ __html: `
+    <style dangerouslySetInnerHTML={{
+        __html: `
         @media print {
             nav, aside, button, .no-print, header, footer { display: none !important; }
             body, main { background: white !important; margin: 0 !important; padding: 0 !important; min-height: auto !important; }
@@ -394,7 +395,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
         e.preventDefault();
         if (!file) { setMsg({ type: 'error', text: 'Please upload a retinal image.' }); return; }
         setSaving(true); setMsg({ type: '', text: '' });
-        
+
         const formData = new FormData();
         formData.append('patientId', form.patientId);
         formData.append('eyeSide', form.eye === 'Right' ? 'OD' : 'OS');
@@ -404,7 +405,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
         try {
             const res = await api.post('/scans', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
             setMsg({ type: 'success', text: 'Scan saved. Triggering AI analysis...' });
-            
+
             // Automatically trigger analysis
             if (res.data.data?._id) {
                 await api.post(`/scans/${res.data.data._id}/analyze`);
@@ -492,8 +493,8 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                         <td className="px-5 py-4">
                                             <div className="flex items-center gap-1">
                                                 {s.status === 'Pending' && (
-                                                    <button 
-                                                        onClick={() => handleAnalyze(s._id)} 
+                                                    <button
+                                                        onClick={() => handleAnalyze(s._id)}
                                                         disabled={analyzingIds.includes(s._id)}
                                                         className={`p-2 rounded-lg transition-all ${analyzingIds.includes(s._id) ? 'text-primary animate-pulse' : 'text-primary hover:bg-primary/5'}`}
                                                         title="Run AI Analysis"
@@ -502,7 +503,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                     </button>
                                                 )}
                                                 {s.status === 'Analyzed' && (
-                                                    <button 
+                                                    <button
                                                         onClick={() => { setSelectedScan(s); setShowReport(true); }}
                                                         className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all"
                                                         title="View AI Report"
@@ -510,7 +511,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                         <FileText size={16} />
                                                     </button>
                                                 )}
-                                                <button 
+                                                <button
                                                     onClick={() => handleDeleteScan(s._id)}
                                                     className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                                                     title="Delete Scan"
@@ -594,7 +595,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                             className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowReport(false)} />
                         <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }}
                             className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[90vh]">
-                            
+
                             <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                                 <div className="flex items-center gap-3 no-print">
                                     <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
@@ -618,7 +619,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                     <div className="col-span-2 space-y-3">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Retinal Scan</label>
                                         <div className="aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-900 shadow-inner group relative">
-                                            <img src={`${api.defaults.baseURL.replace('/api','')}${selectedScan.imageUrl}`} alt="Retina" className="w-full h-full object-cover" />
+                                            <img src={`${api.defaults.baseURL.replace('/api', '')}${selectedScan.imageUrl}`} alt="Retina" className="w-full h-full object-cover" />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                                                 <p className="text-white text-[10px] font-black uppercase tracking-widest">{selectedScan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</p>
                                             </div>
@@ -644,12 +645,12 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                     </div>
                                                 </div>
                                             )}
-                                            
+
                                             {/* --- Referral Section --- */}
                                             {selectedScan.status === 'Analyzed' && (
                                                 <div className="pt-6 border-t border-slate-200 no-print">
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Refer to Specialist</label>
-                                                    
+
                                                     {selectedScan.referredDoctor ? (
                                                         <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between">
                                                             <div>
@@ -660,7 +661,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                         </div>
                                                     ) : (
                                                         <div className="flex flex-col gap-3">
-                                                            <select 
+                                                            <select
                                                                 value={referTargetDoc}
                                                                 onChange={e => setReferTargetDoc(e.target.value)}
                                                                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-white text-slate-900 font-bold text-sm outline-none focus:border-primary/20 transition-all"
@@ -668,7 +669,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                                 <option value="">Select a Doctor...</option>
                                                                 {allDoctors.map(d => <option key={d._id} value={d._id}>Dr. {d.name}</option>)}
                                                             </select>
-                                                            <button 
+                                                            <button
                                                                 onClick={async () => {
                                                                     if (!referTargetDoc) return;
                                                                     setReferring(true);
@@ -695,7 +696,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                     )}
                                                 </div>
                                             )}
-                                            
+
                                             <div className="pt-4 border-t border-slate-200">
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Detected Findings</label>
                                                 <div className="space-y-2">
@@ -716,7 +717,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
 
                             <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 no-print">
                                 {(!selectedScan.aiReportSummary || selectedScan.aiReportSummary.includes('unavailable')) ? (
-                                    <button 
+                                    <button
                                         onClick={async () => {
                                             setRegenerating(true);
                                             try {
@@ -728,7 +729,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                             } finally {
                                                 setRegenerating(false);
                                             }
-                                        }} 
+                                        }}
                                         disabled={regenerating}
                                         className="px-6 py-3 bg-amber-500 text-white rounded-xl font-black text-sm hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 flex items-center gap-2"
                                     >
