@@ -217,7 +217,7 @@ const EducationalResources = () => {
           <motion.section variants={itemVariants} className="flex flex-col md:flex-row justify-between items-end gap-10">
             <div className="space-y-4 max-w-3xl">
               <h3 className="text-5xl font-black text-slate-900 tracking-tighter leading-none italic">Evidence Based <span className="text-primary not-italic">Ophthalmology</span></h3>
-              <p className="text-lg font-medium text-slate-500 leading-relaxed italic">Access professional-grade guidance on Diabetic Retinopathy management, clinical classifications, and AI-assisted diagnostic methodologies.</p>
+              <p className="text-lg font-medium text-slate-500 leading-relaxed italic">Access Doctor-grade guidance on Diabetic Retinopathy management, clinical classifications, and AI-assisted diagnostic methodologies.</p>
             </div>
 
           </motion.section>

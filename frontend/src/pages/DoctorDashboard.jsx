@@ -628,7 +628,8 @@ const DoctorDashboard = () => {
                                     Access Full Triage
                                 </button>
                             </motion.div>
-
+                        
+                            
                             {/* Clinical Security Signature */}
                             <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800 flex items-center gap-4 shadow-inner">
                                 <div className="size-11 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-primary border border-slate-100 dark:border-slate-800 italic font-black text-sm">R</div>

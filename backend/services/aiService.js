@@ -5,16 +5,16 @@ const axios = require('axios');
  */
 const generateClinicalSummary = async (scanData) => {
     const apiKey = process.env.GROQ_API_KEY;
-    
+
     console.log('[AI Service] Initializing Groq (Llama) call for:', scanData.patientName);
-    
+
     if (!apiKey) {
         console.error('[AI Service] CRITICAL ERROR: GROQ_API_KEY is missing from .env');
         return "System error: Clinical summary generation blocked due to missing credentials.";
     }
 
     const { riskLevel, findings, patientName, eyeSide } = scanData;
-    
+
     const prompt = `
         You are an expert Ophthalmologist specializing in Diabetic Retinopathy (DR).
         Patient Name: ${patientName || 'Anonymous Patient'}
@@ -22,7 +22,7 @@ const generateClinicalSummary = async (scanData) => {
         AI Detection Status: ${riskLevel}
         Findings: ${findings && findings.length > 0 ? findings.join(', ') : 'No lesions detected'}
 
-        Task: Generate a concise, highly professional medical summary for a diagnostic report.
+        Task: Generate a concise, highly Doctor medical summary for a diagnostic report.
         
         Structure your response clearly with these headers:
         1. **Clinical Impression**: A summary of the AI detection in medical terms.
@@ -34,22 +34,22 @@ const generateClinicalSummary = async (scanData) => {
 
     try {
         const url = `https://api.groq.com/openai/v1/chat/completions`;
-        
+
         const response = await axios.post(url, {
             model: "llama-3.3-70b-versatile",
             messages: [
-                { role: "system", content: "You are a professional medical assistant specializing in ophthalmology." },
+                { role: "system", content: "You are a Doctor medical assistant specializing in ophthalmology." },
                 { role: "user", content: prompt }
             ],
             temperature: 0.1,
             max_tokens: 1024,
             top_p: 1
         }, {
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`
             },
-            timeout: 15000 
+            timeout: 15000
         });
 
         if (response.data && response.data.choices && response.data.choices[0].message) {
@@ -62,7 +62,7 @@ const generateClinicalSummary = async (scanData) => {
     } catch (error) {
         const errMsg = error.response?.data?.error?.message || error.message;
         console.error(`[AI Service] Groq API FAILURE: ${errMsg}`);
-        
+
         return `Automated clinical summary is currently unavailable (Provider Error: ${errMsg}). Results confirmed as: ${riskLevel}. Findings: ${findings.join(', ')}.`;
     }
 };

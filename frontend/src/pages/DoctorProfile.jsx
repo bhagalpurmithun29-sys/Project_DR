@@ -206,14 +206,14 @@ const DoctorProfile = () => {
                 <header className="sticky top-0 z-[60] h-24 bg-white/70 backdrop-blur-xl border-b border-white flex items-center justify-between px-10">
                     <div className="flex flex-col">
 
-                        <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Professional <span className="text-primary not-italic">Dossier</span></h1>
+                        <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Doctor <span className="text-primary not-italic">Dashboard </span></h1>
                     </div>
 
                     <div className="flex items-center gap-4">
 
                         <Link to="/doctor-registration" className="h-12 px-6 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-xl shadow-xl shadow-primary/20 hover:bg-primary/90 hover:-translate-y-0.5 flex items-center gap-2 transition-all">
                             <Edit3 size={16} />
-                            Modify Credentials
+                            MODIFY PROFILE
                         </Link>
                     </div>
                 </header>
@@ -357,39 +357,7 @@ const DoctorProfile = () => {
                             </div>
                         </motion.div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {/* Academic Foundations */}
-                            <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-xl shadow-slate-200/20">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="size-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
-                                        <Award size={24} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-black text-slate-900 tracking-tight">Academic Foundations</h3>
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    {profile?.degrees?.length > 0 ? profile.degrees.map((deg, i) => (
-                                        <div key={i} className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100/50">
-                                            <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                                                <Award size={18} />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-black text-slate-900 leading-tight">{deg.title}</h4>
-                                                <p className="text-[11px] font-bold text-slate-500 mt-1">{deg.institution}</p>
-                                                <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-2">{deg.year || 'Valid'}</p>
-                                            </div>
-                                        </div>
-                                    )) : (
-                                        <div className="py-8 text-center border-2 border-dashed border-slate-100 rounded-2xl">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No academic data synchronized</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </motion.div>
 
-
-                        </div>
                     </div>
 
                     {/* Right Column (Widget Sidebar) */}
@@ -440,6 +408,34 @@ const DoctorProfile = () => {
                             </div>
                         </div>
 
+                        {/* Academic Foundations */}
+                        <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-xl shadow-slate-200/20">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="size-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
+                                    <Award size={24} />
+                                </div>
+                                <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight">Academic Foundations</h3>
+                            </div>
+                            <div className="space-y-4">
+                                {profile?.degrees?.length > 0 ? profile.degrees.map((deg, i) => (
+                                    <div key={i} className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100/50">
+                                        <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                                            <Award size={18} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-black text-slate-900 leading-tight">{deg.title}</h4>
+                                            <p className="text-[11px] font-bold text-slate-500 mt-1">{deg.institution}</p>
+                                            <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-2">{deg.year || 'Valid'}</p>
+                                        </div>
+                                    </div>
+                                )) : (
+                                    <div className="py-8 px-4 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-loose">No academic data synchronized</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+
 
 
                         <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl shadow-slate-200/20 flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors group">
@@ -455,15 +451,7 @@ const DoctorProfile = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl shadow-slate-200/20 flex items-center gap-4">
-                            <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                                <Shield size={24} className="fill-current" />
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="text-sm font-black text-slate-900">Integrity Verified</h4>
-                                <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Last audit: {new Date().getFullYear()}</p>
-                            </div>
-                        </div>
+                       
                     </motion.div>
                 </motion.div>
 

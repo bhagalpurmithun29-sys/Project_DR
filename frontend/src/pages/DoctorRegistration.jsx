@@ -29,9 +29,9 @@ import { Lock } from 'lucide-react';
 const DoctorRegistration = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-   const [loading, setLoading] = useState(false);
-   const [isFetching, setIsFetching] = useState(true);
-   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     licenseNumber: '',
     country: '',
@@ -46,48 +46,48 @@ const DoctorRegistration = () => {
     { id: 1, title: '', institution: '' }
   ]);
 
-   // Fetch profile data on mount for pre-population
-   useEffect(() => {
-     const fetchProfile = async () => {
-       try {
-         const res = await doctorService.getProfile();
-         if (res && res.data) {
-           const p = res.data;
-           setFormData({
-             licenseNumber: p.licenseNumber || '',
-             country: p.country || '',
-             experience: p.experience || '',
-             specialization: p.specialization || '',
-             email: p.email || (user?.email || ''),
-             phoneNumber: p.phoneNumber || '',
-             photo: null // We don't pre-populate the file input
-           });
-           
-           if (p.degrees && p.degrees.length > 0) {
-             setDegrees(p.degrees.map((d, index) => ({
-               id: index + 1,
-               title: d.title || '',
-               institution: d.institution || ''
-             })));
-           }
-         }
-       } catch (err) {
-         console.error('No existing profile found or fetch error:', err);
-         // If no profile, we still sync the email from auth context
-         if (user?.email) {
-           setFormData(prev => ({ ...prev, email: user.email }));
-         }
-       } finally {
-         setIsFetching(false);
-       }
-     };
+  // Fetch profile data on mount for pre-population
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await doctorService.getProfile();
+        if (res && res.data) {
+          const p = res.data;
+          setFormData({
+            licenseNumber: p.licenseNumber || '',
+            country: p.country || '',
+            experience: p.experience || '',
+            specialization: p.specialization || '',
+            email: p.email || (user?.email || ''),
+            phoneNumber: p.phoneNumber || '',
+            photo: null // We don't pre-populate the file input
+          });
 
-     if (user) {
-       fetchProfile();
-     } else {
-       setIsFetching(false);
-     }
-   }, [user]);
+          if (p.degrees && p.degrees.length > 0) {
+            setDegrees(p.degrees.map((d, index) => ({
+              id: index + 1,
+              title: d.title || '',
+              institution: d.institution || ''
+            })));
+          }
+        }
+      } catch (err) {
+        console.error('No existing profile found or fetch error:', err);
+        // If no profile, we still sync the email from auth context
+        if (user?.email) {
+          setFormData(prev => ({ ...prev, email: user.email }));
+        }
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    if (user) {
+      fetchProfile();
+    } else {
+      setIsFetching(false);
+    }
+  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -116,9 +116,9 @@ const DoctorRegistration = () => {
     // Strict Email Validation (alphabet, number, @)
     const emailRegex = /^(?=.*[0-9])(?=.*[a-zA-Z])[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(formData.email)) {
-        setError('Invalid professional email. It must contain letters, numbers, and a valid @ domain.');
-        setLoading(false);
-        return;
+      setError('Invalid Doctor email. It must contain letters, numbers, and a valid @ domain.');
+      setLoading(false);
+      return;
     }
 
     try {
@@ -156,24 +156,24 @@ const DoctorRegistration = () => {
         </div>
       </header>
 
-       <AnimatePresence>
-         {isFetching && (
-           <motion.div 
-             initial={{ opacity: 0 }} 
-             animate={{ opacity: 1 }} 
-             exit={{ opacity: 0 }} 
-             className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center gap-6"
-           >
-             <div className="relative">
-               <div className="h-24 w-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-               <Activity className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary" size={28} />
-             </div>
-             <p className="text-xs font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Syncing Clinical Data...</p>
-           </motion.div>
-         )}
-       </AnimatePresence>
+      <AnimatePresence>
+        {isFetching && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center gap-6"
+          >
+            <div className="relative">
+              <div className="h-24 w-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
+              <Activity className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary" size={28} />
+            </div>
+            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Syncing Clinical Data...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-16">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-16">
         {/* Stepper */}
         <div className="flex items-center justify-between mb-16 max-w-4xl mx-auto">
           {[
@@ -227,7 +227,7 @@ const DoctorRegistration = () => {
         >
           <div className="p-10 border-b border-slate-50 bg-main/50 flex items-center justify-between">
             <div>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">Professional Dossier</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">Doctor Dashboard</h4>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Medical Identity Verification</p>
             </div>
             <Award className="text-primary/20" size={40} />
@@ -348,7 +348,7 @@ const DoctorRegistration = () => {
                       value={formData.email}
                       readOnly
                       className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-100/50 text-slate-400 font-bold cursor-not-allowed outline-none transition-all shadow-sm"
-                      placeholder="doctor@professional.com"
+                      placeholder="doctor@Doctor.com"
                       type="email"
                     />
                   </div>

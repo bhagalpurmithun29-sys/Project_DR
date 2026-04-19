@@ -20,7 +20,7 @@ const ProfileIncompleteBanner = () => {
                     </div>
                     <div>
                         <h4 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                            Professional Profile Incomplete
+                            Doctor Profile Incomplete
                             <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-ping" />
                         </h4>
                         <p className="text-sm font-bold text-slate-500 tracking-tight mt-1">
@@ -33,7 +33,7 @@ const ProfileIncompleteBanner = () => {
                     to="/doctor-registration"
                     className="relative z-10 h-14 px-8 bg-slate-900 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl flex items-center gap-3 hover:bg-slate-800 hover:-translate-y-0.5 transition-all shadow-xl shadow-slate-900/20 active:scale-95 group/btn"
                 >
-                    Initialize Identity
+                    COMPLETE NOW
                     <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
                 </Link>
             </div>

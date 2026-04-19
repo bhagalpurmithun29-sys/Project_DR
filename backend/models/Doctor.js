@@ -25,7 +25,7 @@ const doctorSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: [true, 'Please add a professional email'],
+        required: [true, 'Please add a Doctor email'],
     },
     phoneNumber: {
         type: String,

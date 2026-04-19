@@ -485,7 +485,7 @@ export default function LandingPage() {
                   clinical workflow.
                 </h2>
                 <p className="mt-8 text-xl text-white/80 font-medium">
-                  Join thousands of medical professionals using AI to prevent blindness and improve patient outcomes through early detection.
+                  Join thousands of medical Doctors using AI to prevent blindness and improve patient outcomes through early detection.
                 </p>
                 <div className="mt-12 flex flex-wrap justify-center gap-6">
                   <Link

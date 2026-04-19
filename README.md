@@ -1,6 +1,6 @@
 # Project DR: AI-Powered Retinal Scan Analysis
 
-Project DR is a comprehensive full-stack platform designed to assist healthcare professionals in diagnosing Diabetic Retinopathy (DR) using AI-driven analysis of retinal fundus images. The system provides a seamless workflow from scan upload to automated risk assessment and patient reporting.
+Project DR is a comprehensive full-stack platform designed to assist healthcare Doctors in diagnosing Diabetic Retinopathy (DR) using AI-driven analysis of retinal fundus images. The system provides a seamless workflow from scan upload to automated risk assessment and patient reporting.
 
 ## 🚀 Vision
 To empower clinicians with state-of-the-art AI insights, reducing the burden of manual screening and enabling early detection of diabetic retinopathy.
