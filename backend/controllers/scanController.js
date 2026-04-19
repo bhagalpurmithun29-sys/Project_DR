@@ -119,7 +119,10 @@ exports.analyzeScan = async (req, res) => {
                 // Try to parse stdout even if error, as predict.py might have printed JSON before exiting
                 if (stdout) {
                     try {
-                        aiResults = JSON.parse(stdout);
+                        // Robust parsing: Extract JSON block from output
+                        const match = stdout.match(/\{[\s\S]*\}/);
+                        const jsonStr = match ? match[0] : stdout;
+                        aiResults = JSON.parse(jsonStr);
                     } catch (e) {
                         aiResults.error = `Execution failed: ${stderr || error.message}`;
                     }
@@ -129,7 +132,10 @@ exports.analyzeScan = async (req, res) => {
             } else {
                 try {
                     console.log(`AI Bridge Output: ${stdout}`);
-                    aiResults = JSON.parse(stdout);
+                    // Robust parsing: Extract JSON block from output
+                    const match = stdout.match(/\{[\s\S]*\}/);
+                    const jsonStr = match ? match[0] : stdout;
+                    aiResults = JSON.parse(jsonStr);
                 } catch (e) {
                     console.error('Failed to parse AI output', stdout);
                     aiResults.error = "Malformed AI result output.";

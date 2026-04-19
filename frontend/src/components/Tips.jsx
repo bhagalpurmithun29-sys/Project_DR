@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import patientService from "../services/patientService";
+import api from "../services/api";
 import {
   Eye,
   LayoutDashboard,
@@ -58,6 +59,8 @@ const EducationalResources = () => {
   const [selectedStage, setSelectedStage] = useState(null);
   const [patient, setPatient] = useState(null);
   const [zoomedImage, setZoomedImage] = useState(null);
+  const [dbCards, setDbCards] = useState(null);
+  const [dbStages, setDbStages] = useState(null);
 
   React.useEffect(() => {
     const loadProfile = async () => {
@@ -71,7 +74,44 @@ const EducationalResources = () => {
       }
     };
 
+    const loadMedicalResources = async () => {
+      try {
+        const res = await api.get('/medical-resources');
+        if (res.data.success) {
+          const data = res.data.data;
+          
+          const stages = data.filter(d => d.category === 'stage').map(d => ({
+            stage: d.stageLevel,
+            title: d.title,
+            desc: d.description,
+            image: d.imageUrl,
+            highlight: d.highlight
+          }));
+          
+          const cardConfig = {
+            primer: { icon: Info, iconBg: "bg-primary/10", iconColor: "text-primary", linkText: "Clinical Abstract" },
+            protocol: { icon: ShieldCheck, iconBg: "bg-teal-500/10", iconColor: "text-teal-600", linkText: "Management Guide" },
+            methodology: { icon: Microscope, iconBg: "bg-amber-500/10", iconColor: "text-amber-600", linkText: " " }
+          };
+
+          const cards = data.filter(d => ['primer', 'protocol', 'methodology'].includes(d.category)).map(d => ({
+            ...cardConfig[d.category],
+            title: d.title,
+            desc: d.description,
+            category: d.category,
+            gallery: d.gallery || []
+          }));
+
+          setDbStages(stages);
+          setDbCards(cards);
+        }
+      } catch (err) {
+        console.error('Failed to fetch medical resources', err);
+      }
+    };
+
     void loadProfile();
+    void loadMedicalResources();
   }, []);
 
   const handleLogout = () => {
@@ -144,12 +184,15 @@ const EducationalResources = () => {
     },
   ];
 
-  const filteredInfoCards = infoCards.filter(card => 
+  const activeInfoCards = dbCards || infoCards;
+  const activeDrStages = dbStages || drStages;
+
+  const filteredInfoCards = activeInfoCards.filter(card => 
     card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     card.desc.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredDrStages = drStages.filter(stage => 
+  const filteredDrStages = activeDrStages.filter(stage => 
     stage.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     stage.desc.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -485,7 +528,22 @@ const EducationalResources = () => {
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📸 Retinal Imaging Gallery</h4>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {['dpp1.jpeg', 'dpp2.jpeg', 'dpp3.jpeg', 'dpp4.jpeg'].map((img, i) => (
+                    {(dbCards?.find(c => c.category === 'primer')?.gallery || []).length > 0 
+                      ? dbCards.find(c => c.category === 'primer').gallery.map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(img.imageUrl)}
+                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={img.imageUrl} alt={img.caption || `Retinal Scan ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-primary shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                    : ['dpp1.jpeg', 'dpp2.jpeg', 'dpp3.jpeg', 'dpp4.jpeg'].map((img, i) => (
                       <div 
                         key={i} 
                         onClick={() => setZoomedImage(`/images/${img}`)}
@@ -716,7 +774,22 @@ const EducationalResources = () => {
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📹 Prevention Clinical Gallery</h4>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                    {['ppp1.jpeg', 'ppp2.jpeg', 'ppp3.jpeg', 'ppp4.jpeg', 'ppp5.jpeg', 'ppp6.jpeg'].map((img, i) => (
+                    {(dbCards?.find(c => c.category === 'protocol')?.gallery || []).length > 0
+                      ? dbCards.find(c => c.category === 'protocol').gallery.map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(img.imageUrl)}
+                        className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-teal-500/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={img.imageUrl} alt={`Management Protocol ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-teal-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                    : ['ppp1.jpeg', 'ppp2.jpeg', 'ppp3.jpeg', 'ppp4.jpeg', 'ppp5.jpeg', 'ppp6.jpeg'].map((img, i) => (
                       <div 
                         key={i} 
                         onClick={() => setZoomedImage(`/images/${img}`)}
@@ -942,7 +1015,22 @@ const EducationalResources = () => {
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">🏗️ Neural Architecture Gallery</h4>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {['aim1.jpeg', 'aim2.jpeg', 'aim3.jpeg', 'aim4.jpeg', 'aim5.jpeg', 'aim6.jpeg', 'aim7.jpeg', 'aim8.jpeg'].map((img, i) => (
+                    {(dbCards?.find(c => c.category === 'methodology')?.gallery || []).length > 0
+                      ? dbCards.find(c => c.category === 'methodology').gallery.map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(img.imageUrl)}
+                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={img.imageUrl} alt={`AI Model Pipeline ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                    : ['aim1.jpeg', 'aim2.jpeg', 'aim3.jpeg', 'aim4.jpeg', 'aim5.jpeg', 'aim6.jpeg', 'aim7.jpeg', 'aim8.jpeg'].map((img, i) => (
                       <div 
                         key={i} 
                         onClick={() => setZoomedImage(`/images/${img}`)}

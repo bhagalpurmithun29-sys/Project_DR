@@ -46,7 +46,7 @@ exports.getProfile = async (req, res) => {
         const doctor = await Doctor.findOne({ user: req.user.id }).populate('user', ['name', 'email']);
 
         if (!doctor) {
-            return res.status(404).json({ success: false, message: 'Doctor profile not found' });
+            return res.status(200).json({ success: true, data: null, message: 'Doctor profile not found' });
         }
 
         res.status(200).json({ success: true, data: doctor });

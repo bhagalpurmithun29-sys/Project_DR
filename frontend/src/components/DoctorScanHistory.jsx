@@ -85,8 +85,13 @@ const DoctorScanHistory = () => {
     const fetchProfile = async () => {
         try {
             const res = await doctorService.getProfile();
-            setProfile(res.data);
-            setIsProfileIncomplete(false);
+            if (res.data) {
+                setProfile(res.data);
+                setIsProfileIncomplete(false);
+            } else {
+                setProfile(null);
+                setIsProfileIncomplete(true);
+            }
         } catch (err) {
             console.error('Failed to fetch profile', err);
             setIsProfileIncomplete(true);

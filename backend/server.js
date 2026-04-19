@@ -25,7 +25,7 @@ const doctorRoutes = require('./routes/doctorRoutes');
 const scanRoutes = require('./routes/scanRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const diagnosisCenterRoutes = require('./routes/diagnosisCenterRoutes');
-
+const medicalResourceRoutes = require('./routes/medicalResourceRoutes');
 const app = express();
 
 // Body parser
@@ -81,6 +81,7 @@ app.use('/api/doctors', doctorRoutes);
 app.use('/api/scans', scanRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/diagnosis-centers', diagnosisCenterRoutes);
+app.use('/api/medical-resources', medicalResourceRoutes);
 
 // 404 handler — must be AFTER all routes
 app.use((req, res) => {

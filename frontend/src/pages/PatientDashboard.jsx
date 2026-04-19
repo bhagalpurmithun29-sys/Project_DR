@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import patientService from '../services/patientService';
+import api from '../services/api';
 import notificationService from '../services/notificationService';
 import {
     Eye,

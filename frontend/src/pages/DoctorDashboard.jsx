@@ -56,11 +56,13 @@ const DoctorDashboard = () => {
                 api.get('/notifications')
             ]);
 
-            if (profileRes.status === 'fulfilled') {
+            if (profileRes.status === 'fulfilled' && profileRes.value.data) {
                 setProfile(profileRes.value.data);
                 setIsProfileIncomplete(false);
             } else {
-                console.error('Profile fetch failed', profileRes.reason);
+                if (profileRes.status === 'rejected') {
+                    console.error('Profile fetch failed', profileRes.reason);
+                }
                 setIsProfileIncomplete(true);
                 setProfile(null);
             }
