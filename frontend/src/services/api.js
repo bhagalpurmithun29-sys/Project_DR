@@ -39,6 +39,10 @@ export const getApiErrorMessage = (error, fallbackMessage = 'Something went wron
         return 'The requested API route was not found. Make sure the backend server is running on port 5001.';
     }
 
+    if (error.response?.status === 503) {
+        return error.response.data.message || 'Database is currently offline. Please check your MongoDB Atlas connection or IP whitelist.';
+    }
+
     return fallbackMessage;
 };
 

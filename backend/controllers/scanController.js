@@ -26,7 +26,7 @@ exports.createScan = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Patient not found' });
         }
 
-        const imageUrl = imageFile ? `/uploads/${imageFile.filename}` : '/uploads/placeholder.png';
+        const imageUrl = imageFile ? imageFile.path : '/uploads/placeholder.png';
 
         const scan = await Scan.create({
             patient: patientId,
@@ -99,7 +99,11 @@ exports.analyzeScan = async (req, res) => {
         const venvPath = venvPaths.find(p => fs.existsSync(p));
         const pythonPath = venvPath || 'python3';
         const scriptPath = path.resolve(__dirname, '../ai/predict.py');
-        const imagePath = path.join(__dirname, '../', scan.imageUrl);
+        
+        // Detect if imageUrl is a remote URL or a local file path
+        const imagePath = scan.imageUrl.startsWith('http') 
+            ? scan.imageUrl 
+            : path.join(__dirname, '../', scan.imageUrl);
 
         // Execute Python Inference
         exec(`${pythonPath} "${scriptPath}" "${imagePath}"`, async (error, stdout, stderr) => {

@@ -639,7 +639,7 @@ exports.uploadUserPhoto = async (req, res) => {
 
         // Save the file path in the avatar field
         // Note: In production you would probably delete the old file if it exists
-        const photoUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        const photoUrl = req.file.path;
         user.avatar = photoUrl;
         await user.save();
 

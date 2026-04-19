@@ -275,7 +275,7 @@ const DoctorScanHistory = () => {
 
                 <div className="p-4 border-t border-white/5">
                     <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5">
-                        <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${profile?.photo && profile.photo !== 'default-doctor.jpg' ? profile.photo : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
+                        <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${profile?.photo ? (profile.photo.startsWith('http') ? profile.photo : `${api.defaults.baseURL.replace('/api', '')}${profile.photo}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
                         <div className="flex-1 min-w-0 text-left">
                             <p className="text-xs font-black truncate text-white">Dr. {user?.name || 'Provider'}</p>
                             <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest text-left">Retina Specialist</p>
@@ -566,7 +566,7 @@ const DoctorScanHistory = () => {
                                 {/* Image Section */}
                                 <div className="md:w-1/2 bg-slate-950 flex items-center justify-center p-4 relative min-h-[300px]">
                                     <img
-                                        src={selectedScan.imageUrl || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
+                                        src={selectedScan.imageUrl ? (selectedScan.imageUrl.startsWith('http') ? selectedScan.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${selectedScan.imageUrl}`) : "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
                                         alt="Retinal Fundus"
                                         className="max-w-full max-h-full rounded-2xl shadow-2xl border border-white/5"
                                     />

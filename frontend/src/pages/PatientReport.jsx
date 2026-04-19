@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -84,7 +85,8 @@ const PatientReport = () => {
             // Add Scan Image if available
             if (scan.imageUrl) {
                 try {
-                    const img = await loadImage(scan.imageUrl);
+                    const absoluteUrl = scan.imageUrl.startsWith('http') ? scan.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${scan.imageUrl}`;
+                    const img = await loadImage(absoluteUrl);
                     // Add image to right side or center
                     doc.addImage(img, 'JPEG', 140, 40, 50, 50);
                     doc.setDrawColor(200);
@@ -240,7 +242,7 @@ const PatientReport = () => {
                             className="bg-slate-950 rounded-[2.5rem] p-4 shadow-2xl overflow-hidden relative group"
                         >
                             <img
-                                src={scan.imageUrl || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
+                                src={scan.imageUrl ? (scan.imageUrl.startsWith('http') ? scan.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${scan.imageUrl}`) : "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
                                 alt="Retina Scan"
                                 className="w-full aspect-square object-cover rounded-[2rem] border border-white/5 opacity-90 group-hover:scale-105 transition-transform duration-700"
                             />

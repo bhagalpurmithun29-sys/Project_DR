@@ -67,7 +67,7 @@ exports.uploadCenterPhoto = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Please upload a file' });
         }
 
-        const photoUrl = `/uploads/${req.file.filename}`;
+        const photoUrl = req.file.path;
 
         const center = await DiagnosisCenter.findOneAndUpdate(
             { user: req.user.id },

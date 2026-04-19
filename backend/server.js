@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+const fs = require('fs');
 
 // Load env vars
 dotenv.config();
@@ -37,6 +38,26 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// ── Self-Healing: Image Not Found Fallback ──────────────────────────────────
+// If a requested upload is missing, serve the placeholder instead of a 404
+app.use('/uploads', (req, res, next) => {
+    const filename = req.path.replace(/^\//, ''); // Remove leading slash
+    const filePath = path.join(__dirname, 'uploads', filename);
+    
+    if (fs.existsSync(filePath)) {
+        return next();
+    }
+
+    if (filename && filename !== 'placeholder.png') {
+        console.warn(`⚠️  Missing asset requested: ${filename}. Serving placeholder.`);
+        const placeholderPath = path.join(__dirname, 'uploads', 'placeholder.png');
+        if (fs.existsSync(placeholderPath)) {
+            return res.sendFile(placeholderPath);
+        }
+    }
+    next();
+});
+
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -46,7 +67,7 @@ app.use('/api', (req, res, next) => {
     if (mongoose.connection.readyState !== 1) {
         return res.status(503).json({
             success: false,
-            message: 'Database not connected. Please check MongoDB Atlas IP whitelist or network access.',
+            message: 'Database not connected. Please ensure your IP is whitelisted in MongoDB Atlas (Network Access -> Add IP -> Allow Access From Anywhere).',
         });
     }
     next();
@@ -69,7 +90,8 @@ app.use((req, res) => {
 // Global error handler — catches unhandled errors from controllers
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    console.error(`❌ Server Error: ${err.message}`);
+    if (err.stack) console.error(err.stack);
     res.status(err.status || 500).json({ success: false, message: err.message || 'Server Error' });
 });
 
@@ -77,7 +99,10 @@ app.use((err, req, res, next) => {
 const connectDB = async () => {
     const tryConnect = async () => {
         try {
-            const conn = await mongoose.connect(process.env.MONGO_URI);
+            const uri = process.env.MONGO_URI;
+            const host = uri.split('@')[1]?.split('/')[0] || 'Unknown Host';
+            console.log(`📡 Attempting to connect to: ${host}...`);
+            const conn = await mongoose.connect(uri);
             console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
         } catch (error) {
             console.error(`❌ MongoDB connection failed: ${error.message}`);

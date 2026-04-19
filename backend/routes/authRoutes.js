@@ -4,17 +4,7 @@ const multer = require('multer');
 const { registerUser, loginUser, googleLogin, getMe, changePassword, setPassword, forgotPassword, resetPassword, getSecurityQuestions, verifySecurityQuestions, updateSecurityQuestions, uploadUserPhoto, deleteAccount, getDoctorsList } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, `user-avatar-${Date.now()}${path.extname(file.originalname)}`);
-    }
-});
-
-const upload = multer({ storage: storage });
+const { upload } = require('../middleware/cloudinaryConfig');
 
 const router = express.Router();
 

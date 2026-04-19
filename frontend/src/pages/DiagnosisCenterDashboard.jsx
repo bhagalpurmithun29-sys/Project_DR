@@ -18,7 +18,7 @@ import DeleteAccountSection from '../components/DeleteAccountSection';
 const Avatar = ({ name, photo, size = 10 }) => (
     <div
         className={`size-${size} rounded-full bg-cover bg-center border-2 border-white shadow-sm flex-shrink-0`}
-        style={{ backgroundImage: `url('${photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=059669&color=fff&bold=true`}')` }}
+        style={{ backgroundImage: `url('${photo ? (photo.startsWith('http') ? photo : `${api.defaults.baseURL.replace('/api', '')}${photo}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=059669&color=fff&bold=true`}')` }}
     />
 );
 
@@ -145,7 +145,7 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate }) => {
                 className="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6 flex flex-wrap gap-6 items-center">
                 <div className="relative flex-shrink-0 group/avatar cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                     <div className="size-24 rounded-[1.25rem] border-4 border-white shadow-xl bg-cover bg-center overflow-hidden relative"
-                        style={{ backgroundImage: `url('${center?.photo && center.photo !== 'default-center.jpg' ? center.photo : `https://ui-avatars.com/api/?name=${encodeURIComponent(center?.centerName || 'DC')}&background=059669&color=fff&bold=true&size=96`}')` }}>
+                        style={{ backgroundImage: `url('${center?.photo ? (center.photo.startsWith('http') ? center.photo : `${api.defaults.baseURL.replace('/api', '')}${center.photo}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(center?.centerName || 'DC')}&background=059669&color=fff&bold=true&size=96`}')` }}>
                         <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-[2px]">
                             {isUploading ? <Loader2 className="animate-spin text-white" size={24} /> : <Camera className="text-white" size={24} />}
                         </div>
@@ -619,7 +619,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                     <div className="col-span-2 space-y-3">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Retinal Scan</label>
                                         <div className="aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-900 shadow-inner group relative">
-                                            <img src={`${api.defaults.baseURL.replace('/api', '')}${selectedScan.imageUrl}`} alt="Retina" className="w-full h-full object-cover" />
+                                            <img src={selectedScan.imageUrl?.startsWith('http') ? selectedScan.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${selectedScan.imageUrl}`} alt="Retina" className="w-full h-full object-cover" />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                                                 <p className="text-white text-[10px] font-black uppercase tracking-widest">{selectedScan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</p>
                                             </div>
@@ -1220,7 +1220,7 @@ const DiagnosisCenterDashboard = () => {
                 <div className="p-3 border-t border-white/5">
                     <div className="bg-white/5 rounded-2xl p-3 flex items-center gap-3 border border-white/5">
                         <div className="size-9 rounded-full border-2 border-white/10 shadow-sm bg-cover bg-center flex-shrink-0"
-                            style={{ backgroundImage: `url('${avatarUrl}')` }} />
+                            style={{ backgroundImage: `url('${avatarUrl.startsWith('http') ? avatarUrl : `${api.defaults.baseURL.replace('/api', '')}${avatarUrl}`}')` }} />
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-black truncate text-white" title={center?.centerName || user?.name}>
                                 {center?.centerName || user?.name}

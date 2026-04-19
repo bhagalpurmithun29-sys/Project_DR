@@ -237,7 +237,7 @@ const PatientDashboard = () => {
 
                 <div className="p-4 border-t border-white/5">
                     <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5">
-                        <div className="size-10 rounded-xl border-2 border-white/10 shadow-sm bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url('${patient?.photo ? patient.photo : "https://ui-avatars.com/api/?name=" + (user?.name || "Patient") + "&background=059669&color=fff&bold=true"}')` }}></div>
+                        <div className="size-10 rounded-xl border-2 border-white/10 shadow-sm bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url('${patient?.photo ? (patient.photo.startsWith('http') ? patient.photo : `${api.defaults.baseURL.replace('/api', '')}${patient.photo}`) : "https://ui-avatars.com/api/?name=" + (user?.name || "Patient") + "&background=059669&color=fff&bold=true"}')` }}></div>
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-black truncate text-white" title={patient?.name || user?.name || 'Patient'}>{patient?.name || user?.name || 'Patient'}</p>
                             <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">{patient?.patientId || 'Patient'}</p>
@@ -422,7 +422,7 @@ const PatientDashboard = () => {
                         <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-center relative z-10">
                             <div className="flex gap-8 items-center flex-1">
                                 <div className="relative group/avatar cursor-pointer">
-                                    <div className="size-32 rounded-[2rem] border-8 border-white dark:border-slate-800 shadow-2xl bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url('${patient?.photo ? patient.photo : "https://ui-avatars.com/api/?name=" + (patient?.name || user?.name || "Patient") + "&background=137fec&color=fff&bold=true"}')` }}></div>
+                                    <div className="size-32 rounded-[2rem] border-8 border-white dark:border-slate-800 shadow-2xl bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url('${patient?.photo ? (patient.photo.startsWith('http') ? patient.photo : `${api.defaults.baseURL.replace('/api', '')}${patient.photo}`) : "https://ui-avatars.com/api/?name=" + (patient?.name || user?.name || "Patient") + "&background=137fec&color=fff&bold=true"}')` }}></div>
                                     <label className="absolute inset-0 bg-black/40 rounded-[2rem] sm:opacity-0 sm:group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center cursor-pointer border-8 border-transparent">
                                         <div className="text-white text-center flex flex-col items-center gap-1">
                                             {uploadingPhoto ? (
@@ -561,7 +561,7 @@ const PatientDashboard = () => {
                                     Latest Fundus Scan
                                 </h4>
                                 <div className="aspect-[4/5] w-full rounded-[2rem] bg-slate-100 dark:bg-slate-800 relative overflow-hidden group/img cursor-zoom-in">
-                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url('${scans[0]?.imageUrl || "/stage1.jpeg"}')` }}></div>
+                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url('${scans[0]?.imageUrl ? (scans[0].imageUrl.startsWith('http') ? scans[0].imageUrl : `${api.defaults.baseURL.replace('/api', '')}${scans[0].imageUrl}`) : "/stage1.jpeg"}')` }}></div>
                                     <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                                         <div className="bg-white dark:bg-slate-900 text-primary p-4 rounded-2xl shadow-2xl scale-50 group-hover/img:scale-100 transition-transform duration-500">
                                             <ZoomIn size={24} strokeWidth={2.5} />
