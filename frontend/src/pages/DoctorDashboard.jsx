@@ -357,7 +357,7 @@ const DoctorDashboard = () => {
                     <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5">
                         <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm" style={{ backgroundImage: `url(${profile?.photo && profile.photo !== 'default-doctor.jpg' ? profile.photo : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black truncate text-white">Dr. {user?.name.split(' ').pop() || "Smith"}</p>
+                            <p className="text-xs font-black truncate text-white">Dr. {user?.name || "Provider"}</p>
                             <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">Retina Specialist</p>
                         </div>
                     </div>

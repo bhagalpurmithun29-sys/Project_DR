@@ -49,27 +49,40 @@ const PatientDashboard = () => {
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const patientRes = await patientService.getMyProfile();
-                if (patientRes.success) {
-                    setPatient(patientRes.data);
-                    const [scansRes, notificationsRes] = await Promise.all([
-                        patientService.getPatientScans(patientRes.data._id),
-                        notificationService.getNotifications()
-                    ]);
+    const getRiskLevel = (result) => {
+        if (!result) return 'None';
+        const lowerResult = result.toLowerCase();
+        if (lowerResult.includes('pdr') || lowerResult.includes('severe')) return 'High';
+        if (lowerResult.includes('moderate')) return 'Moderate';
+        return 'Low';
+    };
 
-                    if (scansRes.success) setScans(scansRes.data);
-                    if (notificationsRes.success) setNotifications(notificationsRes.data);
-                }
-            } catch (error) {
-                console.error('Error fetching dashboard data:', error);
-            } finally {
-                setLoading(false);
+    const fetchData = async () => {
+        try {
+            const patientRes = await patientService.getMyProfile();
+            if (patientRes.success) {
+                setPatient(patientRes.data);
+                const [scansRes, notificationsRes] = await Promise.all([
+                    patientService.getPatientScans(patientRes.data._id),
+                    notificationService.getNotifications()
+                ]);
+
+                if (scansRes.success) setScans(scansRes.data);
+                if (notificationsRes.success) setNotifications(notificationsRes.data);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchData();
+        
+        // Polling for real-time updates from database (every 30s)
+        const interval = setInterval(fetchData, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const markAllAsRead = async () => {
@@ -242,7 +255,7 @@ const PatientDashboard = () => {
                 {/* Topbar */}
                 <header className="sticky top-0 z-40 h-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-between px-10">
                     <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
-                        <span>Portal</span>
+                        <span>Patient</span>
                         <ChevronRight size={14} className="text-slate-300" />
                         <span className="text-primary italic font-black">Dashboard</span>
                     </div>
@@ -395,7 +408,12 @@ const PatientDashboard = () => {
                     <motion.section variants={itemVariants} className="flex flex-col md:flex-row justify-between items-end gap-6">
                         <div>
                             <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">Welcome back, <span className="text-primary italic">{patient?.name?.split(' ')[0] || "Friend"}</span></h2>
-                            <p className="text-lg font-medium text-slate-500 dark:text-slate-400">Your AI-analyzed retinal health overview for today.</p>
+                            <p className="text-lg font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-black text-primary uppercase tracking-widest">
+                                    {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+                                </span>
+                                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                            </p>
                         </div>
                         <div className="flex gap-4">
                             <button onClick={() => setIsExportModalOpen(true)} className="h-14 px-8 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 text-sm font-black text-slate-600 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm">
@@ -451,7 +469,12 @@ const PatientDashboard = () => {
                             <div className="grid grid-cols-2 gap-6 w-full lg:w-auto min-w-[300px]">
                                 {[
                                     { label: "Total Scans", val: scans.length, trend: "History", color: "text-slate-900 dark:text-white" },
-                                    { label: "Stage", val: scans[0]?.aiResult || "None", trend: "Severity", color: "text-primary" }
+                                    { 
+                                        label: "Current Risk", 
+                                        val: getRiskLevel(scans[0]?.aiResult), 
+                                        trend: scans[0]?.aiResult || "Severity", 
+                                        color: getRiskLevel(scans[0]?.aiResult) === 'High' ? "text-rose-500" : getRiskLevel(scans[0]?.aiResult) === 'Moderate' ? "text-amber-500" : "text-primary" 
+                                    }
                                 ].map((stat) => (
                                     <div key={stat.label} className="bg-slate-50 dark:bg-slate-950/50 rounded-3xl p-5 border border-white dark:border-slate-800 text-center shadow-inner hover:bg-white dark:hover:bg-slate-800 hover:border-slate-100 dark:hover:border-slate-700 transition-all group/stat">
                                         <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-extrabold mb-2">{stat.label}</p>
@@ -466,63 +489,6 @@ const PatientDashboard = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                         {/* Main Interaction Area */}
                         <div className="lg:col-span-2 space-y-10">
-                            {/* Chart Card */}
-                            <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-xl shadow-slate-200/40 dark:shadow-black/20 border border-slate-100 dark:border-slate-800">
-                                <div className="flex items-center justify-between mb-12">
-                                    <div>
-                                        <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Progression Analytics</h4>
-                                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Automated lesion detection delta tracking</p>
-                                    </div>
-                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl shadow-inner">
-                                        <button className="px-5 py-2 text-[10px] font-black uppercase tracking-widest bg-white dark:bg-slate-900 rounded-xl shadow-sm text-slate-900 dark:text-white transition-all">Yearly</button>
-                                        <button className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all">All Time</button>
-                                    </div>
-                                </div>
-
-                                <div className="h-72 w-full relative">
-                                    <svg className="w-full h-full overflow-visible" viewBox="0 0 800 200" preserveAspectRatio="none">
-                                        <defs>
-                                            <linearGradient id="chartGradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                                                <stop offset="0%" stopColor="#059669" stopOpacity="0.2" />
-                                                <stop offset="100%" stopColor="#059669" stopOpacity="0" />
-                                            </linearGradient>
-                                        </defs>
-                                        <motion.path
-                                            initial={{ pathLength: 0, opacity: 0 }}
-                                            animate={{ pathLength: 1, opacity: 1 }}
-                                            transition={{ duration: 1.5, ease: "easeInOut" }}
-                                            d="M0,150 C100,160 200,120 300,130 C400,140 500,80 600,90 C700,100 800,40 800,40"
-                                            fill="none"
-                                            stroke="#059669"
-                                            strokeWidth="4"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                        <motion.path
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ delay: 1, duration: 1 }}
-                                            d="M0,150 C100,160 200,120 300,130 C400,140 500,80 600,90 C700,100 800,40 800,40 L800,200 L0,200 Z"
-                                            fill="url(#chartGradient)"
-                                        />
-                                        {[100, 300, 500, 800].map((cx, i) => (
-                                            <motion.circle
-                                                key={i}
-                                                initial={{ scale: 0 }}
-                                                animate={{ scale: 1 }}
-                                                transition={{ delay: 1.5 + (i * 0.1) }}
-                                                cx={cx} cy={[160, 130, 80, 40][i]} r="6" fill="#059669" stroke="white" strokeWidth="3" className="shadow-lg"
-                                            />
-                                        ))}
-                                    </svg>
-                                    <div className="mt-8 flex justify-between px-2 text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-widest">
-                                        <span>Jan 2024</span>
-                                        <span>Apr 2024</span>
-                                        <span>Jul 2024</span>
-                                        <span>Oct 2024</span>
-                                    </div>
-                                </div>
-                            </motion.div>
 
                             {/* Scan History Table */}
                             <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl shadow-slate-200/30 dark:shadow-black/20 border border-slate-100 dark:border-slate-800 overflow-hidden">
@@ -647,26 +613,8 @@ const PatientDashboard = () => {
                                 </button>
                             </motion.div>
 
-                            {/* Clinical Notes Card */}
-                            <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/30 border border-slate-100 relative overflow-hidden group">
-                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
-                                <div className="flex items-center justify-between mb-6">
-                                    <h4 className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Medical Directive</h4>
-                                    <FileText size={18} className="text-slate-300 group-hover:text-primary transition-colors" />
-                                </div>
-                                <div className="text-sm font-medium leading-relaxed text-slate-600 italic border-l-2 border-primary/40 pl-4 py-2">
-                                    "{scans[0]?.clinicalNotes || "Maintain rigorous glycemic control and monitor daily for new distortions or flashes."}"
-                                </div>
-                                <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary overflow-hidden border border-slate-100">
-                                            <img src={`https://ui-avatars.com/api/?name=Sarah+Smith&background=059669&color=fff`} alt="Dr." />
-                                        </div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dr. Sarah Smith</p>
-                                    </div>
-                                    <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Verified</span>
-                                </div>
-                            </motion.div>
+
+
 
                             {/* Security Badge */}
                             <div className="p-6 rounded-3xl bg-slate-100 dark:bg-slate-900 flex items-center gap-4 border border-slate-200/50 dark:border-slate-800">
@@ -705,6 +653,8 @@ const PatientDashboard = () => {
                     return merged;
                 })}
             />
+
+
         </div>
     );
 };

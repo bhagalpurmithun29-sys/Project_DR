@@ -24,7 +24,10 @@ import {
   Search,
   ArrowUpRight,
   Plus,
-  Play
+  Play,
+  X,
+  TrendingUp,
+  Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from './PatientPreferencesModal';
@@ -34,6 +37,7 @@ const EducationalResources = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const [isPrimerOpen, setIsPrimerOpen] = useState(false);
   const [patient, setPatient] = useState(null);
 
   React.useEffect(() => {
@@ -234,7 +238,10 @@ const EducationalResources = () => {
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight italic">{card.title}</h3>
                 <p className="text-slate-500 leading-relaxed text-sm mb-10 italic">{card.desc}</p>
-                <button className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-900 group-hover:text-primary transition-colors border-t border-slate-50 pt-6 w-full">
+                <button 
+                  onClick={() => card.title === "Diagnostic Primer" ? setIsPrimerOpen(true) : null}
+                  className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-900 group-hover:text-primary transition-colors border-t border-slate-50 pt-6 w-full"
+                >
                   {card.linkText}
                   <ArrowUpRight size={16} strokeWidth={3} className="ml-auto" />
                 </button>
@@ -360,6 +367,171 @@ const EducationalResources = () => {
         onClose={() => setIsPreferencesOpen(false)}
         user={user}
       />
+
+      {/* Diagnostic Primer Modal */}
+      <AnimatePresence>
+        {isPrimerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md"
+              onClick={() => setIsPrimerOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 40 }}
+              className="fixed top-[5%] bottom-[5%] left-1/2 -translate-x-1/2 z-[110] w-full max-w-4xl bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-white/20"
+            >
+              {/* Modal Header */}
+              <div className="p-10 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
+                <div className="flex items-center gap-4">
+                  <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                    <BookOpen size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Diagnostic Primer</h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">RetinaAI Medical Library</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsPrimerOpen(false)}
+                  className="size-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center shadow-sm"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="flex-1 overflow-y-auto p-12 space-y-12 custom-scrollbar text-left">
+                <section>
+                  <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter mb-4 italic">Diabetic Retinopathy (DR)</h3>
+                  <p className="text-lg font-medium text-slate-500 dark:text-slate-400 leading-relaxed italic">
+                    Diabetic retinopathy is a microvascular complication of diabetes mellitus that affects the retina—the light-sensitive tissue at the back of the eye. It is one of the leading causes of preventable blindness worldwide, especially in working-age adults.
+                  </p>
+                </section>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <section className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-100 dark:border-amber-500/20">
+                        <Activity size={18} />
+                      </div>
+                      <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">🔬 Pathophysiology (What actually happens?)</h4>
+                    </div>
+                    <div className="space-y-4">
+                      {[
+                        { title: "Microvascular Damage", desc: "High glucose → damage to endothelial cells and pericytes. Loss of pericytes weakens vessel walls, making capillaries leaky and fragile." },
+                        { title: "Capillary Occlusion", desc: "Thickening of basement membrane leads to reduced blood flow, causing retinal ischemia (lack of oxygen)." },
+                        { title: "Increased Permeability", desc: "Breakdown of the blood-retinal barrier allows fluid and lipids to leak into the retina, causing macular edema." },
+                        { title: "Neovascularization", desc: "Advanced stage: Ischemia triggers release of VEGF, forming abnormal blood vessels prone to bleeding." }
+                      ].map((item, i) => (
+                        <div key={i} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                          <p className="text-sm font-black text-slate-900 dark:text-white mb-1">{item.title}</p>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+                        <TrendingUp size={18} />
+                      </div>
+                      <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📊 Stages of Diabetic Retinopathy</h4>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="p-6 rounded-3xl bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/20">
+                        <p className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-3">01. NPDR</p>
+                        <h5 className="text-lg font-black text-slate-900 dark:text-white mb-2">Non-Proliferative Stage</h5>
+                        <ul className="grid grid-cols-2 gap-2">
+                          {['Microaneurysms', 'Hemorrhages', 'Hard exudates', 'Cotton wool spots'].map(t => (
+                            <li key={t} className="flex items-center gap-2 text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                              <div className="size-1 rounded-full bg-emerald-400" /> {t}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="p-6 rounded-3xl bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/20">
+                        <p className="text-xs font-black text-rose-600 uppercase tracking-widest mb-3">02. PDR</p>
+                        <h5 className="text-lg font-black text-slate-900 dark:text-white mb-2">Proliferative Stage</h5>
+                        <ul className="space-y-2">
+                          {['Abnormal neovascularization', 'Vitreous hemorrhage', 'Tractional retinal detachment'].map(t => (
+                            <li key={t} className="flex items-center gap-2 text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                              <div className="size-1 rounded-full bg-rose-400" /> {t}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <section className="p-8 rounded-[2.5rem] bg-slate-900 text-white relative overflow-hidden group text-left">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Info size={80} />
+                    </div>
+                    <h4 className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-6 text-left">⚠️ Key Clinical Features</h4>
+                    <ul className="space-y-4">
+                      {[
+                        'Blurred or fluctuating vision',
+                        'Dark spots or floaters',
+                        'Impaired color vision',
+                        'Vision loss (in severe cases)',
+                        'Often asymptomatic in early stages'
+                      ].map(t => (
+                        <li key={t} className="flex items-center gap-3 text-sm font-bold text-slate-300">
+                          <div className="size-1.5 rounded-full bg-primary" /> {t}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+
+                  <section className="p-8 rounded-[2.5rem] border-2 border-slate-100 dark:border-slate-800 text-left">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 text-left">🧪 Diagnostic Methods</h4>
+                    <div className="space-y-5">
+                      {[
+                        { icon: Eye, title: "Fundus Examination", desc: "Direct visualization of retina using ophthalmoscopy." },
+                        { icon: BookOpen, title: "Fundus Photography", desc: "Used in AI/ML models (like your project 👀) for autonomous screening." },
+                        { icon: Globe, title: "Optical Coherence Tomography", desc: "Detects macular edema with high precision." },
+                        { icon: FileText, title: "Fluorescein Angiography", desc: "Identifies leakage and retinal ischemia." }
+                      ].map((m, i) => (
+                        <div key={i} className="flex gap-4">
+                          <div className="size-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0">
+                            <m.icon size={16} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-slate-900 dark:text-white leading-none mb-1 text-left">{m.title}</p>
+                            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 text-left">{m.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-8 bg-slate-50/50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-primary" />
+                  Peer-Reviewed Clinical Data
+                </p>
+                <button 
+                  onClick={() => setIsPrimerOpen(false)}
+                  className="px-8 py-3 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+                >
+                  Acknowledge & Close
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -36,7 +36,8 @@ exports.createScan = async (req, res) => {
             eyeSide: eyeSide || 'OD',
             scanId: `SCAN-${Math.floor(1000 + Math.random() * 9000)}`,
             clinicalNotes: notes || 'Screening initiated.',
-            status: 'Pending'
+            status: 'Pending',
+            referredDoctor: req.user.role === 'doctor' ? req.user._id : undefined
         });
 
         // Populate patient name for response
@@ -346,7 +347,15 @@ exports.updateScan = async (req, res) => {
             scan[key] = req.body[key];
         });
 
+        // Auto-assign doctor if finalized by a doctor and none assigned
+        if (status === 'Reviewed' && req.user.role === 'doctor') {
+            scan.referredDoctor = req.user._id;
+        }
+
         await scan.save();
+        
+        // Populate referredDoctor for consistent frontend display
+        await scan.populate('referredDoctor', 'name');
 
         // If status moved to Reviewed, create a notification for the patient
         if (status === 'Reviewed' && scan.patient && scan.patient.user) {
