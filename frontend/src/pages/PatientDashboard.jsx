@@ -260,14 +260,6 @@ const PatientDashboard = () => {
                         <span className="text-primary italic font-black">Dashboard</span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="relative group hidden sm:block">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search medical data..."
-                                className="bg-slate-100/80 dark:bg-slate-800/80 border-none rounded-xl py-2.5 pl-11 pr-4 text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-4 focus:ring-primary/5 transition-all w-64"
-                            />
-                        </div>
                         <div className="relative">
                             <button
                                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
