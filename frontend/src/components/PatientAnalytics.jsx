@@ -179,16 +179,7 @@ export default function PatientAnalytics() {
             <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Biometric <span className="text-primary not-italic">Insights</span></h1>
           </div>
 
-          <div className="flex items-center gap-4">
-            <button className="h-12 px-6 bg-white border-2 border-slate-100 text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm text-slate-600">
-              <Printer size={16} />
-              Print Dashboard
-            </button>
-            <button className="h-12 px-6 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-xl shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2 group">
-              <Download size={16} />
-              Share Dataset
-            </button>
-          </div>
+
         </header>
 
         <motion.div
