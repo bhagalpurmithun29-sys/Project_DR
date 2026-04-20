@@ -53,7 +53,7 @@ const PatientDashboard = () => {
     const getRiskLevel = (result) => {
         if (!result) return 'None';
         const lowerResult = result.toLowerCase();
-        if (lowerResult.includes('pdr') || lowerResult.includes('severe')) return 'High';
+        if (lowerResult.includes('pdr') || lowerResult.includes('severe') || lowerResult.includes('high')) return 'High';
         if (lowerResult.includes('moderate')) return 'Moderate';
         return 'Low';
     };
@@ -448,7 +448,16 @@ const PatientDashboard = () => {
                                     </div>
                                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold text-slate-500 dark:text-slate-400">
                                         <span className="flex items-center gap-2"><Calendar size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.age || "N/A"} Years</span>
-                                        <span className="flex items-center gap-2"><Activity size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.diabetesType || "Type Not Specified"}</span>
+                                        <span className={`flex items-center gap-2 ${
+                                            getRiskLevel(scans[0]?.aiResult) === 'High' ? 'text-rose-500' : 
+                                            getRiskLevel(scans[0]?.aiResult) === 'Moderate' ? 'text-amber-500' : 'text-slate-500'
+                                        }`} title="Latest Retinopathy Stage">
+                                            <Activity size={16} className={`${
+                                                getRiskLevel(scans[0]?.aiResult) === 'High' ? 'text-rose-400' : 
+                                                getRiskLevel(scans[0]?.aiResult) === 'Moderate' ? 'text-amber-400' : 'text-slate-300'
+                                            }`} /> 
+                                            {scans[0]?.aiResult || patient?.diabetesType || "No Scan Data"}
+                                        </span>
                                         <span className="flex items-center gap-2"><Mail size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.email || user?.email}</span>
                                         <span className="flex items-center gap-2"><Phone size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.phoneNumber || "N/A"}</span>
                                     </div>
@@ -459,14 +468,30 @@ const PatientDashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6 w-full lg:w-auto min-w-[300px]">
-                                {[
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full lg:w-auto min-w-[300px] lg:min-w-[450px]">
+                                {(() => {
+                                    const latestResult = scans[0]?.aiResult?.toLowerCase() || '';
+                                    const diabeticStage = latestResult.includes('proliferative') || latestResult.includes('pdr') || latestResult.includes('high') ? 'Stage 4' :
+                                                         latestResult.includes('severe') ? 'Stage 3' :
+                                                         latestResult.includes('moderate') ? 'Stage 2' :
+                                                         latestResult.includes('mild') ? 'Stage 1' : 
+                                                         latestResult.includes('no dr') || latestResult.includes('healthy') || latestResult.includes('low') ? 'Healthy' : 'Healthy';
+                                    
+                                    return [
                                     { label: "Total Scans", val: scans.length, trend: "History", color: "text-slate-900 dark:text-white" },
                                     { 
                                         label: "Current Risk", 
                                         val: getRiskLevel(scans[0]?.aiResult), 
                                         trend: scans[0]?.aiResult || "Severity", 
-                                        color: getRiskLevel(scans[0]?.aiResult) === 'High' ? "text-rose-500" : getRiskLevel(scans[0]?.aiResult) === 'Moderate' ? "text-amber-500" : "text-primary" 
+                                        color: getRiskLevel(scans[0]?.aiResult) === 'High' ? "text-rose-500" : getRiskLevel(scans[0]?.aiResult) === 'Moderate' ? "text-amber-500" : "text-emerald-500" 
+                                    },
+                                    {
+                                        label: "Diabetic Stage",
+                                        val: diabeticStage,
+                                        trend: scans[0]?.aiResult || "Status",
+                                        color: diabeticStage === 'Stage 4' || diabeticStage === 'Stage 3' ? 'text-rose-500' :
+                                               diabeticStage === 'Stage 2' ? 'text-amber-500' :
+                                               diabeticStage === 'Healthy' ? 'text-emerald-500' : 'text-primary'
                                     }
                                 ].map((stat) => (
                                     <div key={stat.label} className="bg-slate-50 dark:bg-slate-950/50 rounded-3xl p-5 border border-white dark:border-slate-800 text-center shadow-inner hover:bg-white dark:hover:bg-slate-800 hover:border-slate-100 dark:hover:border-slate-700 transition-all group/stat">
@@ -474,7 +499,8 @@ const PatientDashboard = () => {
                                         <p className={`text-2xl font-black ${stat.color}`}>{stat.val}</p>
                                         <div className="mt-2 h-0.5 w-6 bg-slate-200 dark:bg-slate-700 mx-auto group-hover/stat:w-12 transition-all group-hover/stat:bg-primary" />
                                     </div>
-                                ))}
+                                ));
+                                })()}
                             </div>
                         </div>
                     </motion.section>
