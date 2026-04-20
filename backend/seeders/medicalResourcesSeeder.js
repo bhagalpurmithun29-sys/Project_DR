@@ -26,9 +26,9 @@ const seedData = [
             }
         ],
         gallery: [
-            { imageUrl: '/images/npdr1.jpeg', caption: 'Clinical Manifestation 1' },
-            { imageUrl: '/images/npdr2.jpeg', caption: 'Clinical Manifestation 2' },
-            { imageUrl: '/images/npdr3.jpeg', caption: 'Clinical Manifestation 3' }
+            { imageUrl: 'https://res.cloudinary.com/ds0uepaoz/image/upload/v1776682649/npdr1_sw', caption: 'Clinical Manifestation 1' },
+            { imageUrl: 'https://res.cloudinary.com/ds0uepaoz/image/upload/v1776682649/npdr2_jt', caption: 'Clinical Manifestation 2' },
+            { imageUrl: 'https://res.cloudinary.com/ds0uepaoz/image/upload/v1776682649/npdr3_lp', caption: 'Clinical Manifestation 3' }
         ]
     },
     {

@@ -77,6 +77,13 @@ const scanSchema = new mongoose.Schema({
     referredAt: {
         type: Date,
     },
+    doctorPrescription: {
+        type: String,
+    },
+    sentToPatient: {
+        type: Boolean,
+        default: false,
+    },
     createdAt: {
         type: Date,
         default: Date.now,

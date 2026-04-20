@@ -367,17 +367,24 @@ exports.updateScan = async (req, res) => {
         // Populate referredDoctor for consistent frontend display
         await scan.populate('referredDoctor', 'name');
 
-        // If status moved to Reviewed, create a notification for the patient
-        if (status === 'Reviewed' && scan.patient && scan.patient.user) {
-            const tempPassword = scan.patient.phoneNumber || 'RetinaAI@2024';
-            
-            await Notification.create({
+        // If report is sent to patient, create a notification
+        if (req.body.sentToPatient && scan.patient && scan.patient.user) {
+            // Check if notification already exists to avoid duplicates
+            const existingNotification = await Notification.findOne({
                 user: scan.patient.user._id,
-                title: 'Diagnostic Report Ready',
-                message: `Dr. ${req.user.name} has finalized your scan report. You can now view it in the Patient Portal. \n\nAccess Credentials:\nEmail: ${scan.patient.user.email}\nSecurity Hint: Use your registered phone number to login.`,
-                type: 'Report',
-                relatedId: scan._id
+                relatedId: scan._id,
+                title: 'Diagnostic Report Ready'
             });
+
+            if (!existingNotification) {
+                await Notification.create({
+                    user: scan.patient.user._id,
+                    title: 'Diagnostic Report Ready',
+                    message: `Dr. ${req.user.name} has finalized and sent your scan report with a prescription. You can now view it in your dashboard.`,
+                    type: 'Report',
+                    relatedId: scan._id
+                });
+            }
         }
 
         res.json({
@@ -480,6 +487,9 @@ exports.referScan = async (req, res) => {
         scan.referredDoctor = doctorId;
         scan.referredAt = Date.now();
         await scan.save();
+
+        // Populate doctor name for frontend display
+        await scan.populate('referredDoctor', 'name');
 
         res.json({
             success: true,

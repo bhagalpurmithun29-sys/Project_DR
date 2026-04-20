@@ -52,6 +52,8 @@ const DoctorScanHistory = () => {
     const [profile, setProfile] = useState(null);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+    const [doctorPrescription, setDoctorPrescription] = useState('');
+    const [sendingToPatient, setSendingToPatient] = useState(false);
 
 
     useEffect(() => {
@@ -119,7 +121,9 @@ const DoctorScanHistory = () => {
                 aiReportSummary: scan.aiReportSummary,
                 diagnosisCenter: scan.diagnosisCenter?.name || "Self-Uploaded",
                 technician: scan.technician || "Direct",
-                doctorName: scan.referredDoctor?.name
+                doctorName: scan.referredDoctor?.name,
+                prescription: scan.doctorPrescription,
+                sentToPatient: scan.sentToPatient
             })));
         } catch (err) {
             console.error('Failed to fetch scans', err);
@@ -129,8 +133,9 @@ const DoctorScanHistory = () => {
     };
 
     const handleAnalyzeClick = async (scan) => {
-        if (scan.status === 'Analyzed') {
+        if (scan.status === 'Analyzed' || scan.status === 'Reviewed') {
             setSelectedScan(scan);
+            setDoctorPrescription(scan.prescription || '');
             setIsAnalysisModalOpen(true);
             return;
         }
@@ -160,8 +165,11 @@ const DoctorScanHistory = () => {
                         insights: updatedScan.insights,
                         notes: updatedScan.clinicalNotes,
                         aiReportSummary: updatedScan.aiReportSummary,
-                        doctorName: updatedScan.referredDoctor?.name
+                        doctorName: updatedScan.referredDoctor?.name,
+                        prescription: updatedScan.doctorPrescription,
+                        sentToPatient: updatedScan.sentToPatient
                     });
+                    setDoctorPrescription(updatedScan.doctorPrescription || '');
                     setIsAnalysisModalOpen(true);
                 }
             }
@@ -171,18 +179,32 @@ const DoctorScanHistory = () => {
         }
     };
 
-    const handleFinalizeAnalysis = async () => {
+    const handleFinalizeAnalysis = async (send = false) => {
         if (!selectedScan) return;
 
-        setIsUpdatingStatus(true);
+        if (send) setSendingToPatient(true);
+        else setIsUpdatingStatus(true);
+
         try {
-            await scanService.updateScan(selectedScan.id, { status: 'Reviewed' });
+            const updateData = { 
+                status: 'Reviewed',
+                doctorPrescription: doctorPrescription
+            };
+            
+            if (send) {
+                updateData.sentToPatient = true;
+            }
+
+            await scanService.updateScan(selectedScan.id, updateData);
             setIsAnalysisModalOpen(false);
             fetchScans();
+            if (send) alert('Report and prescription have been securely sent to the patient.');
         } catch (err) {
             console.error('Failed to update scan status', err);
+            alert('Failed to update: ' + (err.response?.data?.message || err.message));
         } finally {
             setIsUpdatingStatus(false);
+            setSendingToPatient(false);
         }
     };
 
@@ -499,21 +521,25 @@ const DoctorScanHistory = () => {
                                                 </td>
                                                 <td className="px-10 py-8 text-right">
                                                     <div className="flex items-center justify-end gap-3">
-                                                        {scan.status === 'Analyzed' ? (
-                                                            <Link
-                                                                to={`/report/${scan.id}`}
-                                                                className="h-10 px-6 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2"
-                                                            >
-                                                                View Report
-                                                                <ArrowRight size={14} />
-                                                            </Link>
-                                                        ) : (
+                                                        {scan.status === 'Pending' ? (
                                                             <button
                                                                 onClick={() => handleAnalyzeClick(scan)}
                                                                 className="h-10 px-6 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 hover:-translate-y-1 shadow-xl shadow-primary/20 transition-all flex items-center gap-2"
                                                             >
                                                                 Analyze
                                                                 <ArrowUpRight size={14} strokeWidth={2.5} />
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleAnalyzeClick(scan)}
+                                                                className={`h-10 px-6 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 ${
+                                                                    scan.status === 'Reviewed' 
+                                                                    ? 'bg-slate-100 text-slate-500 border border-slate-200' 
+                                                                    : 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-900/10'
+                                                                }`}
+                                                            >
+                                                                {scan.status === 'Reviewed' ? 'View Review' : 'Review & Prescribe'}
+                                                                <ArrowRight size={14} />
                                                             </button>
                                                         )}
                                                     </div>
@@ -612,7 +638,7 @@ const DoctorScanHistory = () => {
                                                 </div>
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">AI Scoring</p>
                                                 <h5 className={`text-xl font-black italic relative z-10 ${selectedScan.risk === 'High Risk' ? 'text-rose-500' :
-                                                    selectedScan.risk === 'Moderate' ? 'text-amber-500' : 'text-primary'
+                                                    selectedScan.risk === 'Moderate' ? 'text-amber-500' : 'text-emerald-500'
                                                     }`}>{selectedScan.risk}</h5>
                                             </div>
 
@@ -655,26 +681,54 @@ const DoctorScanHistory = () => {
                                                 {selectedScan.notes || "No additional observations noted for this diagnostic unit."}
                                             </div>
                                         </div>
+
+                                        {/* Prescription Section */}
+                                        <div className="space-y-3 pt-2">
+                                            <div className="flex items-center justify-between ml-2">
+                                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Medical Prescription / Advice</p>
+                                                {selectedScan.sentToPatient && (
+                                                    <span className="flex items-center gap-1 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
+                                                        <CheckCircle size={10} /> Sent to Patient
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <textarea
+                                                value={doctorPrescription}
+                                                onChange={(e) => setDoctorPrescription(e.target.value)}
+                                                placeholder="Write medications, lifestyle advice, or follow-up instructions here..."
+                                                className="w-full p-6 bg-indigo-50/30 border-2 border-indigo-100 rounded-3xl italic text-xs font-bold text-slate-700 leading-relaxed outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 transition-all min-h-[120px] resize-none shadow-inner placeholder:text-slate-300"
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div className="mt-10 flex gap-4">
+                                    <div className="mt-8 flex flex-col gap-3">
+                                        <div className="flex gap-4">
+                                            <button
+                                                onClick={() => setIsAnalysisModalOpen(false)}
+                                                className="flex-1 h-14 rounded-2xl border-2 border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all"
+                                            >
+                                                Close
+                                            </button>
+                                            <button
+                                                onClick={() => handleFinalizeAnalysis(false)}
+                                                disabled={isUpdatingStatus || sendingToPatient}
+                                                className="flex-1 h-14 bg-white border-2 border-slate-900 text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                            >
+                                                {isUpdatingStatus ? <div className="size-4 border-2 border-slate-900/30 border-t-slate-900 animate-spin rounded-full" /> : 'Save Draft'}
+                                            </button>
+                                        </div>
+                                        
                                         <button
-                                            onClick={() => setIsAnalysisModalOpen(false)}
-                                            className="flex-1 h-14 rounded-2xl border-2 border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all"
+                                            onClick={() => handleFinalizeAnalysis(true)}
+                                            disabled={isUpdatingStatus || sendingToPatient || !doctorPrescription.trim()}
+                                            className="w-full h-14 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-primary/30 hover:bg-primary/90 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            Close Portal
-                                        </button>
-                                        <button
-                                            onClick={handleFinalizeAnalysis}
-                                            disabled={isUpdatingStatus || selectedScan.status === 'Reviewed'}
-                                            className="flex-[2] h-14 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-primary/30 hover:bg-primary/90 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {isUpdatingStatus ? (
+                                            {sendingToPatient ? (
                                                 <div className="size-4 border-2 border-white/30 border-t-white animate-spin rounded-full" />
                                             ) : (
                                                 <>
-                                                    {selectedScan.status === 'Reviewed' ? 'Analysis Certified' : 'Complete Analysis'}
-                                                    <CheckCircle size={16} />
+                                                    {selectedScan.sentToPatient ? 'Update & Re-send to Patient' : 'Finalize & Send to Patient'}
+                                                    <ArrowRight size={16} />
                                                 </>
                                             )}
                                         </button>

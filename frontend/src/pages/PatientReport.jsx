@@ -15,7 +15,8 @@ import {
     CheckCircle,
     AlertTriangle,
     Info,
-    ExternalLink
+    ExternalLink,
+    ClipboardList
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import scanService from '../services/scanService';
@@ -111,9 +112,9 @@ const PatientReport = () => {
             doc.text('AI Diagnostic Analysis', 20, 115);
 
             doc.setFontSize(12);
-            doc.setTextColor(scan.aiResult === 'High Risk' ? 225 : scan.aiResult === 'Moderate' ? 217 : 34,
-                scan.aiResult === 'High Risk' ? 29 : scan.aiResult === 'Moderate' ? 119 : 197,
-                scan.aiResult === 'High Risk' ? 72 : scan.aiResult === 'Moderate' ? 6 : 94);
+            doc.setTextColor(scan.aiResult === 'High Risk' ? 225 : scan.aiResult === 'Moderate' ? 217 : 5,
+                scan.aiResult === 'High Risk' ? 29 : scan.aiResult === 'Moderate' ? 119 : 150,
+                scan.aiResult === 'High Risk' ? 72 : scan.aiResult === 'Moderate' ? 6 : 105);
             doc.text(`Risk Assessment: ${scan.aiResult || 'Pending'}`, 20, 125);
 
             doc.setFontSize(10);
@@ -138,11 +139,25 @@ const PatientReport = () => {
                 doc.text('No automated insights available for this diagnostic unit.', 20, 165);
             }
 
+            // Prescription / Doctor's Advice
+            if (scan.doctorPrescription) {
+                doc.setFontSize(14);
+                doc.setTextColor(5, 150, 105);
+                doc.text('Medical Prescription & Advice', 20, yPos + 10);
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0);
+                doc.setFont('helvetica', 'italic');
+                const prescriptionText = doc.splitTextToSize(scan.doctorPrescription, 160);
+                doc.text(prescriptionText, 20, yPos + 20);
+                yPos += (prescriptionText.length * 5) + 25;
+            }
+
             // Note
             doc.setFontSize(10);
             doc.setTextColor(150);
             doc.setFont('helvetica', 'italic');
-            doc.text('Note: This report includes the original retinal scan used for analysis.', 20, 260);
+            doc.text('Note: This report includes the original retinal scan used for analysis.', 20, Math.min(yPos + 20, 260));
 
             // Footer
             doc.setFontSize(8);
@@ -264,8 +279,8 @@ const PatientReport = () => {
                             <div className="space-y-6">
                                 <div className="flex justify-between items-center">
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Risk Index</span>
-                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${scan.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600' :
-                                             scan.aiResult === 'Moderate' ? 'bg-amber-50 text-amber-600' : 'bg-primary/10 text-primary'
+                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${scan.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                                             scan.aiResult === 'Moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                                          }`}>
                                         {scan.aiResult || 'Pending'}
                                     </span>
@@ -387,10 +402,38 @@ const PatientReport = () => {
                                 </div>
                             </div>
 
+                            {/* Doctor's Prescription Section */}
+                            {scan.doctorPrescription && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.25 }}
+                                    className="space-y-4 pt-6 border-t-4 border-primary/20"
+                                >
+                                    <div className="flex items-center gap-3 ml-2">
+                                        <div className="size-10 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                                            <ClipboardList size={20} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Official Medical Prescription</h4>
+                                            <p className="text-sm font-black text-slate-900 leading-none mt-1">Authorized by Dr. {scan.referredDoctor?.name || 'Physician'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="p-10 bg-gradient-to-br from-primary/5 to-transparent border-2 border-primary/10 rounded-[2.5rem] relative overflow-hidden shadow-inner">
+                                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] rotate-12">
+                                            <Activity size={120} />
+                                        </div>
+                                        <p className="text-base font-bold text-slate-700 leading-relaxed italic relative z-10 whitespace-pre-wrap">
+                                            "{scan.doctorPrescription}"
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            )}
+
                             <div className="space-y-4 pt-6 border-t border-slate-100">
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Physician Commentary</h4>
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Clinical Commentary</h4>
                                 <div className="p-8 bg-slate-50 border border-slate-100 rounded-3xl italic text-xs font-bold text-slate-500 leading-loose">
-                                    {scan.clinicalNotes || "No additional commentary provided. The diagnostic unit remains under primary AI observation."}
+                                    {scan.clinicalNotes || "The diagnostic unit remains under primary AI observation."}
                                 </div>
                             </div>
                         </motion.div>

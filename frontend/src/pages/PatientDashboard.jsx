@@ -515,7 +515,11 @@ const PatientDashboard = () => {
                                                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">OS (Left Eye)</p>
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors ${(scan.aiResult || '').includes('Moderate') ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
+                                                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors ${
+                                                            getRiskLevel(scan.aiResult) === 'High' ? 'bg-rose-50 text-rose-600 border-rose-100' : 
+                                                            getRiskLevel(scan.aiResult) === 'Moderate' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
+                                                            'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                        }`}>
                                                             {scan.aiResult || 'Pending'}
                                                         </span>
                                                     </td>

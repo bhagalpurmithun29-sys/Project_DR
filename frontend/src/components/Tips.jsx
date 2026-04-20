@@ -79,7 +79,7 @@ const EducationalResources = () => {
         const res = await api.get('/medical-resources');
         if (res.data.success) {
           const data = res.data.data;
-          
+
           const stages = data.filter(d => d.category === 'stage').map(d => ({
             stage: d.stageLevel,
             title: d.title,
@@ -89,7 +89,7 @@ const EducationalResources = () => {
             gallery: d.gallery || [],
             sections: d.sections || []
           }));
-          
+
           const cardConfig = {
             primer: { icon: Info, iconBg: "bg-primary/10", iconColor: "text-primary", linkText: "Clinical Abstract" },
             protocol: { icon: ShieldCheck, iconBg: "bg-teal-500/10", iconColor: "text-teal-600", linkText: "Management Guide" },
@@ -189,13 +189,13 @@ const EducationalResources = () => {
   const activeInfoCards = dbCards || infoCards;
   const activeDrStages = dbStages || drStages;
 
-  const filteredInfoCards = activeInfoCards.filter(card => 
-    card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredInfoCards = activeInfoCards.filter(card =>
+    card.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     card.desc.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredDrStages = activeDrStages.filter(stage => 
-    stage.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredDrStages = activeDrStages.filter(stage =>
+    stage.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     stage.desc.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -308,7 +308,7 @@ const EducationalResources = () => {
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight italic">{card.title}</h3>
                 <p className="text-slate-500 leading-relaxed text-sm mb-10 italic">{card.desc}</p>
-                <button 
+                <button
                   onClick={() => {
                     if (card.title === "Diagnostic Primer") setIsPrimerOpen(true);
                     if (card.title === "Prevention Protocol") setIsProtocolOpen(true);
@@ -335,8 +335,8 @@ const EducationalResources = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {filteredDrStages.map((stage, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   onClick={() => setSelectedStage(stage.title)}
                   className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/20 overflow-hidden group hover:shadow-2xl transition-all duration-500 cursor-pointer flex flex-col"
                 >
@@ -366,7 +366,7 @@ const EducationalResources = () => {
         {/* Footer */}
         <footer className="mt-auto px-10 py-12 text-center border-t border-slate-100 bg-white/50 backdrop-blur-sm">
           <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
-            © 2024 RetinaAI Medical Systems 
+            © 2024 RetinaAI Medical Systems
           </p>
         </footer>
       </main>
@@ -404,7 +404,7 @@ const EducationalResources = () => {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">RetinaAI Medical Library</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsPrimerOpen(false)}
                   className="size-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center shadow-sm"
                 >
@@ -530,35 +530,35 @@ const EducationalResources = () => {
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📸 Retinal Imaging Gallery</h4>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {(dbCards?.find(c => c.category === 'primer')?.gallery || []).length > 0 
+                    {(dbCards?.find(c => c.category === 'primer')?.gallery || []).length > 0
                       ? dbCards.find(c => c.category === 'primer').gallery.map((img, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => setZoomedImage(img.imageUrl)}
-                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 cursor-zoom-in"
-                      >
-                        <img src={img.imageUrl} alt={img.caption || `Retinal Scan ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-primary shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
-                            <ZoomIn size={20} strokeWidth={2.5} />
+                        <div
+                          key={i}
+                          onClick={() => setZoomedImage(img.imageUrl)}
+                          className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 cursor-zoom-in"
+                        >
+                          <img src={img.imageUrl} alt={img.caption || `Retinal Scan ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-primary shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                              <ZoomIn size={20} strokeWidth={2.5} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                    : ['dpp1.jpeg', 'dpp2.jpeg', 'dpp3.jpeg', 'dpp4.jpeg'].map((img, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => setZoomedImage(`/images/${img}`)}
-                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 cursor-zoom-in"
-                      >
-                        <img src={`/images/${img}`} alt={`Retinal Scan ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-primary shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
-                            <ZoomIn size={20} strokeWidth={2.5} />
+                      ))
+                      : ['dpp1.jpeg', 'dpp2.jpeg', 'dpp3.jpeg', 'dpp4.jpeg'].map((img, i) => (
+                        <div
+                          key={i}
+                          onClick={() => setZoomedImage(`/images/${img}`)}
+                          className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 cursor-zoom-in"
+                        >
+                          <img src={`/images/${img}`} alt={`Retinal Scan ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-primary shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                              <ZoomIn size={20} strokeWidth={2.5} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </section>
               </div>
@@ -569,7 +569,7 @@ const EducationalResources = () => {
                   <ShieldCheck size={14} className="text-primary" />
                   Peer-Reviewed Clinical Data
                 </p>
-                <button 
+                <button
                   onClick={() => setIsPrimerOpen(false)}
                   className="px-8 py-3 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
                 >
@@ -609,7 +609,7 @@ const EducationalResources = () => {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 text-left">ETDRS Management Standards</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsProtocolOpen(false)}
                   className="size-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center shadow-sm"
                 >
@@ -778,33 +778,33 @@ const EducationalResources = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                     {(dbCards?.find(c => c.category === 'protocol')?.gallery || []).length > 0
                       ? dbCards.find(c => c.category === 'protocol').gallery.map((img, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => setZoomedImage(img.imageUrl)}
-                        className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-teal-500/10 transition-all duration-500 cursor-zoom-in"
-                      >
-                        <img src={img.imageUrl} alt={`Management Protocol ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-teal-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
-                            <ZoomIn size={20} strokeWidth={2.5} />
+                        <div
+                          key={i}
+                          onClick={() => setZoomedImage(img.imageUrl)}
+                          className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-teal-500/10 transition-all duration-500 cursor-zoom-in"
+                        >
+                          <img src={img.imageUrl} alt={`Management Protocol ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-teal-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                              <ZoomIn size={20} strokeWidth={2.5} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                    : ['ppp1.jpeg', 'ppp2.jpeg', 'ppp3.jpeg', 'ppp4.jpeg', 'ppp5.jpeg', 'ppp6.jpeg'].map((img, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => setZoomedImage(`/images/${img}`)}
-                        className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-teal-500/10 transition-all duration-500 cursor-zoom-in"
-                      >
-                        <img src={`/images/${img}`} alt={`Management Protocol ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-teal-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
-                            <ZoomIn size={20} strokeWidth={2.5} />
+                      ))
+                      : ['ppp1.jpeg', 'ppp2.jpeg', 'ppp3.jpeg', 'ppp4.jpeg', 'ppp5.jpeg', 'ppp6.jpeg'].map((img, i) => (
+                        <div
+                          key={i}
+                          onClick={() => setZoomedImage(`/images/${img}`)}
+                          className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-teal-500/10 transition-all duration-500 cursor-zoom-in"
+                        >
+                          <img src={`/images/${img}`} alt={`Management Protocol ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-teal-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                              <ZoomIn size={20} strokeWidth={2.5} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </section>
               </div>
@@ -815,7 +815,7 @@ const EducationalResources = () => {
                   <ShieldCheck size={14} className="text-teal-600" />
                   ETDRS Gold Standard Protocols
                 </p>
-                <button 
+                <button
                   onClick={() => setIsProtocolOpen(false)}
                   className="px-8 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg hover:bg-slate-800 transition-all"
                 >
@@ -855,7 +855,7 @@ const EducationalResources = () => {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 text-left">Whitepaper v2.4 / Engineering Draft</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsMethodologyOpen(false)}
                   className="size-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center shadow-sm"
                 >
@@ -891,7 +891,7 @@ const EducationalResources = () => {
                           { title: "Classification", desc: "Fully connected layers for severity grading" }
                         ].map((step, i) => (
                           <div key={i} className="flex gap-4">
-                            <div className="text-[10px] font-black text-primary w-4 uppercase tracking-widest">{i+1}</div>
+                            <div className="text-[10px] font-black text-primary w-4 uppercase tracking-widest">{i + 1}</div>
                             <div>
                               <p className="text-[11px] font-black text-slate-900 dark:text-white mb-0.5">{step.title}</p>
                               <p className="text-[10px] font-medium text-slate-500">{step.desc}</p>
@@ -1019,33 +1019,33 @@ const EducationalResources = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     {(dbCards?.find(c => c.category === 'methodology')?.gallery || []).length > 0
                       ? dbCards.find(c => c.category === 'methodology').gallery.map((img, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => setZoomedImage(img.imageUrl)}
-                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
-                      >
-                        <img src={img.imageUrl} alt={`AI Model Pipeline ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
-                            <ZoomIn size={20} strokeWidth={2.5} />
+                        <div
+                          key={i}
+                          onClick={() => setZoomedImage(img.imageUrl)}
+                          className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
+                        >
+                          <img src={img.imageUrl} alt={`AI Model Pipeline ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                              <ZoomIn size={20} strokeWidth={2.5} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                    : ['aim1.jpeg', 'aim2.jpeg', 'aim3.jpeg', 'aim4.jpeg', 'aim5.jpeg', 'aim6.jpeg', 'aim7.jpeg', 'aim8.jpeg'].map((img, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => setZoomedImage(`/images/${img}`)}
-                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
-                      >
-                        <img src={`/images/${img}`} alt={`AI Model Pipeline ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
-                            <ZoomIn size={20} strokeWidth={2.5} />
+                      ))
+                      : ['aim1.jpeg', 'aim2.jpeg', 'aim3.jpeg', 'aim4.jpeg', 'aim5.jpeg', 'aim6.jpeg', 'aim7.jpeg', 'aim8.jpeg'].map((img, i) => (
+                        <div
+                          key={i}
+                          onClick={() => setZoomedImage(`/images/${img}`)}
+                          className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
+                        >
+                          <img src={`/images/${img}`} alt={`AI Model Pipeline ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                              <ZoomIn size={20} strokeWidth={2.5} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </section>
               </div>
@@ -1056,7 +1056,7 @@ const EducationalResources = () => {
                   <Cpu size={14} className="text-amber-500" />
                   Neural Architecture v2.4.1
                 </p>
-                <button 
+                <button
                   onClick={() => setIsMethodologyOpen(false)}
                   className="px-8 py-3 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
                 >
@@ -1096,7 +1096,7 @@ const EducationalResources = () => {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 text-left">Stage 01 / Early Detection</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedStage(null)}
                   className="size-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center shadow-sm"
                 >
@@ -1211,7 +1211,7 @@ const EducationalResources = () => {
                       ].map((d, i) => (
                         <div key={i} className="flex gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
                           <div className="size-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0">
-                            <span className="text-[10px] font-black">{i+1}</span>
+                            <span className="text-[10px] font-black">{i + 1}</span>
                           </div>
                           <div>
                             <p className="text-[11px] font-black text-slate-900 dark:text-white leading-none mb-1">{d.title}</p>
@@ -1264,12 +1264,12 @@ const EducationalResources = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {['npdr1.jpeg', 'npdr2.jpeg', 'npdr3.jpeg'].map((img, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         onClick={() => setZoomedImage(`/images/${img}`)}
                         className="aspect-[4/3] rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 cursor-zoom-in"
                       >
-                        <img src={`/images/${img}`} alt={`Mild NPDR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <img src={`/images/${img}`} alt={`Mild NPDR Asset ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                         <div className="absolute inset-0 bg-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                           <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-emerald-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
                             <ZoomIn size={20} strokeWidth={2.5} />
@@ -1287,7 +1287,7 @@ const EducationalResources = () => {
                   <Activity size={14} className="text-emerald-500" />
                   Clinical Status: Non-Proliferative
                 </p>
-                <button 
+                <button
                   onClick={() => setSelectedStage(null)}
                   className="px-8 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg hover:bg-slate-800 transition-all"
                 >
@@ -1327,7 +1327,7 @@ const EducationalResources = () => {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 text-left">Stage 02 / Progressive Damage</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedStage(null)}
                   className="size-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center shadow-sm"
                 >
@@ -1393,7 +1393,7 @@ const EducationalResources = () => {
                           ].map((step, i) => (
                             <div key={i} className="flex items-center gap-3">
                               <div className="size-5 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400">
-                                {i+1}
+                                {i + 1}
                               </div>
                               <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400">{step}</p>
                             </div>
@@ -1515,33 +1515,33 @@ const EducationalResources = () => {
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {(dbStages?.find(s => s.title === "Moderate NPDR")?.gallery || []).length > 0
                       ? dbStages.find(s => s.title === "Moderate NPDR").gallery.map((img, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => setZoomedImage(img.imageUrl)}
-                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
-                      >
-                        <img src={img.imageUrl} alt={img.caption || `Moderate NPDR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
-                            <ZoomIn size={20} strokeWidth={2.5} />
+                        <div
+                          key={i}
+                          onClick={() => setZoomedImage(img.imageUrl)}
+                          className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
+                        >
+                          <img src={img.imageUrl} alt={img.caption || `Moderate NPDR Asset ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                              <ZoomIn size={20} strokeWidth={2.5} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                    : ['mndpr1.jpeg', 'mndpr2.jpeg', 'mndpr3.jpeg', 'mndpr4.jpeg', 'mndpr5.jpeg'].map((img, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => setZoomedImage(`/images/${img}`)}
-                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
-                      >
-                        <img src={`/images/${img}`} alt={`Moderate NPDR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
-                            <ZoomIn size={20} strokeWidth={2.5} />
+                      ))
+                      : ['mndpr1.jpeg', 'mndpr2.jpeg', 'mndpr3.jpeg', 'mndpr4.jpeg', 'mndpr5.jpeg'].map((img, i) => (
+                        <div
+                          key={i}
+                          onClick={() => setZoomedImage(`/images/${img}`)}
+                          className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
+                        >
+                          <img src={`/images/${img}`} alt={`Moderate NPDR Asset ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                              <ZoomIn size={20} strokeWidth={2.5} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </section>
               </div>
@@ -1552,7 +1552,7 @@ const EducationalResources = () => {
                   <Stethoscope size={14} className="text-amber-500" />
                   Clinical Transition Phase identified
                 </p>
-                <button 
+                <button
                   onClick={() => setSelectedStage(null)}
                   className="px-8 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg hover:bg-slate-800 transition-all"
                 >
@@ -1592,7 +1592,7 @@ const EducationalResources = () => {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 text-left">Stage 03 / Pre-Proliferative Warning</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedStage(null)}
                   className="size-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center shadow-sm"
                 >
@@ -1781,12 +1781,12 @@ const EducationalResources = () => {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                     {['sndpr2.jpeg', 'sndpr3.jpeg', 'sndpr4.jpeg', 'sndpr5.jpeg', 'sndpr6.jpeg', 'snpdr1.jpeg'].map((img, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         onClick={() => setZoomedImage(`/images/${img}`)}
                         className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-rose-500/10 transition-all duration-500 cursor-zoom-in"
                       >
-                        <img src={`/images/${img}`} alt={`Severe NPDR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <img src={`/images/${img}`} alt={`Severe NPDR Asset ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                         <div className="absolute inset-0 bg-rose-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                           <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-rose-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
                             <ZoomIn size={20} strokeWidth={2.5} />
@@ -1804,7 +1804,7 @@ const EducationalResources = () => {
                   <AlertCircle size={14} className="text-rose-500" />
                   Pre-Proliferative Stage Confirmed
                 </p>
-                <button 
+                <button
                   onClick={() => setSelectedStage(null)}
                   className="px-8 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg hover:bg-slate-800 transition-all"
                 >
@@ -1844,7 +1844,7 @@ const EducationalResources = () => {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 text-left">Stage 04 / Advanced Critical Stage</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedStage(null)}
                   className="size-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center shadow-sm"
                 >
@@ -1937,7 +1937,7 @@ const EducationalResources = () => {
                           'VEGF stimulates abnormal Neovascularization'
                         ].map((step, i) => (
                           <div key={i} className="flex items-center gap-4">
-                            <div className="size-6 rounded-lg bg-primary text-white flex items-center justify-center text-[10px] font-black">{i+1}</div>
+                            <div className="size-6 rounded-lg bg-primary text-white flex items-center justify-center text-[10px] font-black">{i + 1}</div>
                             <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400">{step}</p>
                           </div>
                         ))}
@@ -1990,7 +1990,7 @@ const EducationalResources = () => {
                             { t: 'Vitrectomy', d: 'Surgical removal of blood/tissue' }
                           ].map(m => (
                             <div key={m.t} className="flex items-start gap-3">
-                              <Zap size={14} className="text-white mt-1 flex-shrink-0" /> 
+                              <Zap size={14} className="text-white mt-1 flex-shrink-0" />
                               <div>
                                 <p className="text-xs font-black">{m.t}</p>
                                 <p className="text-[10px] font-bold text-white/60">{m.d}</p>
@@ -2020,12 +2020,12 @@ const EducationalResources = () => {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                     {['pdr1.jpeg', 'pdr2.jpeg', 'pdr3.jpeg', 'pdr4.jpeg', 'pdr5.jpeg', 'pdr6.jpeg'].map((img, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         onClick={() => setZoomedImage(`/images/${img}`)}
                         className="aspect-video rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-red-500/10 transition-all duration-500 cursor-zoom-in"
                       >
-                        <img src={`/images/${img}`} alt={`Proliferative DR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <img src={`/images/${img}`} alt={`Proliferative DR Asset ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                         <div className="absolute inset-0 bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                           <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-red-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
                             <ZoomIn size={20} strokeWidth={2.5} />
@@ -2043,7 +2043,7 @@ const EducationalResources = () => {
                   <Stethoscope size={14} className="text-red-500" />
                   Advanced Proliferative Phase
                 </p>
-                <button 
+                <button
                   onClick={() => setSelectedStage(null)}
                   className="px-8 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg hover:bg-slate-800 transition-all"
                 >
@@ -2074,7 +2074,7 @@ const EducationalResources = () => {
               >
                 <X size={28} />
               </motion.button>
-              
+
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -2083,9 +2083,9 @@ const EducationalResources = () => {
                 className="relative max-w-5xl w-full h-full flex items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
               >
-                <img 
-                  src={zoomedImage} 
-                  alt="Zoomed Retinal Asset" 
+                <img
+                  src={zoomedImage}
+                  alt="Zoomed Retinal Asset"
                   className="max-w-full max-h-full object-contain rounded-[2rem] shadow-2xl border border-white/10"
                 />
               </motion.div>

@@ -197,7 +197,7 @@ const DoctorDashboard = () => {
         risk: scan.aiResult,
         riskStyle: scan.aiResult === 'High Risk' ? "bg-rose-50 text-rose-600 border-rose-100" :
             scan.aiResult === 'Moderate' ? "bg-amber-50 text-amber-600 border-amber-100" :
-                "bg-primary/10 text-primary border-primary/20",
+                "bg-emerald-50 text-emerald-600 border-emerald-100",
         status: scan.status,
         statusStyle: scan.status === 'Pending' ? "text-amber-600" : "text-primary",
         statusDot: scan.status === 'Pending' ? "bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.4)] animate-pulse" : "bg-primary",
@@ -272,14 +272,14 @@ const DoctorDashboard = () => {
                                         className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer group/res"
                                     >
                                         <div className={`size-10 rounded-xl flex items-center justify-center font-black text-[9px] border-2 border-white shadow-sm ${s.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-500' :
-                                            s.aiResult === 'Moderate' ? 'bg-amber-50 text-amber-500' : 'bg-primary/10 text-primary'
+                                            s.aiResult === 'Moderate' ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'
                                             }`}>
                                             {s.eyeSide}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-black text-slate-900 group-hover/res:text-primary transition-colors">{s.patient?.name || 'Unknown'}</p>
                                             <div className="flex items-center gap-2">
-                                                <span className={`text-[9px] font-black uppercase tracking-widest ${s.aiResult === 'High Risk' ? 'text-rose-500' : 'text-slate-400'
+                                                <span className={`text-[9px] font-black uppercase tracking-widest ${s.aiResult === 'High Risk' ? 'text-rose-500' : s.aiResult === 'Moderate' ? 'text-amber-500' : 'text-emerald-500'
                                                     }`}>{s.aiResult || 'Pending'}</span>
                                                 <span className="size-1 rounded-full bg-slate-200" />
                                                 <span className="text-[9px] font-bold text-slate-300 italic">{new Date(s.createdAt).toLocaleDateString()}</span>
@@ -508,7 +508,7 @@ const DoctorDashboard = () => {
                                                 </td>
                                                 <td className="px-8 py-8 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{row.time}</td>
                                                 <td className="px-8 py-8">
-                                                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.risk === 'High Risk' ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20' : row.risk === 'Moderate' ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
+                                                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.risk === 'High Risk' ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20' : row.risk === 'Moderate' ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20' : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20'}`}>
                                                         {row.risk}
                                                     </span>
                                                 </td>

@@ -292,10 +292,10 @@ const DetailedScanHistory = () => {
                               </div>
                             </div>
                           </td>
-                          <td className="px-10 py-8">
-                            <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${(row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                              (row.aiResult || '').includes('Severe') ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                'bg-primary/10 text-primary border-primary/20'
+                           <td className="px-10 py-8">
+                            <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                              (row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                'bg-emerald-50 text-emerald-600 border-emerald-100'
                               }`}>
                               {row.aiResult || 'Pending Analysis'}
                             </span>
@@ -310,13 +310,17 @@ const DetailedScanHistory = () => {
                             <ConfidenceBar value={95} />
                           </td>
                           <td className="px-10 py-8 text-right">
-                            {['Analyzed', 'Reviewed'].includes(row.status) ? (
+                            {['Analyzed', 'Reviewed'].includes(row.status) && (row.sentToPatient || !row.referredDoctor) ? (
                               <Link
                                 to={`/report/${row._id}`}
                                 className="h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group/btn"
                               >
                                 View Report <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" strokeWidth={3} />
                               </Link>
+                            ) : row.status === 'Reviewed' && !row.sentToPatient ? (
+                              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 flex items-center gap-2">
+                                <Clock size={12} /> Awaiting Release
+                              </span>
                             ) : (
                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
                                 {row.status}
@@ -377,13 +381,17 @@ const DetailedScanHistory = () => {
                         </div>
                       </div>
 
-                      {['Analyzed', 'Reviewed'].includes(row.status) ? (
+                      {['Analyzed', 'Reviewed'].includes(row.status) && (row.sentToPatient || !row.referredDoctor) ? (
                         <Link
                           to={`/report/${row._id}`}
                           className="w-full h-12 bg-white text-slate-900 border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-white hover:border-primary transition-all flex items-center justify-center gap-2"
                         >
                           Access Analysis <ArrowUpRight size={14} strokeWidth={2.5} />
                         </Link>
+                      ) : row.status === 'Reviewed' && !row.sentToPatient ? (
+                        <div className="w-full h-12 bg-amber-50 text-amber-600 border border-amber-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                          Physician Review Pending <Clock size={14} />
+                        </div>
                       ) : (
                         <div className="w-full h-12 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                           {row.status} <Clock size={14} />
