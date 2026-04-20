@@ -26,6 +26,7 @@ const scanRoutes = require('./routes/scanRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const diagnosisCenterRoutes = require('./routes/diagnosisCenterRoutes');
 const medicalResourceRoutes = require('./routes/medicalResourceRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 const app = express();
 
 // Body parser
@@ -61,6 +62,10 @@ app.use('/uploads', (req, res, next) => {
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// ── Routes that DON'T need MongoDB (mounted before the DB guard) ────────────
+// The /api/chat endpoint uses Gemini AI and has no DB dependency.
+app.use('/api/chat', chatRoutes);
+
 // ── DB-ready guard ──────────────────────────────────────────────────────────
 // If MongoDB is not yet connected, return a friendly 503 instead of crashing
 app.use('/api', (req, res, next) => {
@@ -82,6 +87,7 @@ app.use('/api/scans', scanRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/diagnosis-centers', diagnosisCenterRoutes);
 app.use('/api/medical-resources', medicalResourceRoutes);
+// Note: /api/chat is mounted above (before the DB guard)
 
 // 404 handler — must be AFTER all routes
 app.use((req, res) => {

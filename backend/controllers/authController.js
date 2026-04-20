@@ -23,7 +23,8 @@ const generateToken = (id) => {
 // @access  Public
 exports.registerUser = async (req, res) => {
     try {
-        const { name, email, password, role, age } = req.body;
+        const { name, password, role, age } = req.body;
+        const email = req.body.email?.toLowerCase().trim();
 
         // Validation regex patterns
         // Email: Must contain alphabet, number and @ sign
@@ -109,7 +110,8 @@ exports.registerUser = async (req, res) => {
 // @access  Public
 exports.loginUser = async (req, res) => {
     try {
-        const { email, password, role } = req.body;
+        const { password, role } = req.body;
+        const email = req.body.email?.toLowerCase().trim();
 
         // Validate email and password presence
         if (!email || !password) {
@@ -268,7 +270,7 @@ exports.changePassword = async (req, res) => {
 // @access  Public
 exports.forgotPassword = async (req, res) => {
     try {
-        const { email } = req.body;
+        const email = req.body.email?.toLowerCase().trim();
         if (!email) {
             return res.status(400).json({ success: false, message: 'Please provide your email address' });
         }
@@ -301,7 +303,8 @@ exports.forgotPassword = async (req, res) => {
 // @access  Public
 exports.resetPassword = async (req, res) => {
     try {
-        const { email, code, newPassword } = req.body;
+        const { code, newPassword } = req.body;
+        const email = req.body.email?.toLowerCase().trim();
         if (!email || !code || !newPassword) {
             return res.status(400).json({ success: false, message: 'Email, token, and new password are required' });
         }
@@ -335,7 +338,7 @@ exports.resetPassword = async (req, res) => {
 // @access  Public
 exports.getSecurityQuestions = async (req, res) => {
     try {
-        const { email } = req.body;
+        const email = req.body.email?.toLowerCase().trim();
         if (!email) {
             return res.status(400).json({ success: false, message: 'Please provide an email address' });
         }
@@ -363,7 +366,8 @@ exports.getSecurityQuestions = async (req, res) => {
 // @access  Public
 exports.verifySecurityQuestions = async (req, res) => {
     try {
-        const { email, answers } = req.body;
+        const { answers } = req.body;
+        const email = req.body.email?.toLowerCase().trim();
         if (!email || !answers || answers.length !== 2) {
             return res.status(400).json({ success: false, message: 'Please provide email and exactly 2 answers.' });
         }
