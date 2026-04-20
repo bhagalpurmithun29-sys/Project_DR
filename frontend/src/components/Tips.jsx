@@ -341,9 +341,9 @@ const EducationalResources = () => {
                   className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/20 overflow-hidden group hover:shadow-2xl transition-all duration-500 cursor-pointer flex flex-col"
                 >
                   <div className="relative aspect-[16/11] overflow-hidden">
-                    <img src={stage.image} alt={stage.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 p-2 rounded-[2.5rem]" />
+                    <img src={stage.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 p-2 rounded-[2.5rem]" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className={`absolute top-6 left-6 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] backdrop-blur-md shadow-2xl border border-white/20 ${stage.highlight ? 'bg-primary text-white' : 'bg-white/80 text-slate-900'}`}>
+                    <div className="absolute top-6 left-6 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] bg-primary text-white shadow-2xl border border-white/20">
                       {stage.stage}
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
