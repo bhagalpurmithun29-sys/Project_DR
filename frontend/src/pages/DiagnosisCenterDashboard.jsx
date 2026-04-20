@@ -356,8 +356,10 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
     const [search, setSearch] = useState('');
     const [showNew, setShowNew] = useState(false);
     const [form, setForm] = useState({ patientId: '', eye: 'Right', notes: '' });
-    const [file, setFile] = useState(null);
-    const [preview, setPreview] = useState(null);
+    const [fileOD, setFileOD] = useState(null);
+    const [fileOS, setFileOS] = useState(null);
+    const [previewOD, setPreviewOD] = useState(null);
+    const [previewOS, setPreviewOS] = useState(null);
     const [saving, setSaving] = useState(false);
     const [analyzingIds, setAnalyzingIds] = useState([]);
     const [showReport, setShowReport] = useState(false);
@@ -378,11 +380,16 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
         fetchDoctors();
     }, []);
 
-    const handleFileChange = (e) => {
+    const handleFileChange = (e, side) => {
         const f = e.target.files[0];
         if (f) {
-            setFile(f);
-            setPreview(URL.createObjectURL(f));
+            if (side === 'OD') {
+                setFileOD(f);
+                setPreviewOD(URL.createObjectURL(f));
+            } else {
+                setFileOS(f);
+                setPreviewOS(URL.createObjectURL(f));
+            }
         }
     };
 
@@ -393,26 +400,37 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
 
     const handleNewScan = async (e) => {
         e.preventDefault();
-        if (!file) { setMsg({ type: 'error', text: 'Please upload a retinal image.' }); return; }
+        const sidesToUpload = [];
+        if (form.eye === 'Right' || form.eye === 'Both') {
+            if (!fileOD) { setMsg({ type: 'error', text: 'Please upload Right Retinal Image.' }); return; }
+            sidesToUpload.push({ side: 'OD', file: fileOD });
+        }
+        if (form.eye === 'Left' || form.eye === 'Both') {
+            if (!fileOS) { setMsg({ type: 'error', text: 'Please upload Left Retinal Image.' }); return; }
+            sidesToUpload.push({ side: 'OS', file: fileOS });
+        }
+
         setSaving(true); setMsg({ type: '', text: '' });
 
-        const formData = new FormData();
-        formData.append('patientId', form.patientId);
-        formData.append('eyeSide', form.eye === 'Right' ? 'OD' : 'OS');
-        formData.append('notes', form.notes);
-        formData.append('image', file);
-
         try {
-            const res = await api.post('/scans', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-            setMsg({ type: 'success', text: 'Scan saved. Triggering AI analysis...' });
+            for (const item of sidesToUpload) {
+                const formData = new FormData();
+                formData.append('patientId', form.patientId);
+                formData.append('eyeSide', item.side);
+                formData.append('notes', form.notes);
+                formData.append('image', item.file);
 
-            // Automatically trigger analysis
-            if (res.data.data?._id) {
-                await api.post(`/scans/${res.data.data._id}/analyze`);
-                setMsg({ type: 'success', text: 'Scan analyzed successfully.' });
+                const res = await api.post('/scans', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                
+                // Automatically trigger analysis
+                if (res.data.data?._id) {
+                    await api.post(`/scans/${res.data.data._id}/analyze`);
+                }
             }
 
-            setFile(null); setPreview(null);
+            setMsg({ type: 'success', text: 'Scan(s) saved and analyzed successfully.' });
+            setFileOD(null); setPreviewOD(null);
+            setFileOS(null); setPreviewOS(null);
             onRefresh();
             setTimeout(() => setShowNew(false), 800);
         } catch (err) {
@@ -547,20 +565,38 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                     <option value="">— Choose a patient —</option>
                                     {patients.map(p => <option key={p._id} value={p._id}>{p.name} ({p.patientId})</option>)}
                                 </Select>
+                                <Select label="Eye" value={form.eye} onChange={e => setForm(f => ({ ...f, eye: e.target.value }))}>
+                                    {['Right', 'Left', 'Both'].map(e => <option key={e}>{e}</option>)}
+                                </Select>
+
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Select label="Eye" value={form.eye} onChange={e => setForm(f => ({ ...f, eye: e.target.value }))}>
-                                        {['Right', 'Left', 'Both'].map(e => <option key={e}>{e}</option>)}
-                                    </Select>
-                                    <div className="space-y-1.5 text-center">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-left ml-1">Retinal Image</label>
-                                        <label className={`flex flex-col items-center justify-center h-[90px] w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer ${preview ? 'border-primary/40 bg-primary/5' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}>
-                                            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                                            {preview ? (
-                                                <img src={preview} className="h-full object-contain rounded-xl" alt="Preview" />
+                                    {/* Right Eye Upload */}
+                                    <div className={`space-y-1.5 text-center transition-opacity ${form.eye === 'Left' ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-left ml-1 italic">Right Retinal Image (OD)</label>
+                                        <label className={`flex flex-col items-center justify-center h-[100px] w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer ${previewOD ? 'border-primary/40 bg-primary/5' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}>
+                                            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'OD')} className="hidden" disabled={form.eye === 'Left'} />
+                                            {previewOD ? (
+                                                <img src={previewOD} className="h-full object-contain rounded-xl p-1" alt="Right Eye Preview" />
                                             ) : (
                                                 <div className="flex flex-col items-center gap-1">
                                                     <Upload size={18} className="text-slate-300" />
-                                                    <span className="text-[10px] font-bold text-slate-400">Click to upload</span>
+                                                    <span className="text-[9px] font-bold text-slate-400">Right Eye</span>
+                                                </div>
+                                            )}
+                                        </label>
+                                    </div>
+
+                                    {/* Left Eye Upload */}
+                                    <div className={`space-y-1.5 text-center transition-opacity ${form.eye === 'Right' ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-left ml-1 italic">Left Retinal Image (OS)</label>
+                                        <label className={`flex flex-col items-center justify-center h-[100px] w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer ${previewOS ? 'border-primary/40 bg-primary/5' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}>
+                                            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'OS')} className="hidden" disabled={form.eye === 'Right'} />
+                                            {previewOS ? (
+                                                <img src={previewOS} className="h-full object-contain rounded-xl p-1" alt="Left Eye Preview" />
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <Upload size={18} className="text-slate-300" />
+                                                    <span className="text-[9px] font-bold text-slate-400">Left Eye</span>
                                                 </div>
                                             )}
                                         </label>
@@ -818,9 +854,10 @@ const ReportsSection = ({ scans }) => {
 ═══════════════════════════════════════════════════ */
 const AnalyticsSection = ({ scans, patients }) => {
     const analysed = scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed');
-    const high = analysed.filter(s => s.aiResult === 'High Risk').length;
-    const moderate = analysed.filter(s => s.aiResult === 'Moderate Risk').length;
-    const low = analysed.length - high - moderate;
+    const high = analysed.filter(s => s.aiResult === 'High Risk' || (s.aiResult || '').toLowerCase().includes('high')).length;
+    const moderate = analysed.filter(s => s.aiResult === 'Moderate Risk' || (s.aiResult || '').toLowerCase().includes('moderate')).length;
+    const noDR = analysed.filter(s => (s.aiResult || '').toLowerCase().includes('healthy') || (s.aiResult || '').toLowerCase().includes('no dr')).length;
+    const low = analysed.length - high - moderate - noDR;
 
     const byMonth = {};
     scans.forEach(s => {
@@ -831,9 +868,10 @@ const AnalyticsSection = ({ scans, patients }) => {
     const maxVal = Math.max(...monthlyData.map(([, v]) => v), 1);
 
     const riskStats = [
-        { label: 'High Risk', value: high, color: 'bg-red-500', pct: analysed.length ? Math.round(high / analysed.length * 100) : 0 },
+        { label: 'High Risk', value: high, color: 'bg-rose-500', pct: analysed.length ? Math.round(high / analysed.length * 100) : 0 },
         { label: 'Moderate Risk', value: moderate, color: 'bg-amber-400', pct: analysed.length ? Math.round(moderate / analysed.length * 100) : 0 },
-        { label: 'Low Risk', value: low, color: 'bg-primary', pct: analysed.length ? Math.round(low / analysed.length * 100) : 0 },
+        { label: 'Low Risk', value: low, color: 'bg-emerald-500', pct: analysed.length ? Math.round(low / analysed.length * 100) : 0 },
+        { label: 'NO DR', value: noDR, color: 'bg-blue-500', pct: analysed.length ? Math.round(noDR / analysed.length * 100) : 0 },
     ];
 
     return (
