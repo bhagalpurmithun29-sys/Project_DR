@@ -62,6 +62,9 @@ app.use('/uploads', (req, res, next) => {
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Static folder for medical reference images (project root /image directory)
+app.use('/images', express.static(path.join(__dirname, '..', 'image')));
+
 // ── Routes that DON'T need MongoDB (mounted before the DB guard) ────────────
 // The /api/chat endpoint uses Gemini AI and has no DB dependency.
 app.use('/api/chat', chatRoutes);

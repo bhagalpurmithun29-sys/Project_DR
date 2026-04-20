@@ -48,18 +48,112 @@ const seedData = [
         category: 'stage',
         title: 'Severe NPDR',
         stageLevel: 'STAGE 03',
-        description: 'Extensive capillary non-perfusion; significant increase in intraretinal microvascular abnormalities.',
-        imageUrl: '/stage3.jpeg',
-        order: 3
+        description: 'Extensive capillary non-perfusion; significant increase in intraretinal microvascular abnormalities and venous beading.',
+        imageUrl: '/images/snpdr1.jpeg',
+        order: 3,
+        sections: [
+            {
+                title: 'Pathophysiology',
+                points: [
+                    'More than 20 intraretinal hemorrhages in all 4 quadrants',
+                    'Venous beading present in 2 or more quadrants',
+                    'Intraretinal microvascular abnormalities (IRMA) in 1+ quadrant',
+                    'Significant retinal ischemia and capillary dropout'
+                ],
+                sectionType: 'pathophysiology'
+            },
+            {
+                title: 'Clinical Warning Signs',
+                points: [
+                    '4-2-1 Rule: hallmark diagnostic criterion for Severe NPDR',
+                    'Cotton wool spots indicating nerve fiber layer infarcts',
+                    'Risk of progression to PDR within 1 year is ~50%',
+                    'Immediate referral to a retinal specialist is recommended'
+                ],
+                sectionType: 'warning'
+            },
+            {
+                title: 'Management',
+                points: [
+                    'Strict glycemic and blood pressure control',
+                    'Anti-VEGF injections if macular edema is present',
+                    'Panretinal photocoagulation (PRP) may be considered',
+                    'Close monitoring every 3–4 months'
+                ],
+                sectionType: 'management'
+            }
+        ],
+        gallery: [
+            { imageUrl: '/images/snpdr1.jpeg', caption: 'Severe NPDR — Fundus View 1' },
+            { imageUrl: '/images/sndpr2.jpeg', caption: 'Severe NPDR — Venous Beading' },
+            { imageUrl: '/images/sndpr3.jpeg', caption: 'Severe NPDR — IRMA Pattern' },
+            { imageUrl: '/images/sndpr4.jpeg', caption: 'Severe NPDR — Hemorrhage Quadrants' },
+            { imageUrl: '/images/sndpr5.jpeg', caption: 'Severe NPDR — Capillary Dropout' },
+            { imageUrl: '/images/sndpr6.jpeg', caption: 'Severe NPDR — Clinical Overview' }
+        ]
     },
     {
         category: 'stage',
         title: 'Proliferative DR',
         stageLevel: 'STAGE 04',
-        description: 'Advanced neovascularization; fragile vessels prone to vitreous hemorrhage and tractional detachment.',
-        imageUrl: '/stage4.jpeg',
+        description: 'Advanced neovascularization with fragile new vessels prone to vitreous hemorrhage and tractional retinal detachment.',
+        imageUrl: '/images/pdr1.jpeg',
         order: 4,
-        highlight: true
+        highlight: true,
+        sections: [
+            {
+                title: 'Pathophysiology',
+                points: [
+                    'Neovascularization of the disc (NVD) or elsewhere (NVE)',
+                    'New vessels grow along posterior vitreous face',
+                    'Fibrovascular proliferation causes tractional forces',
+                    'VEGF overexpression drives uncontrolled angiogenesis'
+                ],
+                sectionType: 'pathophysiology'
+            },
+            {
+                title: 'Critical Complications',
+                points: [
+                    'Vitreous hemorrhage: sudden painless visual loss',
+                    'Tractional retinal detachment (TRD)',
+                    'Neovascular glaucoma: elevated IOP from anterior chamber vessels',
+                    'Rubeosis iridis: neovascularization of the iris'
+                ],
+                sectionType: 'warning'
+            },
+            {
+                title: 'Treatment Options',
+                points: [
+                    'Panretinal photocoagulation (PRP): gold standard for PDR',
+                    'Anti-VEGF therapy (ranibizumab, bevacizumab, aflibercept)',
+                    'Pars plana vitrectomy for non-clearing vitreous hemorrhage',
+                    'Surgical repair for tractional retinal detachment'
+                ],
+                sectionType: 'management'
+            },
+            {
+                title: 'Prognosis',
+                points: [
+                    'Without treatment, 50% risk of severe vision loss in 2 years',
+                    'Early laser treatment reduces severe vision loss risk by 50%',
+                    'Anti-VEGF improves visual acuity in DME-associated cases',
+                    'Regular follow-up every 1–3 months is essential'
+                ],
+                sectionType: 'clinical'
+            }
+        ],
+        gallery: [
+            { imageUrl: '/images/pdr1.jpeg', caption: 'Proliferative DR — NVD Pattern' },
+            { imageUrl: '/images/pdr2.jpeg', caption: 'Proliferative DR — NVE Growth' },
+            { imageUrl: '/images/pdr3.jpeg', caption: 'Proliferative DR — Vitreous Hemorrhage' },
+            { imageUrl: '/images/pdr4.jpeg', caption: 'Proliferative DR — Fibrovascular Proliferation' },
+            { imageUrl: '/images/pdr5.jpeg', caption: 'Proliferative DR — Tractional Features' },
+            { imageUrl: '/images/pdr6.jpeg', caption: 'Proliferative DR — Advanced Stage' }
+        ],
+        metadata: {
+            frequency: 'Immediate referral',
+            target: 'Retinal Specialist / Vitreoretinal Surgeon'
+        }
     },
 
     // ─── EDUCATIONAL MODALS ────────────────────────────────────────────────
