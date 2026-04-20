@@ -355,7 +355,7 @@ const PatientsSection = ({ patients, onRefresh }) => {
 const ScansSection = ({ scans, patients, onRefresh }) => {
     const [search, setSearch] = useState('');
     const [showNew, setShowNew] = useState(false);
-    const [form, setForm] = useState({ patientId: '', eye: 'Right', notes: '' });
+    const [form, setForm] = useState({ patientId: '', eye: 'Right', notes: '', technician: '' });
     const [fileOD, setFileOD] = useState(null);
     const [fileOS, setFileOS] = useState(null);
     const [previewOD, setPreviewOD] = useState(null);
@@ -418,6 +418,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                 formData.append('patientId', form.patientId);
                 formData.append('eyeSide', item.side);
                 formData.append('notes', form.notes);
+                formData.append('technician', form.technician);
                 formData.append('image', item.file);
 
                 const res = await api.post('/scans', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -603,6 +604,12 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Technician Name (optional)</label>
+                                    <input type="text" value={form.technician} onChange={e => setForm(f => ({ ...f, technician: e.target.value }))}
+                                        className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all"
+                                        placeholder="Name of the person performing scan…" />
+                                </div>
+                                <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notes (optional)</label>
                                     <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2}
                                         className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all resize-none"
@@ -634,12 +641,8 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
 
                             <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                                 <div className="flex items-center gap-3 no-print">
-                                    <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
-                                        <Activity size={20} />
-                                    </div>
                                     <div>
                                         <h3 className="text-lg font-black text-slate-900">AI Diagnostic Report</h3>
-                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">Automated screening complete</p>
                                     </div>
                                 </div>
                                 {/* Print Header (only visible in print) */}
@@ -913,26 +916,51 @@ const AnalyticsSection = ({ scans, patients }) => {
                         </div>}
                 </div>
 
-                {/* Monthly Scans Bar Chart */}
+                {/* Recent Scan Volume Bar Chart */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Monthly Scans</h3>
-                    {monthlyData.length === 0
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Recent Scan Volume</h3>
+                    {scans.length === 0
                         ? <p className="text-slate-400 text-sm font-medium text-center py-12">No scan data yet.</p>
-                        : <div className="flex items-end gap-3 h-40">
-                            {monthlyData.map(([month, count], idx) => {
-                                const colors = ['bg-emerald-500', 'bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500'];
-                                return (
-                                    <div key={month} className="flex-1 flex flex-col items-center gap-2">
-                                        <span className="text-xs font-black text-slate-700">{count}</span>
-                                        <motion.div
-                                            initial={{ height: 0 }} animate={{ height: `${(count / maxVal) * 100}%` }}
-                                            transition={{ duration: 0.6, delay: idx * 0.1 }}
-                                            className={`w-full ${colors[idx % colors.length]} rounded-t-xl min-h-[4px] opacity-80`}
-                                        />
-                                        <span className="text-[9px] font-black text-slate-400 uppercase">{month}</span>
-                                    </div>
-                                );
-                            })}
+                        : <div className="space-y-8">
+                            <div className="flex items-end justify-around gap-2 h-48 px-2 border-b border-slate-50">
+                                {(() => {
+                                    // Ensure we always show the last 4 months even if no data exists
+                                    const monthsToShow = [];
+                                    for (let i = 3; i >= 0; i--) {
+                                        const d = new Date();
+                                        d.setMonth(d.getMonth() - i);
+                                        monthsToShow.push(d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+                                    }
+
+                                    const maxVal = Math.max(...monthsToShow.map(m => byMonth[m] || 0), 5); // Min scale of 5
+                                    const colors = ['bg-blue-400', 'bg-rose-500', 'bg-orange-400', 'bg-emerald-500'];
+
+                                    return monthsToShow.map((month, i) => {
+                                        const count = byMonth[month] || 0;
+                                        const hasData = count > 0;
+                                        return (
+                                            <div key={month} className="flex-1 flex flex-col items-center gap-3 h-full justify-end group max-w-[80px]">
+                                                {hasData && (
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-black px-2 py-1 rounded-md mb-1">
+                                                        {count}
+                                                    </div>
+                                                )}
+                                                <motion.div
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: `${(count / maxVal) * 100}%` }}
+                                                    transition={{ duration: 1, delay: i * 0.1, ease: "backOut" }}
+                                                    className={`w-full max-w-[40px] ${hasData ? colors[i % colors.length] : 'bg-slate-100'} rounded-t-xl shadow-lg relative`}
+                                                >
+                                                    {!hasData && <div className="absolute bottom-0 w-full h-[2px] bg-slate-200 rounded-full" />}
+                                                </motion.div>
+                                                <span className={`text-[9px] font-black uppercase tracking-widest ${hasData ? 'text-slate-600' : 'text-slate-300'}`}>
+                                                    {month}
+                                                </span>
+                                            </div>
+                                        );
+                                    });
+                                })()}
+                            </div>
                         </div>}
                 </div>
             </div>

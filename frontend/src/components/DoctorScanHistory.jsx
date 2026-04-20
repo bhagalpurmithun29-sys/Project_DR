@@ -510,7 +510,7 @@ const DoctorScanHistory = () => {
                                                 <td className="px-10 py-8">
                                                     <div className="flex flex-col">
                                                         <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none">{scan.diagnosisCenter}</p>
-                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">Lab: {scan.technician}</p>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic capitalize">Lab: {scan.technician}</p>
                                                     </div>
                                                 </td>
                                                 <td className="px-10 py-8">
@@ -674,13 +674,7 @@ const DoctorScanHistory = () => {
                                             </div>
                                         </div>
 
-                                        {/* Clinical Notes */}
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Physician Observations</p>
-                                            <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl italic text-xs font-bold text-slate-500 leading-relaxed">
-                                                {selectedScan.notes || "No additional observations noted for this diagnostic unit."}
-                                            </div>
-                                        </div>
+
 
                                         {/* Prescription Section */}
                                         <div className="space-y-3 pt-2">
