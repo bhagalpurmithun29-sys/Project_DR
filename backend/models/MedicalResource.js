@@ -4,8 +4,8 @@ const sectionSchema = new mongoose.Schema({
     title: { type: String, required: true },
     content: { type: String },
     points: [{ type: String }],
-    sectionType: { 
-        type: String, 
+    sectionType: {
+        type: String,
         enum: ['info', 'warning', 'clinical', 'technical', 'pathophysiology', 'stages', 'diagnostics', 'management', 'architecture', 'metrics'],
         default: 'info'
     }

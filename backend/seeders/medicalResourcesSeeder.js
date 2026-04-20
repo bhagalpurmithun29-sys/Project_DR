@@ -36,12 +36,47 @@ const seedData = [
         title: 'Moderate NPDR',
         stageLevel: 'STAGE 02',
         description: 'Widespread vascular distortion and incipient leakage; compromised retinal perfusion identified.',
-        imageUrl: '/stage2.jpeg',
+        imageUrl: 'https://res.cloudinary.com/ds0uepaoz/image/upload/v1776678930/stage2_i',
         order: 2,
+        sections: [
+            {
+                title: 'Key Pathological Changes',
+                points: [
+                    'Increased Microaneurysms & Hemorrhages',
+                    'Diffuse Widespread Vascular Damage',
+                    'Worsening Blood-Retinal Barrier Leakage',
+                    'Capillary Non-Perfusion (Localized Ischemia)',
+                    'Venous Abnormalities (Early Hypoxia Signs)'
+                ],
+                sectionType: 'pathophysiology'
+            },
+            {
+                title: 'Clinical Significance',
+                points: [
+                    'Indicates active disease progression',
+                    'Critical risk of Diabetic Macular Edema (DME)',
+                    'Progression to Severe NPDR',
+                    'Transition to Proliferative DR (PDR)'
+                ],
+                sectionType: 'warning'
+            },
+            {
+                title: 'Management & Strategy',
+                points: [
+                    'Aggressive Glycemic Control (HbA1c < 7%)',
+                    'Blood Pressure Regulation',
+                    'Lipid Management',
+                    'Monitoring Protocol: Every 6–12 Months'
+                ],
+                sectionType: 'management'
+            }
+        ],
         gallery: [
-            { imageUrl: '/images/mndpr1.jpeg' },
-            { imageUrl: '/images/mndpr2.jpeg' },
-            { imageUrl: '/images/mndpr3.jpeg' }
+            { imageUrl: '/images/mndpr1.jpeg', caption: 'Vascular Distortion Pattern' },
+            { imageUrl: '/images/mndpr2.jpeg', caption: 'Capillary Leakage Zone' },
+            { imageUrl: '/images/mndpr3.jpeg', caption: 'Diffuse Hemorrhages' },
+            { imageUrl: '/images/mndpr4.jpeg', caption: 'Perfusion Deficits' },
+            { imageUrl: '/images/mndpr5.jpeg', caption: 'Clinical Overview' }
         ]
     },
     {

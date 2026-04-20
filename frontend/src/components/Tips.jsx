@@ -85,7 +85,9 @@ const EducationalResources = () => {
             title: d.title,
             desc: d.description,
             image: d.imageUrl,
-            highlight: d.highlight
+            highlight: d.highlight,
+            gallery: d.gallery || [],
+            sections: d.sections || []
           }));
           
           const cardConfig = {
@@ -1511,7 +1513,22 @@ const EducationalResources = () => {
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">📸 Clinical Progression Gallery</h4>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {['mndpr1.jpeg', 'mndpr2.jpeg', 'mndpr3.jpeg', 'mndpr4.jpeg', 'mndpr5.jpeg'].map((img, i) => (
+                    {(dbStages?.find(s => s.title === "Moderate NPDR")?.gallery || []).length > 0
+                      ? dbStages.find(s => s.title === "Moderate NPDR").gallery.map((img, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => setZoomedImage(img.imageUrl)}
+                        className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-50 dark:border-slate-800 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500 cursor-zoom-in"
+                      >
+                        <img src={img.imageUrl} alt={img.caption || `Moderate NPDR Asset ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                          <div className="size-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-amber-600 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <ZoomIn size={20} strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                    : ['mndpr1.jpeg', 'mndpr2.jpeg', 'mndpr3.jpeg', 'mndpr4.jpeg', 'mndpr5.jpeg'].map((img, i) => (
                       <div 
                         key={i} 
                         onClick={() => setZoomedImage(`/images/${img}`)}
