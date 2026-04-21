@@ -107,7 +107,7 @@ const TypingIndicator = () => (
     </motion.div>
 );
 
-const Tips = () => {
+const AiAssistant = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [patient, setPatient] = useState(null);
@@ -251,7 +251,7 @@ const Tips = () => {
             <Activity size={18} />
             <span className="text-sm">Health Analytics</span>
           </Link>
-          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
+          <Link to="/reports" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
             <History size={18} />
             <span className="text-sm">Reports</span>
           </Link>
@@ -416,4 +416,4 @@ const Tips = () => {
   );
 };
 
-export default Tips;
+export default AiAssistant;

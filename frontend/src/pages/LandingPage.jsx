@@ -19,9 +19,7 @@ import { Link } from "react-router-dom";
 
 const NAV_LINKS = [
   { label: "How it Works", href: "#how-it-works" },
-  { label: "Features", href: "#features" },
-  { label: "Research", href: "#research" },
-  { label: "Pricing", href: "#pricing" }
+  { label: "Features", href: "#features" }
 ];
 
 const FEATURE_CARDS = [

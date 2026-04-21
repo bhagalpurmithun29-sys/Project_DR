@@ -156,7 +156,7 @@ const DetailedScanHistory = () => {
             <Activity size={18} />
             <span className="text-sm">Health Analytics</span>
           </Link>
-          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-primary text-white font-black shadow-lg shadow-primary/25 transition-all">
+          <Link to="/reports" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-primary text-white font-black shadow-lg shadow-primary/25 transition-all">
             <History size={18} strokeWidth={2.5} />
             <span className="text-sm">Reports</span>
           </Link>

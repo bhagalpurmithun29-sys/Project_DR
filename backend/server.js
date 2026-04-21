@@ -44,7 +44,7 @@ app.use(cors({
 app.use('/uploads', (req, res, next) => {
     const filename = req.path.replace(/^\//, ''); // Remove leading slash
     const filePath = path.join(__dirname, 'uploads', filename);
-    
+
     if (fs.existsSync(filePath)) {
         return next();
     }
