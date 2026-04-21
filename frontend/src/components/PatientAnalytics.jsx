@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   Download,
   ArrowUpRight,
-  Zap
+  Zap,
+  MessageCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from './PatientPreferencesModal';
@@ -114,41 +115,41 @@ export default function PatientAnalytics() {
     <div className="min-h-screen bg-main font-display text-slate-900 antialiased flex flex-col lg:flex-row overflow-x-hidden">
       {/* Sidebar */}
       <aside className="fixed top-0 left-0 h-screen w-72 flex-shrink-0 bg-sidebar border-r border-white/5 hidden lg:flex flex-col z-50">
-        <div className="p-8 pb-12 flex items-center gap-3">
-          <div className="size-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
+        <div className="p-8 flex items-center gap-3">
+          <div className="size-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary shadow-sm border border-primary/20">
             <Activity size={24} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Patients Portal</p>
+            <h1 className="font-black text-lg tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
+            <p className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] mt-1">Patients Portal</p>
           </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 space-y-1 mt-6 custom-scrollbar">
-          <button onClick={() => navigate('/dashboard')} className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group text-left">
-            <LayoutDashboard size={16} />
+          <Link to="/dashboard" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
+            <LayoutDashboard size={18} />
             <span className="text-sm">Patient Dashboard</span>
-          </button>
-          <Link to="/analytics" className="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-black shadow-lg shadow-primary/20 transition-all">
-            <BarChart3 size={16} strokeWidth={2.5} />
+          </Link>
+          <Link to="/analytics" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-primary text-white font-black shadow-lg shadow-primary/25 transition-all">
+            <Activity size={18} strokeWidth={2.5} />
             <span className="text-sm">Health Analytics</span>
           </Link>
-          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
-            <History size={16} />
+          <Link to="/scan-history" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
+            <History size={18} />
             <span className="text-sm">Reports</span>
           </Link>
-          <Link to="/tips" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
-            <BookOpen size={16} />
-            <span className="text-sm">Medical Library</span>
+          <Link to="/ai-assistant" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
+            <MessageCircle size={18} />
+            <span className="text-sm">AI Assistant</span>
           </Link>
 
-          <div className="pt-8 mb-4">
-            <p className="px-4 mb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-left">System</p>
+          <div className="pt-6 mt-6 border-t border-white/5">
+            <p className="px-4 mb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Account</p>
             <button
-              onClick={() => navigate('/dashboard')}
-              className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group text-left"
+              onClick={() => setIsPreferencesOpen(true)}
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group text-left"
             >
-              <Settings size={16} />
+              <Settings size={18} />
               <span className="text-sm">Settings</span>
             </button>
           </div>

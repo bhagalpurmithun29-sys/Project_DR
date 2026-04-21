@@ -14,14 +14,14 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 
-const { upload } = require('../middleware/cloudinaryConfig');
+const { upload, formatFilePath } = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
 
 router.use(protect);
 
 router.route('/')
-    .post(authorize('doctor', 'technician', 'diagnosis_center'), upload.single('image'), createScan)
+    .post(authorize('doctor', 'technician', 'diagnosis_center'), upload.single('image'), formatFilePath, createScan)
     .get(authorize('doctor', 'diagnosis_center'), getScans);
 
 router.route('/:id')

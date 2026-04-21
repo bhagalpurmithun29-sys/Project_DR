@@ -31,7 +31,8 @@ import {
     ArrowUpRight,
     X,
     Check,
-    Phone
+    Phone,
+    MessageCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from '../components/PatientPreferencesModal';
@@ -226,9 +227,9 @@ const PatientDashboard = () => {
                         <History size={18} />
                         <span className="text-sm">Reports</span>
                     </Link>
-                    <Link to="/tips" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
-                        <BookOpen size={18} />
-                        <span className="text-sm">Medical Library</span>
+                    <Link to="/ai-assistant" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
+                        <MessageCircle size={18} />
+                        <span className="text-sm">AI Assistant</span>
                     </Link>
 
                     <div className="pt-6 mt-6 border-t border-white/5">

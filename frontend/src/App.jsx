@@ -24,7 +24,7 @@ import ProfileSetup from './pages/ProfileSetup';
 import DiabetesChatbot from './components/DiabetesChatbot';
 
 // Exact patient-only routes where the chatbot is allowed
-const PATIENT_ROUTES = ['/dashboard', '/analytics', '/scan-history', '/tips'];
+const PATIENT_ROUTES = ['/dashboard', '/analytics', '/scan-history'];
 
 /**
  * Renders the DiabetesChatbot ONLY when:
@@ -132,7 +132,7 @@ function App() {
                 }
               />
               <Route
-                path="/tips"
+                path="/ai-assistant"
                 element={
                   <RoleRoute allowedRoles={['patient']}>
                     <Tips />
