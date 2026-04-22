@@ -738,7 +738,35 @@ exports.deleteAccount = async (req, res) => {
  */
 exports.getDoctorsList = async (req, res) => {
     try {
-        const doctors = await Doctor.find().select('name email specialization photo');
+        // 1. Get all users with doctor role
+        const doctorUsers = await User.find({ role: 'doctor' });
+        
+        // 2. Get all existing doctor profiles
+        const profiles = await Doctor.find();
+        const profileMap = new Map(profiles.map(p => [p.user.toString(), p]));
+        
+        const doctors = [];
+        
+        // 3. Ensure every doctor user has a profile
+        for (const user of doctorUsers) {
+            let profile = profileMap.get(user._id.toString());
+            
+            if (!profile) {
+                // Auto-create basic profile if missing
+                profile = await Doctor.create({
+                    user: user._id,
+                    name: user.name,
+                    email: user.email,
+                    specialization: 'Ophthalmology',
+                    licenseNumber: `TEMP-${user._id.toString().substring(0, 8)}`,
+                    country: 'Unknown',
+                    experience: '0',
+                    phoneNumber: '0000000000'
+                });
+            }
+            doctors.push(profile);
+        }
+
         res.json({
             success: true,
             data: doctors

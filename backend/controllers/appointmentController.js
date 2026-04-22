@@ -25,10 +25,23 @@ exports.createAppointment = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Cannot book appointments in the past.' });
         }
 
-        // Check for double booking
-        const existing = await Appointment.findOne({ doctorId, date, time });
-        if (existing) {
+        // Check for double booking (same doctor, same time slot)
+        const existingSlot = await Appointment.findOne({ doctorId, date, time });
+        if (existingSlot) {
             return res.status(400).json({ success: false, message: 'This time slot is already booked for this doctor.' });
+        }
+
+        // Check if patient already has an active appointment with this doctor
+        const existingActive = await Appointment.findOne({ 
+            patientId, 
+            doctorId, 
+            status: { $in: ['pending', 'confirmed'] } 
+        });
+        if (existingActive) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'You already have an active appointment (pending or confirmed) with this doctor. You must wait for it to be completed or cancelled before booking again.' 
+            });
         }
 
         const appointment = await Appointment.create({
@@ -64,7 +77,7 @@ exports.createAppointment = async (req, res) => {
 exports.getPatientAppointments = async (req, res) => {
     try {
         let patientId = req.params.id;
-        
+
         // If "me" is passed, find the current patient's ID
         if (patientId === 'me') {
             const patientDoc = await Patient.findOne({ user: req.user._id });
@@ -91,7 +104,7 @@ exports.getDoctorAppointments = async (req, res) => {
         // If "me" is passed, find the current doctor's ID
         if (doctorId === 'me') {
             let doctorDoc = await Doctor.findOne({ user: req.user._id });
-            
+
             // Auto-create basic profile if missing for a user with 'doctor' role
             if (!doctorDoc && (req.user.role === 'doctor' || req.user.role === 'technician')) {
                 doctorDoc = await Doctor.create({
@@ -105,7 +118,7 @@ exports.getDoctorAppointments = async (req, res) => {
                     phoneNumber: '0000000000'
                 });
             }
-            
+
             if (!doctorDoc) return res.status(404).json({ success: false, message: 'Doctor profile not found' });
             doctorId = doctorDoc._id;
         }
