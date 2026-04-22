@@ -23,7 +23,9 @@ import {
   Search,
   ChevronDown,
   Info,
-  ShieldCheck
+  ShieldCheck,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -115,10 +117,19 @@ const AiAssistant = () => {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const autoSendTimeoutRef = useRef(null);
+  const inputValRef = useRef('');
+
+  // Keep inputValRef in sync with inputValue state
+  useEffect(() => {
+    inputValRef.current = inputValue;
+  }, [inputValue]);
 
   // Load profile
   useEffect(() => {
@@ -167,6 +178,10 @@ const AiAssistant = () => {
   };
 
   const sendMessage = async (text) => {
+    if (autoSendTimeoutRef.current) {
+      clearTimeout(autoSendTimeoutRef.current);
+      autoSendTimeoutRef.current = null;
+    }
     const trimmed = text.trim();
     if (!trimmed || isLoading) return;
 
@@ -212,6 +227,55 @@ const AiAssistant = () => {
       setMessages(prev => [...prev, errMsg]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const toggleListening = () => {
+    if (autoSendTimeoutRef.current) {
+      clearTimeout(autoSendTimeoutRef.current);
+      autoSendTimeoutRef.current = null;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInputValue(prev => (prev ? prev + " " + transcript : transcript));
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        // Start 3s auto-send timer if there is content
+        if (inputValRef.current.trim()) {
+          autoSendTimeoutRef.current = setTimeout(() => {
+            sendMessage(inputValRef.current);
+          }, 3000);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
     }
   };
 
@@ -387,6 +451,10 @@ const AiAssistant = () => {
                 rows={1}
                 value={inputValue}
                 onChange={(e) => {
+                  if (autoSendTimeoutRef.current) {
+                    clearTimeout(autoSendTimeoutRef.current);
+                    autoSendTimeoutRef.current = null;
+                  }
                   setInputValue(e.target.value);
                   e.target.style.height = 'auto';
                   e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
@@ -401,13 +469,27 @@ const AiAssistant = () => {
                 className="flex-1 bg-slate-50/50 border-none rounded-[2.5rem] px-8 py-5 text-base font-medium placeholder-slate-400 outline-none focus:ring-0 focus:bg-white transition-all resize-none overflow-hidden"
                 style={{ maxHeight: '150px', minHeight: '64px' }}
               />
-              <button
-                type="submit"
-                disabled={!inputValue.trim() || isLoading}
-                className="size-16 bg-primary text-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-primary/30 hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-30 disabled:scale-100 disabled:shadow-none shrink-0"
-              >
-                {isLoading ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} strokeWidth={2.5} />}
-              </button>
+              <div className="flex items-center gap-2 mb-1">
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  className={`size-14 rounded-2xl flex items-center justify-center transition-all ${
+                    isListening 
+                      ? 'bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-200' 
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
+                  title={isListening ? "Stop Listening" : "Start Voice Input"}
+                >
+                  {isListening ? <MicOff size={22} strokeWidth={2.5} /> : <Mic size={22} strokeWidth={2.5} />}
+                </button>
+                <button
+                  type="submit"
+                  disabled={!inputValue.trim() || isLoading}
+                  className="size-16 bg-primary text-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-primary/30 hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-30 disabled:scale-100 disabled:shadow-none shrink-0"
+                >
+                  {isLoading ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} strokeWidth={2.5} />}
+                </button>
+              </div>
             </form>
           </div>
         </div>
