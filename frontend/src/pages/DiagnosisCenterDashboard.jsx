@@ -1195,6 +1195,94 @@ const SettingsSection = ({ center, user, onCenterUpdate }) => {
     );
 };
 
+/* ── Appointments Section ── */
+const AppointmentsSection = () => {
+    const [appointments, setAppointments] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchApps = async () => {
+            try {
+                const res = await api.get('/appointments/center');
+                if (res.data.success) setAppointments(res.data.data);
+            } catch (err) {
+                console.error("Failed to fetch center appointments", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchApps();
+    }, []);
+
+    if (loading) return <div className="p-20 flex justify-center"><Loader2 className="animate-spin text-primary" size={30} /></div>;
+
+    return (
+        <div className="space-y-8">
+            <header className="flex justify-between items-end">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight italic uppercase">Scheduled <span className="text-primary not-italic">Appointments</span></h1>
+                    <p className="text-sm font-medium text-slate-400 mt-1">Global view of all patient-doctor consultations at this facility.</p>
+                </div>
+            </header>
+
+            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/30 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-slate-50/50">
+                            <tr>
+                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Patient</th>
+                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Doctor</th>
+                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Schedule</th>
+                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                            {appointments.length > 0 ? appointments.map((app) => (
+                                <tr key={app._id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center font-black text-[10px] text-primary">
+                                                {app.patientId?.name?.split(' ').map(n => n[0]).join('')}
+                                            </div>
+                                            <span className="text-sm font-black text-slate-900">{app.patientId?.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <span className="text-sm font-bold text-slate-600">Dr. {app.doctorId?.name}</span>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-black text-slate-900">{new Date(app.date).toLocaleDateString()}</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase">{app.time}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                            app.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                            app.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                            'bg-rose-50 text-rose-600 border-rose-100'
+                                        }`}>
+                                            {app.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <p className="text-xs font-medium text-slate-500 max-w-xs truncate">{app.reason || 'Regular checkup'}</p>
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="5" className="px-8 py-20 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">No appointments found</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 /* ═══════════════════════════════════════════════════
    MAIN DASHBOARD
 ═══════════════════════════════════════════════════ */
@@ -1212,6 +1300,7 @@ const DiagnosisCenterDashboard = () => {
         { id: 'patients', label: 'Patients', icon: Users, path: 'patients' },
         { id: 'scans', label: 'Scans', icon: Scan, path: 'scans' },
         { id: 'reports', label: 'Reports', icon: FileText, path: 'reports' },
+        { id: 'appointments', label: 'Appointments', icon: Calendar, path: 'appointments' },
         { id: 'analytics', label: 'Analytics', icon: BarChart2, path: 'analytics' },
         { id: 'settings', label: 'Settings', icon: Settings, path: 'settings' },
     ];

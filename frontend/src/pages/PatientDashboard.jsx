@@ -227,6 +227,10 @@ const PatientDashboard = () => {
                         <History size={18} />
                         <span className="text-sm">Reports</span>
                     </Link>
+                    <Link to="/appointments" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
+                        <Calendar size={18} />
+                        <span className="text-sm">Appointments</span>
+                    </Link>
                     <Link to="/ai-assistant" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
                         <MessageCircle size={18} />
                         <span className="text-sm">AI Assistant</span>

@@ -280,6 +280,10 @@ const DoctorScanHistory = () => {
                         <Activity size={16} strokeWidth={2.5} />
                         <span className="text-sm">Scan History</span>
                     </Link>
+                    <Link to="/doctor/appointments" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
+                        <Calendar size={16} />
+                        <span className="text-sm">Appointments</span>
+                    </Link>
                     <Link to="/doctor-profile" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
                         <User size={16} />
                         <span className="text-sm">Profile</span>

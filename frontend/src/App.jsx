@@ -22,9 +22,11 @@ import PatientReport from './pages/PatientReport';
 import DiagnosisCenterDashboard from './pages/DiagnosisCenterDashboard';
 import ProfileSetup from './pages/ProfileSetup';
 import DiabetesChatbot from './components/DiabetesChatbot';
+import PatientAppointments from './components/PatientAppointments';
+import DoctorAppointments from './components/DoctorAppointments';
 
 // Exact patient-only routes where the chatbot is allowed
-const PATIENT_ROUTES = ['/dashboard', '/analytics', '/reports'];
+const PATIENT_ROUTES = ['/dashboard', '/analytics', '/reports', '/appointments', '/ai-assistant'];
 
 /**
  * Renders the DiabetesChatbot ONLY when:
@@ -116,6 +118,14 @@ function App() {
                 }
               />
               <Route
+                path="/doctor/appointments"
+                element={
+                  <RoleRoute allowedRoles={['doctor']}>
+                    <DoctorAppointments />
+                  </RoleRoute>
+                }
+              />
+              <Route
                 path="/report/:id"
                 element={
                   <PrivateRoute>
@@ -128,6 +138,14 @@ function App() {
                 element={
                   <RoleRoute allowedRoles={['patient']}>
                     <PatientScanHistory />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/appointments"
+                element={
+                  <RoleRoute allowedRoles={['patient']}>
+                    <PatientAppointments />
                   </RoleRoute>
                 }
               />

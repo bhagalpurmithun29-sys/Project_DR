@@ -335,6 +335,10 @@ const DoctorDashboard = () => {
                         <Activity size={18} />
                         <span className="text-sm">Scan History</span>
                     </Link>
+                    <Link to="/doctor/appointments" className="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
+                        <Calendar size={18} />
+                        <span className="text-sm">Appointments</span>
+                    </Link>
                     <Link to="/doctor-profile" className="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
                         <User size={18} />
                         <span className="text-sm">Profile</span>
