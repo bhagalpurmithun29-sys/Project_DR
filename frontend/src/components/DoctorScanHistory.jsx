@@ -262,35 +262,35 @@ const DoctorScanHistory = () => {
             {/* Sidebar */}
             <aside className="fixed top-0 left-0 h-screen w-72 bg-sidebar border-r border-white/5 hidden lg:flex flex-col z-50">
                 <div className="p-8 pb-12 flex items-center gap-3">
-                    <div className="size-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
+                    <div className="size-11 bg-primary/20 rounded-xl flex items-center justify-center text-primary shadow-sm border border-primary/20">
                         <Activity size={24} strokeWidth={2.5} />
                     </div>
                     <div>
                         <h1 className="text-xl font-black tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Clinical Portal</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-1 text-primary">Clinical Portal</p>
                     </div>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto px-4 space-y-1 mt-6 custom-scrollbar">
-                    <Link to="/doctor-dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
-                        <LayoutDashboard size={16} />
+                <nav className="flex-1 overflow-y-auto px-4 space-y-1.5 custom-scrollbar">
+                    <Link to="/doctor-dashboard" className="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
+                        <LayoutDashboard size={18} />
                         <span className="text-sm">Dashboard</span>
                     </Link>
-                    <Link to="/doctor/scan-history" className="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-black shadow-lg shadow-primary/20 transition-all">
-                        <Activity size={16} strokeWidth={2.5} />
+                    <Link to="/doctor/scan-history" className="flex items-center gap-3 px-4 py-4 bg-primary text-white rounded-2xl font-black shadow-2xl shadow-primary/25 transition-all">
+                        <Activity size={18} strokeWidth={2.5} />
                         <span className="text-sm">Scan History</span>
                     </Link>
-                    <Link to="/doctor/appointments" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
-                        <Calendar size={16} />
+                    <Link to="/doctor/appointments" className="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
+                        <Calendar size={18} />
                         <span className="text-sm">Appointments</span>
                     </Link>
-                    <Link to="/doctor-profile" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
-                        <User size={16} />
+                    <Link to="/doctor-profile" className="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
+                        <User size={18} />
                         <span className="text-sm">Profile</span>
                     </Link>
                     <div className="pt-8 mb-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-left">System</div>
-                    <button onClick={() => setIsAlertsOpen(true)} className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group">
-                        <Bell size={16} />
+                    <button onClick={() => setIsAlertsOpen(true)} className="w-full flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group text-left">
+                        <Bell size={18} />
                         <span className="text-sm">Notifications</span>
                         {unreadNotifications > 0 && (
                             <span className="ml-auto size-5 bg-rose-500 text-white text-[10px] flex items-center justify-center rounded-lg font-black shadow-lg shadow-rose-500/20">
@@ -298,15 +298,15 @@ const DoctorScanHistory = () => {
                             </span>
                         )}
                     </button>
-                    <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all group text-left">
-                        <Settings size={16} />
+                    <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group text-left">
+                        <Settings size={18} />
                         <span className="text-sm">Settings</span>
                     </button>
                 </nav>
 
                 <div className="p-4 border-t border-white/5">
                     <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5">
-                        <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${profile?.photo ? (profile.photo.startsWith('http') ? profile.photo : `${api.defaults.baseURL.replace('/api', '')}${profile.photo}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
+                        <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${normalizeUrl(profile?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
                         <div className="flex-1 min-w-0 text-left">
                             <p className="text-xs font-black truncate text-white">Dr. {user?.name || 'Provider'}</p>
                             <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest text-left">Retina Specialist</p>

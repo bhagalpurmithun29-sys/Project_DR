@@ -172,7 +172,7 @@ const PatientAppointments = () => {
 
         <div className="p-4 border-t border-white/5">
           <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5 text-left">
-            <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${patient?.photo ? (patient.photo.startsWith('http') ? patient.photo : `${api.defaults.baseURL.replace('/api', '')}${patient.photo}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Patient')}&background=059669&color=fff&bold=true`})` }}></div>
+            <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${normalizeUrl(patient?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Patient')}&background=059669&color=fff&bold=true`})` }}></div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black truncate text-white">{user?.name || 'Patient'}</p>
               <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{patient?.patientId || 'Medical ID: 88A-29C'}</p>
@@ -232,7 +232,7 @@ const PatientAppointments = () => {
                       >
                         <td className="px-10 py-8">
                           <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-xl bg-cover bg-center border-2 border-slate-50 shadow-sm" style={{ backgroundImage: `url(${app.doctorId?.photo ? (app.doctorId.photo.startsWith('http') ? app.doctorId.photo : `${api.defaults.baseURL.replace('/api', '')}${app.doctorId.photo}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(app.doctorId?.name || 'Dr')}&background=059669&color=fff&bold=true`})` }}></div>
+                            <div className="size-10 rounded-xl bg-cover bg-center border-2 border-slate-50 shadow-sm" style={{ backgroundImage: `url(${normalizeUrl(app.doctorId?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.doctorId?.name || 'Dr')}&background=059669&color=fff&bold=true`})` }}></div>
                             <div>
                               <p className="text-sm font-black text-slate-900 leading-none">Dr. {app.doctorId?.name}</p>
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{app.doctorId?.specialization || 'Specialist'}</p>

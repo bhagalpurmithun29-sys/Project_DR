@@ -124,11 +124,11 @@ const DoctorAppointments = () => {
             <span className="text-sm">Profile</span>
           </Link>
           <div className="pt-8 mb-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">System</div>
-          <button onClick={() => setIsAlertsOpen(true)} className="w-full flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
+          <button onClick={() => setIsAlertsOpen(true)} className="w-full flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group text-left">
             <Bell size={18} />
             <span className="text-sm">Notifications</span>
           </button>
-          <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group">
+          <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl font-bold transition-all group text-left">
             <Settings size={18} />
             <span className="text-sm">Settings</span>
           </button>
@@ -136,7 +136,7 @@ const DoctorAppointments = () => {
 
         <div className="p-4 border-t border-white/5">
           <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5">
-            <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm" style={{ backgroundImage: `url(${profile?.photo ? (profile.photo.startsWith('http') ? profile.photo : `${api.defaults.baseURL.replace('/api', '')}${profile.photo}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
+            <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm" style={{ backgroundImage: `url(${normalizeUrl(profile?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black truncate text-white">Dr. {user?.name || "Provider"}</p>
               <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">Retina Specialist</p>

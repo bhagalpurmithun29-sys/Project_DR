@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation, Routes, Route, Navigate } from 'react-r
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Building2, Activity, LogOut, Users, Scan, MapPin, Phone, Mail,
-    Award, Settings, Calendar, ChevronRight, BarChart2, FileText,
+    Award, Settings, ChevronRight, BarChart2, FileText,
     Edit3, CheckCircle2, Plus, Search, Filter, Eye, Trash2, X,
     Lock, User, Bell, Shield, Camera, Loader2, AlertCircle,
     TrendingUp, Clock, RefreshCw, Save, ChevronDown, Hash,
@@ -152,7 +152,7 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate }) => {
                 className="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6 flex flex-wrap gap-6 items-center">
                 <div className="relative flex-shrink-0 group/avatar cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                     <div className="size-24 rounded-[1.25rem] border-4 border-white shadow-xl bg-cover bg-center overflow-hidden relative"
-                        style={{ backgroundImage: `url('${center?.photo ? (center.photo.startsWith('http') ? center.photo : `${api.defaults.baseURL.replace('/api', '')}${center.photo}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(center?.centerName || 'DC')}&background=059669&color=fff&bold=true&size=96`}')` }}>
+                        style={{ backgroundImage: `url('${center?.photo ? normalizeUrl(center.photo) : `https://ui-avatars.com/api/?name=${encodeURIComponent(center?.centerName || 'DC')}&background=059669&color=fff&bold=true&size=96`}')` }}>
                         <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-[2px]">
                             {isUploading ? <Loader2 className="animate-spin text-white" size={24} /> : <Camera className="text-white" size={24} />}
                         </div>
@@ -665,7 +665,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                     <div className="col-span-2 space-y-3">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Retinal Scan</label>
                                         <div className="aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-900 shadow-inner group relative">
-                                            <img src={selectedScan.imageUrl?.startsWith('http') ? selectedScan.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${selectedScan.imageUrl}`} alt="Retina" className="w-full h-full object-cover" />
+                                            <img src={normalizeUrl(selectedScan.imageUrl)} alt="Retina" className="w-full h-full object-cover" />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                                                 <p className="text-white text-[10px] font-black uppercase tracking-widest">{selectedScan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</p>
                                             </div>
@@ -1202,94 +1202,6 @@ const SettingsSection = ({ center, user, onCenterUpdate }) => {
     );
 };
 
-/* ── Appointments Section ── */
-const AppointmentsSection = () => {
-    const [appointments, setAppointments] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchApps = async () => {
-            try {
-                const res = await api.get('/appointments/center');
-                if (res.data.success) setAppointments(res.data.data);
-            } catch (err) {
-                console.error("Failed to fetch center appointments", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchApps();
-    }, []);
-
-    if (loading) return <div className="p-20 flex justify-center"><Loader2 className="animate-spin text-primary" size={30} /></div>;
-
-    return (
-        <div className="space-y-8">
-            <header className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight italic uppercase">Scheduled <span className="text-primary not-italic">Appointments</span></h1>
-                    <p className="text-sm font-medium text-slate-400 mt-1">Global view of all patient-doctor consultations at this facility.</p>
-                </div>
-            </header>
-
-            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/30 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50/50">
-                            <tr>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Patient</th>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Doctor</th>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Schedule</th>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Reason</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {appointments.length > 0 ? appointments.map((app) => (
-                                <tr key={app._id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center font-black text-[10px] text-primary">
-                                                {app.patientId?.name?.split(' ').map(n => n[0]).join('')}
-                                            </div>
-                                            <span className="text-sm font-black text-slate-900">{app.patientId?.name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <span className="text-sm font-bold text-slate-600">Dr. {app.doctorId?.name}</span>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-black text-slate-900">{new Date(app.date).toLocaleDateString()}</span>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase">{app.time}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                                            app.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                            app.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                            'bg-rose-50 text-rose-600 border-rose-100'
-                                        }`}>
-                                            {app.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <p className="text-xs font-medium text-slate-500 max-w-xs truncate">{app.reason || 'Regular checkup'}</p>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan="5" className="px-8 py-20 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">No appointments found</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 /* ═══════════════════════════════════════════════════
    MAIN DASHBOARD
 ═══════════════════════════════════════════════════ */
@@ -1307,7 +1219,6 @@ const DiagnosisCenterDashboard = () => {
         { id: 'patients', label: 'Patients', icon: Users, path: 'patients' },
         { id: 'scans', label: 'Scans', icon: Scan, path: 'scans' },
         { id: 'reports', label: 'Reports', icon: FileText, path: 'reports' },
-        { id: 'appointments', label: 'Appointments', icon: Calendar, path: 'appointments' },
         { id: 'analytics', label: 'Analytics', icon: BarChart2, path: 'analytics' },
         { id: 'settings', label: 'Settings', icon: Settings, path: 'settings' },
     ];
@@ -1382,7 +1293,7 @@ const DiagnosisCenterDashboard = () => {
                 <div className="p-3 border-t border-white/5">
                     <div className="bg-white/5 rounded-2xl p-3 flex items-center gap-3 border border-white/5">
                         <div className="size-9 rounded-full border-2 border-white/10 shadow-sm bg-cover bg-center flex-shrink-0"
-                            style={{ backgroundImage: `url('${avatarUrl.startsWith('http') ? avatarUrl : `${api.defaults.baseURL.replace('/api', '')}${avatarUrl}`}')` }} />
+                            style={{ backgroundImage: `url('${normalizeUrl(center?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(center?.centerName || user?.name || 'DC')}&background=137fec&color=fff&bold=true`}')` }} />
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-black truncate text-white" title={center?.centerName || user?.name}>
                                 {center?.centerName || user?.name}
@@ -1407,7 +1318,6 @@ const DiagnosisCenterDashboard = () => {
                             <Route path="patients" element={<PatientsSection patients={patients} onRefresh={fetchAll} />} />
                             <Route path="scans" element={<ScansSection scans={scans} patients={patients} onRefresh={fetchAll} />} />
                             <Route path="reports" element={<ReportsSection scans={scans} />} />
-                            <Route path="appointments" element={<AppointmentsSection />} />
                             <Route path="analytics" element={<AnalyticsSection scans={scans} patients={patients} />} />
                             <Route path="settings" element={<SettingsSection center={center} user={user} onCenterUpdate={setCenter} />} />
                         </Routes>

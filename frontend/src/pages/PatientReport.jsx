@@ -90,7 +90,7 @@ const PatientReport = () => {
             // Add Scan Image
             if (scan.imageUrl) {
                 try {
-                    const absoluteUrl = scan.imageUrl.startsWith('http') ? scan.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${scan.imageUrl}`;
+                    const absoluteUrl = normalizeUrl(scan.imageUrl);
                     const img = await loadImage(absoluteUrl);
                     doc.addImage(img, 'JPEG', 140, 40, 50, 50);
                     doc.setDrawColor(230);
