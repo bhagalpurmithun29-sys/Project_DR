@@ -53,7 +53,7 @@ const CentralAlertsModal = ({ isOpen, onClose }) => {
     const handleMarkOne = async (id) => {
         if (readIds.has(id)) return;
         try {
-            await api.put(`/notifications/${id}/read`);
+            await api.put(`/notifications/${id}`);
             setReadIds(prev => new Set([...prev, id]));
             setAlerts(prev => prev.map(a => a._id === id ? { ...a, isRead: true } : a));
         } catch { /* silent */ }

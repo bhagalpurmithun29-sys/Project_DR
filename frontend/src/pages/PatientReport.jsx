@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { normalizeUrl } from '../services/api';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -353,7 +353,7 @@ const PatientReport = () => {
                             className="bg-slate-950 rounded-[2.5rem] p-4 shadow-2xl overflow-hidden relative group"
                         >
                             <img
-                                src={scan.imageUrl ? (scan.imageUrl.startsWith('http') ? scan.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${scan.imageUrl}`) : "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
+                                src={normalizeUrl(scan.imageUrl) || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
                                 alt="Retina Scan"
                                 className="w-full aspect-square object-cover rounded-[2rem] border border-white/5 opacity-90 group-hover:scale-105 transition-transform duration-700"
                             />
@@ -541,7 +541,7 @@ const PatientReport = () => {
                         </div>
                         {scan.imageUrl && (
                             <div className="print-image-box">
-                                <img src={scan.imageUrl.startsWith('http') ? scan.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${scan.imageUrl}`} className="print-image" alt="Retina Scan" />
+                                <img src={normalizeUrl(scan.imageUrl)} className="print-image" alt="Retina Scan" />
                                 <p className="print-image-caption">{scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</p>
                             </div>
                         )}

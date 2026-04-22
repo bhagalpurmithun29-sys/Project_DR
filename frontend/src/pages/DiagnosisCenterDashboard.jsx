@@ -10,17 +10,24 @@ import {
     Download, Printer, CheckSquare, Upload, List
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
-import api from '../services/api';
+import api, { normalizeUrl } from '../services/api';
 import { SECURITY_QUESTIONS } from '../constants/securityQuestions';
 import DeleteAccountSection from '../components/DeleteAccountSection';
 
 /* ─── tiny helpers ─────────────────────────────────── */
-const Avatar = ({ name, photo, size = 10 }) => (
-    <div
-        className={`size-${size} rounded-full bg-cover bg-center border-2 border-white shadow-sm flex-shrink-0`}
-        style={{ backgroundImage: `url('${photo ? (photo.startsWith('http') ? photo : `${api.defaults.baseURL.replace('/api', '')}${photo}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=059669&color=fff&bold=true`}')` }}
-    />
-);
+const Avatar = ({ name, photo, size = 10 }) => {
+    const [imgError, setImgError] = useState(false);
+    const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=059669&color=fff&bold=true`;
+    const src = (!imgError && photo) ? normalizeUrl(photo) : fallback;
+    
+    return (
+        <div
+            className={`size-${size} rounded-full bg-cover bg-center border-2 border-white shadow-sm flex-shrink-0`}
+            style={{ backgroundImage: `url('${src}')` }}
+            onError={() => setImgError(true)}
+        />
+    );
+};
 
 const Badge = ({ children, color = 'emerald' }) => {
     const map = { emerald: 'bg-primary/10 text-primary border-primary/20', green: 'bg-primary/10 text-primary border-primary/20', red: 'bg-red-50 text-red-600 border-red-100', amber: 'bg-amber-50 text-amber-600 border-amber-100', slate: 'bg-slate-50 text-slate-500 border-slate-100' };
@@ -1400,6 +1407,7 @@ const DiagnosisCenterDashboard = () => {
                             <Route path="patients" element={<PatientsSection patients={patients} onRefresh={fetchAll} />} />
                             <Route path="scans" element={<ScansSection scans={scans} patients={patients} onRefresh={fetchAll} />} />
                             <Route path="reports" element={<ReportsSection scans={scans} />} />
+                            <Route path="appointments" element={<AppointmentsSection />} />
                             <Route path="analytics" element={<AnalyticsSection scans={scans} patients={patients} />} />
                             <Route path="settings" element={<SettingsSection center={center} user={user} onCenterUpdate={setCenter} />} />
                         </Routes>

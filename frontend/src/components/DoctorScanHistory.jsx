@@ -28,7 +28,7 @@ import scanService from '../services/scanService';
 import doctorService from '../services/doctorService';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../services/api';
+import api, { normalizeUrl } from '../services/api';
 import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
 
 
@@ -601,7 +601,7 @@ const DoctorScanHistory = () => {
                                 {/* Image Section */}
                                 <div className="md:w-1/2 bg-slate-950 flex items-center justify-center p-4 relative min-h-[300px]">
                                     <img
-                                        src={selectedScan.imageUrl ? (selectedScan.imageUrl.startsWith('http') ? selectedScan.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${selectedScan.imageUrl}`) : "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
+                                        src={normalizeUrl(selectedScan.imageUrl) || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
                                         alt="Retinal Fundus"
                                         className="max-w-full max-h-full rounded-2xl shadow-2xl border border-white/5"
                                     />

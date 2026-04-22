@@ -9,10 +9,12 @@ const Doctor = require('../models/Doctor');
 exports.createAppointment = async (req, res) => {
     try {
         const { doctorId, date, time, reason } = req.body;
-        const patientId = req.user.patientId; // Assuming req.user has patientId for patient role
+        // Find patient document for this user
+        const patientDoc = await Patient.findOne({ user: req.user._id });
+        const patientId = patientDoc?._id;
 
         if (!patientId) {
-            return res.status(403).json({ success: false, message: 'Only patients can book appointments.' });
+            return res.status(403).json({ success: false, message: 'Only registered patients can book appointments.' });
         }
 
         // Validate date is not in past
@@ -39,14 +41,16 @@ exports.createAppointment = async (req, res) => {
         });
 
         // Notify Doctor
-        const patient = await Patient.findById(patientId);
-        await Notification.create({
-            recipientId: doctorId,
-            recipientType: 'Doctor',
-            title: 'New Appointment Request',
-            message: `You have a new appointment request from ${patient.name} for ${date} at ${time}.`,
-            type: 'Appointment'
-        });
+        const doctor = await Doctor.findById(doctorId);
+        if (doctor && doctor.user) {
+            await Notification.create({
+                user: doctor.user,
+                title: 'New Appointment Request',
+                message: `You have a new appointment request from ${patientDoc.name} for ${date} at ${time}.`,
+                type: 'Appointment',
+                relatedId: appointment._id
+            });
+        }
 
         res.status(201).json({ success: true, data: appointment });
     } catch (err) {
@@ -59,7 +63,16 @@ exports.createAppointment = async (req, res) => {
 // @access  Private
 exports.getPatientAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find({ patientId: req.params.id })
+        let patientId = req.params.id;
+        
+        // If "me" is passed, find the current patient's ID
+        if (patientId === 'me') {
+            const patientDoc = await Patient.findOne({ user: req.user._id });
+            if (!patientDoc) return res.status(404).json({ success: false, message: 'Patient profile not found' });
+            patientId = patientDoc._id;
+        }
+
+        const appointments = await Appointment.find({ patientId })
             .populate('doctorId', 'name specialization photo')
             .sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: appointments });
@@ -73,7 +86,31 @@ exports.getPatientAppointments = async (req, res) => {
 // @access  Private
 exports.getDoctorAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find({ doctorId: req.params.id })
+        let doctorId = req.params.id;
+
+        // If "me" is passed, find the current doctor's ID
+        if (doctorId === 'me') {
+            let doctorDoc = await Doctor.findOne({ user: req.user._id });
+            
+            // Auto-create basic profile if missing for a user with 'doctor' role
+            if (!doctorDoc && (req.user.role === 'doctor' || req.user.role === 'technician')) {
+                doctorDoc = await Doctor.create({
+                    user: req.user._id,
+                    name: req.user.name,
+                    email: req.user.email,
+                    specialization: 'Ophthalmology',
+                    licenseNumber: `TEMP-${req.user._id.toString().substring(0, 8)}`,
+                    country: 'Unknown',
+                    experience: '0',
+                    phoneNumber: '0000000000'
+                });
+            }
+            
+            if (!doctorDoc) return res.status(404).json({ success: false, message: 'Doctor profile not found' });
+            doctorId = doctorDoc._id;
+        }
+
+        const appointments = await Appointment.find({ doctorId })
             .populate('patientId', 'name photo patientId')
             .sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: appointments });
@@ -118,13 +155,16 @@ exports.updateAppointmentStatus = async (req, res) => {
         await appointment.save();
 
         // Notify Patient
-        await Notification.create({
-            recipientId: appointment.patientId,
-            recipientType: 'Patient',
-            title: `Appointment ${status.charAt(0).toUpperCase() + status.slice(1)}`,
-            message: `Your appointment for ${appointment.date} at ${appointment.time} has been ${status}.`,
-            type: 'Appointment'
-        });
+        const patient = await Patient.findById(appointment.patientId);
+        if (patient && patient.user) {
+            await Notification.create({
+                user: patient.user,
+                title: `Appointment ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+                message: `Your appointment for ${appointment.date} at ${appointment.time} has been ${status}.`,
+                type: 'Appointment',
+                relatedId: appointment._id
+            });
+        }
 
         res.status(200).json({ success: true, data: appointment });
     } catch (err) {

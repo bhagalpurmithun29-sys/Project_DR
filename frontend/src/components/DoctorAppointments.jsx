@@ -43,8 +43,8 @@ const DoctorAppointments = () => {
   const fetchData = async () => {
     try {
       const [profileRes, appRes] = await Promise.all([
-        api.get('/doctors/me'),
-        appointmentService.getDoctorAppointments(user.id)
+        api.get('/doctors/profile'),
+        appointmentService.getDoctorAppointments('me')
       ]);
       if (profileRes.data.success) setProfile(profileRes.data.data);
       if (appRes.success) setAppointments(appRes.data);

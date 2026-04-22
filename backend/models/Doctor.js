@@ -6,6 +6,10 @@ const doctorSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    name: {
+        type: String,
+        required: true
+    },
     licenseNumber: {
         type: String,
         required: [true, 'Please add a medical license number'],

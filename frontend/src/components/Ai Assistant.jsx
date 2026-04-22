@@ -25,7 +25,8 @@ import {
   Info,
   ShieldCheck,
   Mic,
-  MicOff
+  MicOff,
+  Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

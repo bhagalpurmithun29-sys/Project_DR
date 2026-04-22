@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import patientService from "../services/patientService";
-import api from "../services/api";
+import api, { normalizeUrl } from "../services/api";
 import {
   Eye,
   LayoutDashboard,
@@ -370,7 +370,7 @@ const DetailedScanHistory = () => {
                       </div>
 
                       <div className="aspect-[16/10] bg-white rounded-2xl border border-slate-100 shadow-inner overflow-hidden group-hover:scale-[1.02] transition-transform duration-500">
-                        <img src={row.imageUrl ? (row.imageUrl.startsWith('http') ? row.imageUrl : `${api.defaults.baseURL.replace('/api', '')}${row.imageUrl}`) : "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=500&auto=format"} alt="Fundus Scan" className="w-full h-full object-cover p-2 rounded-[2rem]" />
+                        <img src={normalizeUrl(row.imageUrl) || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=500&auto=format"} alt="Fundus Scan" className="w-full h-full object-cover p-2 rounded-[2rem]" />
                       </div>
 
                       <div className="space-y-4">

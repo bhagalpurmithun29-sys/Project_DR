@@ -20,7 +20,7 @@ import {
     MoreHorizontal,
     Filter,
     ArrowUpRight,
-    Zap, X
+    Zap, X, Calendar
 } from 'lucide-react';
 import CentralAlertsModal from '../components/CentralAlertsModal';
 import NodeSettingsModal from '../components/NodeSettingsModal';
@@ -207,15 +207,15 @@ const DoctorDashboard = () => {
     }));
 
     const filteredPatients = patients.filter(p =>
-        p.name?.toLowerCase().includes(search.toLowerCase()) ||
-        p.email?.toLowerCase().includes(search.toLowerCase()) ||
-        p.phoneNumber?.includes(search)
+        (p.name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+        (p.email?.toLowerCase() || '').includes(search.toLowerCase()) ||
+        (p.phoneNumber || '').includes(search)
     );
 
     const filteredScans = scans.filter(s =>
-        s.patient?.name?.toLowerCase().includes(search.toLowerCase()) ||
-        s.aiResult?.toLowerCase().includes(search.toLowerCase()) ||
-        s.status?.toLowerCase().includes(search.toLowerCase())
+        (s.patient?.name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+        (s.aiResult?.toLowerCase() || '').includes(search.toLowerCase()) ||
+        (s.status?.toLowerCase() || '').includes(search.toLowerCase())
     );
 
     const SearchResults = () => {

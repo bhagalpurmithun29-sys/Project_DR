@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import patientService from '../services/patientService';
-import api from '../services/api';
+import api, { normalizeUrl } from '../services/api';
 import notificationService from '../services/notificationService';
 import {
     Eye,
@@ -595,7 +595,7 @@ const PatientDashboard = () => {
                                     Latest Fundus Scan
                                 </h4>
                                 <div className="aspect-[4/5] w-full rounded-[2rem] bg-slate-100 dark:bg-slate-800 relative overflow-hidden group/img cursor-zoom-in">
-                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url('${scans[0]?.imageUrl ? (scans[0].imageUrl.startsWith('http') ? scans[0].imageUrl : `${api.defaults.baseURL.replace('/api', '')}${scans[0].imageUrl}`) : "/stage1.jpeg"}')` }}></div>
+                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url('${normalizeUrl(scans[0]?.imageUrl) || "/stage1.jpeg"}')` }}></div>
                                     <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                                         <div className="bg-white dark:bg-slate-900 text-primary p-4 rounded-2xl shadow-2xl scale-50 group-hover/img:scale-100 transition-transform duration-500">
                                             <ZoomIn size={24} strokeWidth={2.5} />

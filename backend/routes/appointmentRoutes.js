@@ -17,6 +17,7 @@ router.route('/')
 
 router.get('/patient/:id', getPatientAppointments);
 router.get('/doctor/:id', getDoctorAppointments);
+router.get('/center', getAllAppointments);
 router.patch('/:id', updateAppointmentStatus);
 
 module.exports = router;

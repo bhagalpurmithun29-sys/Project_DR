@@ -85,6 +85,15 @@ exports.registerUser = async (req, res) => {
                     email: user.email,
                 });
             }
+            // If doctor → create Doctor profile
+            if (user.role === 'doctor') {
+                await Doctor.create({
+                    user: user._id,
+                    name: user.name,
+                    email: user.email,
+                    specialization: 'retina' // Default
+                });
+            }
 
             res.status(201).json({
                 success: true,
@@ -503,6 +512,14 @@ exports.googleLogin = async (req, res) => {
                     email: user.email,
                 });
             }
+            if (user.role === 'doctor') {
+                await Doctor.create({
+                    user: user._id,
+                    name: user.name,
+                    email: user.email,
+                    specialization: 'retina'
+                });
+            }
         } else {
             // --- Role Validation Check for existing Google users ---
             if (role) {
@@ -721,7 +738,7 @@ exports.deleteAccount = async (req, res) => {
  */
 exports.getDoctorsList = async (req, res) => {
     try {
-        const doctors = await User.find({ role: 'doctor' }).select('name email avatar');
+        const doctors = await Doctor.find().select('name email specialization photo');
         res.json({
             success: true,
             data: doctors

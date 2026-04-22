@@ -60,8 +60,8 @@ const PatientAppointments = () => {
       if (patientRes.success) {
         setPatient(patientRes.data);
         const [appRes, docRes] = await Promise.all([
-          appointmentService.getPatientAppointments(patientRes.data._id),
-          api.get('/auth/doctors') // Using the same endpoint as in DiagnosisCenterDashboard
+          appointmentService.getPatientAppointments('me'),
+          api.get('/auth/doctors')
         ]);
         if (appRes.success) setAppointments(appRes.data);
         if (docRes.data.success) setDoctors(docRes.data.data);

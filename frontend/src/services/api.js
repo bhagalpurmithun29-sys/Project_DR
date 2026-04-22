@@ -77,4 +77,16 @@ api.interceptors.response.use(
     }
 );
 
+export const normalizeUrl = (url) => {
+    if (!url) return null;
+    // Handle Cloudinary failure: convert to local upload path if it matches our pattern
+    if (url.startsWith('http') && url.includes('cloudinary.com')) {
+        const filename = url.split('/').pop();
+        const baseUrl = resolveApiBaseUrl().replace('/api', '');
+        return `${baseUrl}/uploads/${filename}`;
+    }
+    const baseUrl = resolveApiBaseUrl().replace('/api', '');
+    return url.startsWith('http') ? url : `${baseUrl}${url}`;
+};
+
 export default api;
