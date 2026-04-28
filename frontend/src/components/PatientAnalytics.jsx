@@ -274,10 +274,6 @@ export default function PatientAnalytics() {
                   <div className={`p-4 rounded-2xl ${card.iconBg} ${card.iconColor} shadow-sm border border-white`}>
                     <card.icon size={22} strokeWidth={2.5} />
                   </div>
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${card.trendUp ? 'bg-primary/10 text-primary' : 'bg-rose-50 text-rose-600'}`}>
-                    {card.trendUp ? <TrendingUp size={12} /> : <AlertCircle size={12} />}
-                    {card.trend}
-                  </div>
                 </div>
                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{card.label}</p>
                 <div className="flex items-end gap-1.5">
