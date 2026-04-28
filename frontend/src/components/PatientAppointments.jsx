@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import patientService from "../services/patientService";
 import appointmentService from "../services/appointmentService";
 import doctorService from "../services/doctorService";
-import api from "../services/api";
+import api, { normalizeUrl } from "../services/api";
 import {
   Eye,
   LayoutDashboard,

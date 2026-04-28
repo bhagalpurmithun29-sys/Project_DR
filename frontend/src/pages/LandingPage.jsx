@@ -410,7 +410,7 @@ export default function LandingPage() {
                   transition={{ delay: 0.2 }}
                   className="mt-6 text-lg text-slate-500 font-medium leading-relaxed"
                 >
-                  Proprietary neural networks trained on millions of clinical markers to deliver instant precision in ophthalmology.
+                  Proprietary neural networks trained on millions of clinical markers to deliver instant precision in Retina.
                 </motion.p>
               </div>
 

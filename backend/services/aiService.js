@@ -38,7 +38,7 @@ const generateClinicalSummary = async (scanData) => {
         const response = await axios.post(url, {
             model: "llama-3.3-70b-versatile",
             messages: [
-                { role: "system", content: "You are a Doctor medical assistant specializing in ophthalmology." },
+                { role: "system", content: "You are a Doctor medical assistant specializing in Retina." },
                 { role: "user", content: prompt }
             ],
             temperature: 0.1,

@@ -192,7 +192,7 @@ const Register = () => {
 
                         <div className="mb-10">
                             <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Create Account</h2>
-                            <p className="text-lg font-medium text-slate-500">Join the next generation of AI-powered ophthalmology.</p>
+                            <p className="text-lg font-medium text-slate-500">Join the next generation of AI-powered Retina.</p>
                         </div>
 
                         {error && <div className="p-4 mb-8 text-sm font-bold text-red-600 bg-red-50 border border-red-100 rounded-2xl">{error}</div>}
@@ -207,8 +207,8 @@ const Register = () => {
                                         whileHover={{ y: -4 }}
                                         onClick={() => setRole('patient')}
                                         className={`cursor-pointer group relative p-5 rounded-3xl transition-all duration-300 shadow-sm ${role === 'patient'
-                                                ? 'border-slate-900 bg-white ring-4 ring-primary/20'
-                                                : 'border-white bg-white/40 hover:border-slate-200'
+                                            ? 'border-slate-900 bg-white ring-4 ring-primary/20'
+                                            : 'border-white bg-white/40 hover:border-slate-200'
                                             }`}
                                     >
                                         <div className="flex items-start justify-between mb-4">
@@ -228,8 +228,8 @@ const Register = () => {
                                         whileHover={{ y: -4 }}
                                         onClick={() => setRole('doctor')}
                                         className={`cursor-pointer group relative p-5 rounded-3xl transition-all duration-300 shadow-sm ${role === 'doctor'
-                                                ? 'border-slate-900 bg-white ring-4 ring-primary/20'
-                                                : 'border-white bg-white/40 hover:border-slate-200'
+                                            ? 'border-slate-900 bg-white ring-4 ring-primary/20'
+                                            : 'border-white bg-white/40 hover:border-slate-200'
                                             }`}
                                     >
                                         <div className="flex items-start justify-between mb-4">
@@ -249,8 +249,8 @@ const Register = () => {
                                         whileHover={{ y: -4 }}
                                         onClick={() => setRole('diagnosis_center')}
                                         className={`cursor-pointer group relative p-5 rounded-3xl transition-all duration-300 shadow-sm ${role === 'diagnosis_center'
-                                                ? 'border-slate-900 bg-white ring-4 ring-primary/20'
-                                                : 'border-white bg-white/40 hover:border-slate-200'
+                                            ? 'border-slate-900 bg-white ring-4 ring-primary/20'
+                                            : 'border-white bg-white/40 hover:border-slate-200'
                                             }`}
                                     >
                                         <div className="flex items-start justify-between mb-4">

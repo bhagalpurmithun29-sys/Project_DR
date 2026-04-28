@@ -3,74 +3,82 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     MessageCircle, X, Send, Bot, User, Loader2,
     RefreshCw, ChevronDown, Sparkles, AlertCircle,
-    Activity, Heart, Droplets
+    Activity, Heart, Droplets, Mic, MicOff,
+    Info, ShieldCheck
 } from 'lucide-react';
 import api from '../services/api';
 
 // ─── Suggested Starter Questions ────────────────────────────────────────────
 const SUGGESTED_QUESTIONS = [
-    "What are early signs of diabetic retinopathy?",
-    "How do I manage my blood sugar levels daily?",
-    "What foods should diabetics avoid?",
-    "What is HbA1c and what's a normal range?",
-    "How does insulin resistance develop?",
+    { text: "What is NPDR?",                 category: "Education",   icon: Info,        color: "text-blue-500",   bg: "bg-blue-50",   border: "border-blue-100"   },
+    { text: "How to prevent vision loss?",   category: "Prevention",  icon: ShieldCheck, color: "text-emerald-500",bg: "bg-emerald-50",border: "border-emerald-100"},
+    { text: "Explain HbA1c levels",          category: "Vitals",      icon: Droplets,    color: "text-rose-500",   bg: "bg-rose-50",   border: "border-rose-100"   },
+    { text: "Symptoms of PDR stage",         category: "Symptoms",    icon: AlertCircle, color: "text-amber-500",  bg: "bg-amber-50",  border: "border-amber-100"  },
+    { text: "Diabetic diet tips",            category: "Lifestyle",   icon: Heart,       color: "text-purple-500", bg: "bg-purple-50", border: "border-purple-100" },
+    { text: "Signs of high blood sugar",     category: "Awareness",   icon: Activity,    color: "text-primary",    bg: "bg-primary/5", border: "border-primary/10" },
 ];
 
-// ─── Message Bubble ──────────────────────────────────────────────────────────
-const MessageBubble = ({ message, isLast }) => {
+// ─── Message Bubble (matches Ai Assistant style) ─────────────────────────────
+const MessageBubble = ({ message }) => {
     const isUser = message.role === 'user';
     return (
         <motion.div
-            initial={{ opacity: 0, y: 12, scale: 0.97 }}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className={`flex items-end gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+            transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
+            className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
         >
             {/* Avatar */}
-            <div className={`shrink-0 size-7 rounded-xl flex items-center justify-center shadow-sm ${
+            <div className={`shrink-0 size-8 rounded-xl flex items-center justify-center shadow-md ${
                 isUser
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                    ? 'bg-primary text-white shadow-primary/20'
+                    : 'bg-white text-primary border border-primary/10 shadow-slate-200'
             }`}>
-                {isUser ? <User size={13} strokeWidth={2.5} /> : <Bot size={13} strokeWidth={2.5} />}
+                {isUser ? <User size={14} strokeWidth={2.5} /> : <Bot size={14} strokeWidth={2.5} />}
             </div>
 
             {/* Bubble */}
-            <div className={`max-w-[78%] rounded-2xl px-4 py-3 shadow-sm text-sm leading-relaxed ${
-                isUser
-                    ? 'bg-emerald-500 text-white rounded-br-sm'
-                    : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-700 rounded-bl-sm'
-            }`}>
-                <p className="whitespace-pre-wrap break-words">{message.text}</p>
-                <p className={`text-[10px] mt-1.5 font-medium ${
-                    isUser ? 'text-emerald-100 text-right' : 'text-slate-400 dark:text-slate-500'
+            <div className={`max-w-[78%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+                <div className={`relative rounded-[1.5rem] px-4 py-3 shadow-lg transition-all ${
+                    isUser
+                        ? 'bg-primary text-white rounded-tr-none shadow-primary/10'
+                        : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none shadow-slate-200/50'
                 }`}>
-                    {message.time}
-                </p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words font-medium">
+                        {message.text}
+                    </p>
+                </div>
+                <div className={`flex items-center gap-1.5 mt-1.5 px-1 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{message.time}</p>
+                    <div className="size-1 bg-slate-300 rounded-full" />
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${isUser ? 'text-primary' : 'text-slate-500'}`}>
+                        {isUser ? 'You' : 'AI Assistant'}
+                    </p>
+                </div>
             </div>
         </motion.div>
     );
 };
 
-// ─── Typing Indicator ────────────────────────────────────────────────────────
+// ─── Typing Indicator (matches Ai Assistant style) ───────────────────────────
 const TypingIndicator = () => (
     <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
-        className="flex items-end gap-2.5"
+        className="flex items-start gap-3"
     >
-        <div className="shrink-0 size-7 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
-            <Bot size={13} className="text-white" strokeWidth={2.5} />
+        <div className="shrink-0 size-8 rounded-xl bg-white text-primary border border-primary/10 flex items-center justify-center shadow-md">
+            <Bot size={14} strokeWidth={2.5} />
         </div>
-        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+        <div className="bg-white border border-slate-100 rounded-[1.5rem] rounded-tl-none px-5 py-3 shadow-lg">
             <div className="flex items-center gap-1.5">
                 {[0, 1, 2].map(i => (
                     <motion.div
                         key={i}
-                        className="size-2 bg-indigo-400 rounded-full"
-                        animate={{ y: [0, -5, 0] }}
-                        transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+                        className="size-2 bg-primary rounded-full"
+                        animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 1, repeat: Infinity, delay: i * 0.2, ease: 'easeInOut' }}
                     />
                 ))}
             </div>
@@ -80,26 +88,30 @@ const TypingIndicator = () => (
 
 // ─── Main Chatbot Component ──────────────────────────────────────────────────
 const DiabetesChatbot = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [inputValue, setInputValue] = useState('');
-    const [messages, setMessages] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isOpen, setIsOpen]           = useState(false);
+    const [inputValue, setInputValue]   = useState('');
+    const [messages, setMessages]       = useState([]);
+    const [isLoading, setIsLoading]     = useState(false);
     const [showScrollBtn, setShowScrollBtn] = useState(false);
-    const [hasUnread, setHasUnread] = useState(false);
-    const messagesEndRef = useRef(null);
-    const messagesContainerRef = useRef(null);
-    const inputRef = useRef(null);
+    const [hasUnread, setHasUnread]     = useState(false);
+    const [isListening, setIsListening] = useState(false);
+
+    const messagesEndRef        = useRef(null);
+    const messagesContainerRef  = useRef(null);
+    const inputRef              = useRef(null);
+    const recognitionRef        = useRef(null);
+
+    const formatTime = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     // Welcome message on first open
     useEffect(() => {
         if (isOpen && messages.length === 0) {
-            const welcome = {
+            setMessages([{
                 role: 'model',
-                text: "👋 Hello! I'm **DiabetesAI**, your specialized diabetes health assistant.\n\nI can help you with questions about blood sugar management, diabetic retinopathy, medications, diet, symptoms, and more.\n\nWhat would you like to know about diabetes today?",
+                text: `👋 Hello! I'm your RetinaAI Diabetes Assistant.\n\nI can help you understand your diagnostic reports, explain the different stages of Diabetic Retinopathy, and provide evidence-based guidance on blood sugar management and eye health.\n\nWhat would you like to know today?`,
                 time: formatTime(new Date()),
                 id: 'welcome',
-            };
-            setMessages([welcome]);
+            }]);
         }
         if (isOpen) {
             setHasUnread(false);
@@ -107,7 +119,7 @@ const DiabetesChatbot = () => {
         }
     }, [isOpen]);
 
-    // Auto-scroll to bottom
+    // Auto-scroll
     const scrollToBottom = useCallback((behavior = 'smooth') => {
         messagesEndRef.current?.scrollIntoView({ behavior });
     }, []);
@@ -116,91 +128,83 @@ const DiabetesChatbot = () => {
         if (isOpen) scrollToBottom();
     }, [messages, isOpen, isLoading]);
 
-    // Track scroll position for scroll-to-bottom button
     const handleScroll = () => {
         const el = messagesContainerRef.current;
         if (!el) return;
-        const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-        setShowScrollBtn(distFromBottom > 100);
+        setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 100);
     };
 
-    const formatTime = (date) =>
-        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // Voice recognition (matches Ai Assistant)
+    const toggleListening = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        if (isListening) {
+            recognitionRef.current?.stop();
+            setIsListening(false);
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (e) => {
+            const transcript = e.results[0][0].transcript;
+            setInputValue(prev => prev ? `${prev} ${transcript}` : transcript);
+        };
+        recognition.onend  = () => setIsListening(false);
+        recognition.onerror = () => setIsListening(false);
+
+        recognitionRef.current = recognition;
+        recognition.start();
+        setIsListening(true);
+    };
 
     const sendMessage = async (text) => {
         const trimmed = text.trim();
         if (!trimmed || isLoading) return;
 
-        const userMsg = {
-            role: 'user',
-            text: trimmed,
-            time: formatTime(new Date()),
-            id: Date.now(),
-        };
-
+        const userMsg = { role: 'user', text: trimmed, time: formatTime(new Date()), id: Date.now() };
         setMessages(prev => [...prev, userMsg]);
         setInputValue('');
         setIsLoading(true);
 
-        // Build history for context (exclude welcome msg, max 8 turns)
         const history = messages
             .filter(m => m.id !== 'welcome')
             .slice(-8)
             .map(m => ({ role: m.role, text: m.text }));
 
         try {
-            const res = await api.post('/chat/message', {
-                message: trimmed,
-                history,
-            });
-
-            const botMsg = {
+            const res = await api.post('/chat/message', { message: trimmed, history });
+            setMessages(prev => [...prev, {
                 role: 'model',
                 text: res.data.reply,
                 time: formatTime(new Date()),
                 id: Date.now() + 1,
-            };
-            setMessages(prev => [...prev, botMsg]);
+            }]);
             if (!isOpen) setHasUnread(true);
         } catch (err) {
-            const errText = err.response?.data?.message || 'Something went wrong. Please try again.';
-            const errMsg = {
+            setMessages(prev => [...prev, {
                 role: 'model',
-                text: `⚠️ ${errText}`,
+                text: `⚠️ ${err.response?.data?.message || 'Something went wrong. Please try again.'}`,
                 time: formatTime(new Date()),
                 id: Date.now() + 1,
                 isError: true,
-            };
-            setMessages(prev => [...prev, errMsg]);
+            }]);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        sendMessage(inputValue);
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage(inputValue);
-        }
-    };
-
     const clearChat = () => {
-        setMessages([]);
-        setTimeout(() => {
-            // Trigger welcome message again
-            const welcome = {
-                role: 'model',
-                text: "Chat cleared! I'm DiabetesAI. How can I help you with your diabetes questions?",
-                time: formatTime(new Date()),
-                id: 'welcome-new',
-            };
-            setMessages([welcome]);
-        }, 100);
+        setMessages([{
+            role: 'model',
+            text: "Chat cleared! I'm your RetinaAI Diabetes Assistant. How can I help you today?",
+            time: formatTime(new Date()),
+            id: 'welcome-new',
+        }]);
     };
 
     return (
@@ -213,10 +217,10 @@ const DiabetesChatbot = () => {
                             initial={{ opacity: 0, y: 10, scale: 0.9 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 shadow-xl max-w-[200px]"
+                            className="bg-white border border-slate-200 rounded-2xl px-4 py-2.5 shadow-xl max-w-[200px]"
                         >
-                            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 leading-tight">
-                                🩺 Ask about <span className="text-emerald-600 font-black">diabetes</span>
+                            <p className="text-[11px] font-bold text-slate-500 leading-tight">
+                                🩺 Ask about <span className="text-primary font-black">diabetes</span>
                             </p>
                         </motion.div>
                     )}
@@ -225,12 +229,8 @@ const DiabetesChatbot = () => {
                 <motion.button
                     id="diabetes-chatbot-fab"
                     onClick={() => setIsOpen(prev => !prev)}
-                    className="relative size-14 rounded-2xl shadow-2xl shadow-emerald-500/30 flex items-center justify-center transition-all"
-                    style={{
-                        background: isOpen
-                            ? 'linear-gradient(135deg, #ef4444, #dc2626)'
-                            : 'linear-gradient(135deg, #059669, #10b981)',
-                    }}
+                    className="relative size-14 rounded-2xl shadow-2xl shadow-primary/30 flex items-center justify-center transition-all"
+                    style={{ background: isOpen ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'linear-gradient(135deg,#059669,#10b981)' }}
                     whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.94 }}
                 >
@@ -246,7 +246,6 @@ const DiabetesChatbot = () => {
                         )}
                     </AnimatePresence>
 
-                    {/* Unread badge */}
                     {hasUnread && !isOpen && (
                         <motion.div
                             initial={{ scale: 0 }} animate={{ scale: 1 }}
@@ -267,104 +266,88 @@ const DiabetesChatbot = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: 'spring', damping: 24, stiffness: 300 }}
-                        className="fixed bottom-24 right-6 z-[9998] w-[380px] max-w-[calc(100vw-2rem)] flex flex-col rounded-[2rem] overflow-hidden shadow-2xl shadow-black/20 border border-white/10"
-                        style={{ height: '560px' }}
+                        className="fixed bottom-24 right-6 z-[9998] w-[400px] max-w-[calc(100vw-2rem)] flex flex-col rounded-[2rem] overflow-hidden shadow-2xl shadow-black/20 border border-slate-100 bg-white"
+                        style={{ height: '580px' }}
                     >
-                        {/* Header */}
-                        <div
-                            className="shrink-0 px-5 py-4 flex items-center gap-3"
-                            style={{ background: 'linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%)' }}
-                        >
-                            <div className="size-10 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-inner">
-                                <Sparkles size={18} className="text-white" />
+                        {/* ── Header (matches Ai Assistant header style) ── */}
+                        <div className="shrink-0 h-16 border-b border-slate-100 flex items-center justify-between px-5 bg-white/90 backdrop-blur-xl">
+                            <div className="flex flex-col justify-center">
+                                <h3 className="text-base font-black text-slate-900 tracking-tight italic leading-tight">
+                                    AI <span className="text-primary not-italic">Assistant</span>
+                                </h3>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="text-white font-black text-sm tracking-tight">DiabetesAI</h3>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                    <div className="size-1.5 bg-emerald-300 rounded-full animate-pulse shadow-[0_0_6px_rgba(110,231,183,0.8)]" />
-                                    <p className="text-emerald-200 text-[10px] font-bold uppercase tracking-widest">Specialized Assistant</p>
+                            <div className="flex items-center gap-2">
+                                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100">
+                                    <div className="size-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Diabetes AI</span>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-1">
                                 <button
                                     onClick={clearChat}
-                                    title="Clear conversation"
-                                    className="size-8 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-all"
+                                    title="Reset Chat"
+                                    className="size-8 rounded-xl bg-white text-slate-400 hover:text-primary hover:border-primary/30 border border-slate-100 shadow-sm transition-all flex items-center justify-center group"
                                 >
-                                    <RefreshCw size={14} strokeWidth={2.5} />
+                                    <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
                                 </button>
                                 <button
                                     onClick={() => setIsOpen(false)}
-                                    className="size-8 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-all"
+                                    className="size-8 rounded-xl bg-white text-slate-400 hover:text-rose-500 border border-slate-100 shadow-sm transition-all flex items-center justify-center"
                                 >
                                     <X size={14} strokeWidth={2.5} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* Specialty badges */}
-                        <div className="shrink-0 bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-100 dark:border-emerald-800/30 px-4 py-2 flex items-center gap-2 overflow-x-auto">
-                            {[
-                                { icon: Droplets, label: 'Blood Sugar' },
-                                { icon: Activity, label: 'Retinopathy' },
-                                { icon: Heart, label: 'Diabetes Care' },
-                            ].map(({ icon: Icon, label }) => (
-                                <div key={label} className="shrink-0 flex items-center gap-1.5 bg-white dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-700/40 rounded-full px-2.5 py-1 shadow-sm">
-                                    <Icon size={10} className="text-emerald-600 dark:text-emerald-400" />
-                                    <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-widest whitespace-nowrap">{label}</span>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Messages Area */}
+                        {/* ── Messages Area ── */}
                         <div
                             ref={messagesContainerRef}
                             onScroll={handleScroll}
-                            className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-sm"
-                            style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db transparent' }}
+                            className="flex-1 overflow-y-auto px-5 py-5 space-y-6 bg-slate-50/20"
+                            style={{ scrollbarWidth: 'thin', scrollbarColor: '#e2e8f0 transparent' }}
                         >
-                            {/* Suggested questions (shown before first user message) */}
-                            {messages.length <= 1 && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.4 }}
-                                    className="space-y-2"
-                                >
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Suggested Questions</p>
-                                    {SUGGESTED_QUESTIONS.map((q, i) => (
-                                        <motion.button
-                                            key={i}
-                                            initial={{ opacity: 0, x: -10 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 0.5 + i * 0.07 }}
-                                            onClick={() => sendMessage(q)}
-                                            className="w-full text-left text-[12px] font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all shadow-sm"
-                                        >
-                                            {q}
-                                        </motion.button>
-                                    ))}
-                                </motion.div>
-                            )}
+                            <div className="space-y-6">
+                                {/* Suggested questions — 3-col icon card grid */}
+                                {messages.length <= 1 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 8 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="mb-2"
+                                    >
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Suggested Questions</p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {SUGGESTED_QUESTIONS.map((q, i) => (
+                                                <motion.button
+                                                    key={i}
+                                                    initial={{ opacity: 0, y: 8 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.35 + i * 0.06 }}
+                                                    onClick={() => sendMessage(q.text)}
+                                                    className={`group flex flex-col items-start p-3 bg-white border ${q.border} rounded-2xl text-left hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all h-[90px]`}
+                                                >
+                                                    <div className={`size-7 rounded-lg ${q.bg} ${q.color} flex items-center justify-center mb-2 shrink-0 group-hover:scale-110 transition-transform`}>
+                                                        <q.icon size={13} strokeWidth={2.5} />
+                                                    </div>
+                                                    <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${q.color}`}>{q.category}</p>
+                                                    <p className="text-[10px] font-bold text-slate-700 italic group-hover:text-slate-900 transition-colors leading-tight line-clamp-2">{q.text}</p>
+                                                </motion.button>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
 
-                            {/* Chat messages */}
-                            {messages.map((msg, idx) => (
-                                <MessageBubble
-                                    key={msg.id || idx}
-                                    message={msg}
-                                    isLast={idx === messages.length - 1}
-                                />
-                            ))}
+                                {messages.map((msg, idx) => (
+                                    <MessageBubble key={msg.id || idx} message={msg} />
+                                ))}
 
-                            {/* Typing indicator */}
-                            <AnimatePresence>
-                                {isLoading && <TypingIndicator />}
-                            </AnimatePresence>
+                                <AnimatePresence>
+                                    {isLoading && <TypingIndicator />}
+                                </AnimatePresence>
 
-                            <div ref={messagesEndRef} />
+                                <div ref={messagesEndRef} className="h-2" />
+                            </div>
                         </div>
 
-                        {/* Scroll to bottom */}
+                        {/* ── Scroll to Bottom ── */}
                         <AnimatePresence>
                             {showScrollBtn && (
                                 <motion.button
@@ -372,27 +355,27 @@ const DiabetesChatbot = () => {
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.8 }}
                                     onClick={() => scrollToBottom()}
-                                    className="absolute right-6 bottom-20 size-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-emerald-600 transition-all"
+                                    className="absolute right-5 bottom-28 size-10 bg-white border border-slate-100 rounded-full shadow-lg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all z-30"
                                 >
-                                    <ChevronDown size={16} strokeWidth={2.5} />
+                                    <ChevronDown size={18} strokeWidth={3} />
                                 </motion.button>
                             )}
                         </AnimatePresence>
 
-                        {/* Disclaimer */}
-                        <div className="shrink-0 px-4 py-2 bg-amber-50 dark:bg-amber-900/10 border-t border-amber-100 dark:border-amber-800/20 flex items-start gap-2">
-                            <AlertCircle size={11} className="text-amber-500 shrink-0 mt-0.5" />
-                            <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium leading-tight">
-                                AI responses are informational only. Always consult your doctor for medical advice.
+                        {/* ── Disclaimer (matches Ai Assistant style) ── */}
+                        <div className="shrink-0 px-5 py-2.5 bg-amber-50/50 border-t border-amber-100/50 flex items-center justify-center gap-2">
+                            <AlertCircle size={11} className="text-amber-500 shrink-0" />
+                            <p className="text-[9px] font-black text-amber-700/80 uppercase tracking-widest text-center">
+                                Informational only • Consult your doctor for medical advice
                             </p>
                         </div>
 
-                        {/* Input Area */}
-                        <form
-                            onSubmit={handleSubmit}
-                            className="shrink-0 px-4 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-end gap-3"
-                        >
-                            <div className="flex-1 relative">
+                        {/* ── Input Area (matches Ai Assistant pill style) ── */}
+                        <div className="shrink-0 px-4 py-3 bg-white border-t border-slate-50">
+                            <form
+                                onSubmit={(e) => { e.preventDefault(); sendMessage(inputValue); }}
+                                className="bg-white border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-[2rem] p-2 flex items-end gap-2 transition-all focus-within:shadow-primary/5 focus-within:border-primary/20"
+                            >
                                 <textarea
                                     ref={inputRef}
                                     id="diabetes-chatbot-input"
@@ -400,37 +383,43 @@ const DiabetesChatbot = () => {
                                     value={inputValue}
                                     onChange={(e) => {
                                         setInputValue(e.target.value);
-                                        // Auto-grow
                                         e.target.style.height = 'auto';
                                         e.target.style.height = Math.min(e.target.scrollHeight, 96) + 'px';
                                     }}
-                                    onKeyDown={handleKeyDown}
-                                    placeholder="Ask about diabetes..."
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(inputValue); }
+                                    }}
+                                    placeholder="Ask about reports, stages, or health tips..."
                                     disabled={isLoading}
-                                    className="w-full resize-none bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-emerald-300 dark:focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-700 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none transition-all leading-relaxed shadow-inner disabled:opacity-60"
-                                    style={{ minHeight: '44px', maxHeight: '96px' }}
+                                    className="flex-1 bg-slate-50/50 border-none rounded-[1.8rem] px-5 py-3 text-sm font-medium placeholder-slate-400 outline-none focus:ring-0 focus:bg-white transition-all resize-none overflow-hidden disabled:opacity-60"
+                                    style={{ maxHeight: '96px', minHeight: '44px' }}
                                 />
-                            </div>
-                            <motion.button
-                                type="submit"
-                                id="diabetes-chatbot-send"
-                                disabled={!inputValue.trim() || isLoading}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="shrink-0 size-11 rounded-xl flex items-center justify-center shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                                style={{
-                                    background: (!inputValue.trim() || isLoading)
-                                        ? '#e2e8f0'
-                                        : 'linear-gradient(135deg, #059669, #10b981)',
-                                }}
-                            >
-                                {isLoading ? (
-                                    <Loader2 size={18} className="text-slate-400 animate-spin" />
-                                ) : (
-                                    <Send size={17} className={!inputValue.trim() ? 'text-slate-400' : 'text-white'} strokeWidth={2.5} />
-                                )}
-                            </motion.button>
-                        </form>
+                                {/* Mic button */}
+                                <button
+                                    type="button"
+                                    onClick={toggleListening}
+                                    className={`shrink-0 size-11 rounded-[1.4rem] flex items-center justify-center transition-all ${
+                                        isListening
+                                            ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30 animate-pulse'
+                                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                                    }`}
+                                    title={isListening ? 'Stop listening' : 'Voice input'}
+                                >
+                                    {isListening ? <MicOff size={16} strokeWidth={2.5} /> : <Mic size={16} strokeWidth={2.5} />}
+                                </button>
+                                {/* Send button */}
+                                <motion.button
+                                    type="submit"
+                                    id="diabetes-chatbot-send"
+                                    disabled={!inputValue.trim() || isLoading}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="shrink-0 size-11 bg-primary text-white rounded-[1.4rem] flex items-center justify-center shadow-xl shadow-primary/30 hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-30 disabled:scale-100 disabled:shadow-none"
+                                >
+                                    {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} strokeWidth={2.5} />}
+                                </motion.button>
+                            </form>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

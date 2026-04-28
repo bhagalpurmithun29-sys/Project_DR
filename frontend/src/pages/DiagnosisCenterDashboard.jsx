@@ -371,6 +371,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
     const [analyzingIds, setAnalyzingIds] = useState([]);
     const [showReport, setShowReport] = useState(false);
     const [selectedScan, setSelectedScan] = useState(null);
+    const [siblingScan, setSiblingScan] = useState(null);
     const [msg, setMsg] = useState({ type: '', text: '' });
     const [regenerating, setRegenerating] = useState(false);
     const [allDoctors, setAllDoctors] = useState([]);
@@ -494,7 +495,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                         <table className="w-full text-left">
                             <thead className="border-b border-slate-100 bg-slate-50/50">
                                 <tr>
-                                    {['Scan ID', 'Patient', 'Eye', 'Date', 'Source Site', 'Status', 'Risk', 'Actions'].map(h => (
+                                    {['Scan ID', 'Patient', 'Eye', 'Date', 'Source Site', 'Status', 'AI Result', 'Actions'].map(h => (
                                         <th key={h} className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
                                     ))}
                                 </tr>
@@ -515,7 +516,42 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                             </div>
                                         </td>
                                         <td className="px-5 py-4"><Badge color={statusColor(s)}>{s.status || 'Pending'}</Badge></td>
-                                        <td className="px-5 py-4"><Badge color={s.aiResult === 'High Risk' ? 'red' : s.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>{s.aiResult || '—'}</Badge></td>
+                                        <td className="px-5 py-4">
+                                            {s.status === 'Analyzed' ? (
+                                                <div className="flex flex-col gap-1.5 min-w-[180px]">
+                                                    {/* Row 1: Risk badge */}
+                                                    <Badge color={s.aiResult === 'High Risk' ? 'red' : s.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
+                                                        {s.aiResult || 'Unknown'}
+                                                    </Badge>
+                                                    {/* Row 2: 3-metric pills */}
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {/* Prediction */}
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-lg">
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">DR:</span>
+                                                            <span className="text-[9px] font-black text-slate-700 truncate max-w-[90px]" title={s.prediction || '—'}>
+                                                                {s.prediction || (s.findings?.[0]?.replace('AI Analysis detects: ', '')) || '—'}
+                                                            </span>
+                                                        </div>
+                                                        {/* Confidence */}
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{background: s.aiConfidence >= 0.7 ? '#fff1f2' : s.aiConfidence >= 0.4 ? '#fffbeb' : '#f0fdf4'}}>
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Conf:</span>
+                                                            <span className={`text-[9px] font-black ${s.aiConfidence >= 0.7 ? 'text-rose-600' : s.aiConfidence >= 0.4 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                                                {s.aiConfidence ? `${(s.aiConfidence * 100).toFixed(1)}%` : '—'}
+                                                            </span>
+                                                        </div>
+                                                        {/* Lesions */}
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{background: (s.lesionCount || 0) > 2 ? '#fff1f2' : (s.lesionCount || 0) > 0 ? '#fffbeb' : '#f0fdf4'}}>
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Les:</span>
+                                                            <span className={`text-[9px] font-black ${(s.lesionCount || 0) > 2 ? 'text-rose-600' : (s.lesionCount || 0) > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                                                {s.lesionCount ?? 0}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-slate-300 italic">Pending Analysis</span>
+                                            )}
+                                        </td>
                                         <td className="px-5 py-4">
                                             <div className="flex items-center gap-1">
                                                 {s.status === 'Pending' && (
@@ -530,7 +566,17 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                 )}
                                                 {s.status === 'Analyzed' && (
                                                     <button
-                                                        onClick={() => { setSelectedScan(s); setShowReport(true); }}
+                                                        onClick={() => { 
+                                                            // Find sibling scan (same patient, opposite eye, within 5 minutes)
+                                                            const sibling = scans.find(sib => 
+                                                                sib.patient?._id === s.patient?._id && 
+                                                                sib.eyeSide !== s.eyeSide &&
+                                                                Math.abs(new Date(sib.date) - new Date(s.date)) < 10 * 60 * 1000
+                                                            );
+                                                            setSelectedScan(s);
+                                                            setSiblingScan(sibling);
+                                                            setShowReport(true); 
+                                                        }}
                                                         className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all"
                                                         title="View AI Report"
                                                     >
@@ -644,121 +690,167 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowReport(false)} />
                         <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[90vh]">
+                            className={`relative w-full ${siblingScan ? 'max-w-5xl' : 'max-w-2xl'} bg-white rounded-3xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[90vh]`}>
 
                             <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                                 <div className="flex items-center gap-3 no-print">
+                                    <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                        <Activity size={20} />
+                                    </div>
                                     <div>
-                                        <h3 className="text-lg font-black text-slate-900">AI Diagnostic Report</h3>
+                                        <h3 className="text-lg font-black text-slate-900">AI Bilateral Diagnostic Report</h3>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{selectedScan.patient?.name} · {selectedScan.patient?.patientId}</p>
                                     </div>
                                 </div>
                                 {/* Print Header (only visible in print) */}
-                                <div className="hidden print:flex flex-col gap-1">
-                                    <h2 className="text-2xl font-black text-slate-900 uppercase italic">RetinaAI Diagnostic Report</h2>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Autonomous Retinal Screening Results</p>
+                                <div className="hidden print:flex flex-col gap-1 text-center w-full">
+                                    <h2 className="text-3xl font-black text-slate-900 uppercase italic">RetinaAI Diagnostic Report</h2>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Comprehensive Bilateral Retinal Screening Results</p>
+                                    <div className="mt-4 flex justify-center gap-8 text-[10px] font-black uppercase text-slate-400">
+                                        <span>Patient: {selectedScan.patient?.name}</span>
+                                        <span>ID: {selectedScan.patient?.patientId}</span>
+                                        <span>Date: {new Date(selectedScan.date).toLocaleDateString()}</span>
+                                    </div>
                                 </div>
                                 <button onClick={() => setShowReport(false)} className="no-print size-9 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all shadow-sm"><X size={18} /></button>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-8 space-y-8">
-                                <div className="grid grid-cols-5 gap-8">
-                                    <div className="col-span-2 space-y-3">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Retinal Scan</label>
-                                        <div className="aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-900 shadow-inner group relative">
-                                            <img src={normalizeUrl(selectedScan.imageUrl)} alt="Retina" className="w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                                                <p className="text-white text-[10px] font-black uppercase tracking-widest">{selectedScan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-span-3 space-y-6">
-                                        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-4">
-                                            <div>
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Risk Assessment</label>
-                                                <Badge color={selectedScan.aiResult === 'High Risk' ? 'red' : selectedScan.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
-                                                    {selectedScan.aiResult || 'Low Risk'}
+                                <div className={`grid ${siblingScan ? 'grid-cols-2' : 'grid-cols-1'} gap-8`}>
+                                    {[selectedScan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map((scan, idx) => (
+                                        <div key={scan._id} className="space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                                    <div className="size-2 rounded-full bg-primary" />
+                                                    {scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}
+                                                </h4>
+                                                <Badge color={scan.aiResult === 'High Risk' ? 'red' : scan.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
+                                                    {scan.aiResult || 'Low Risk'}
                                                 </Badge>
                                             </div>
 
-                                            {selectedScan.aiReportSummary && (
-                                                <div className="pt-4 border-t border-slate-200">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block text-primary">Clinical Summary (Generative AI)</label>
-                                                    <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-inner">
-                                                        <p className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-wrap italic">
-                                                            {selectedScan.aiReportSummary}
-                                                        </p>
+                                            <div className="aspect-[4/3] rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-900 shadow-inner group relative">
+                                                <img src={normalizeUrl(scan.imageUrl)} alt={`${scan.eyeSide} Retina`} className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                                    <p className="text-white text-[10px] font-black uppercase tracking-widest">
+                                                        {scan.eyeSide === 'OD' ? 'Right Fundus Image' : 'Left Fundus Image'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-4">
+
+                                                {/* ── AI Key Metrics ── */}
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Prediction</span>
+                                                        <span className="text-[11px] font-black text-slate-900 text-center leading-tight">
+                                                            {scan.prediction || scan.findings?.[0]?.replace('AI Analysis detects: ', '') || '—'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Confidence</span>
+                                                        <span className={`text-lg font-black ${scan.aiConfidence >= 0.7 ? 'text-rose-500' : scan.aiConfidence >= 0.4 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                                            {scan.aiConfidence ? `${(scan.aiConfidence * 100).toFixed(1)}%` : '—'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Lesions</span>
+                                                        <span className={`text-lg font-black ${(scan.lesionCount || 0) > 2 ? 'text-rose-500' : (scan.lesionCount || 0) > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                                            {scan.lesionCount ?? '—'}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                            )}
 
-                                            {/* --- Referral Section --- */}
-                                            {selectedScan.status === 'Analyzed' && (
-                                                <div className="pt-6 border-t border-slate-200 no-print">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Refer to Specialist</label>
-
-                                                    {selectedScan.referredDoctor ? (
-                                                        <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between">
-                                                            <div>
-                                                                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Successfully Referred to</p>
-                                                                <p className="text-sm font-black text-indigo-900 mt-0.5">Dr. {selectedScan.referredDoctor.name || 'Practitioner'}</p>
+                                                {scan.aiReportSummary && (
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-black text-primary uppercase tracking-widest block">AI Clinical Analysis</label>
+                                                        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-inner max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                            <div className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-wrap italic ai-summary-content">
+                                                                {scan.aiReportSummary}
                                                             </div>
-                                                            <CheckCircle2 className="text-indigo-500" size={20} />
                                                         </div>
-                                                    ) : (
-                                                        <div className="flex flex-col gap-3">
-                                                            <select
-                                                                value={referTargetDoc}
-                                                                onChange={e => setReferTargetDoc(e.target.value)}
-                                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-white text-slate-900 font-bold text-sm outline-none focus:border-primary/20 transition-all"
-                                                            >
-                                                                <option value="">Select a Doctor...</option>
-                                                                {allDoctors.map(d => <option key={d._id} value={d._id}>Dr. {d.name}</option>)}
-                                                            </select>
-                                                            <button
-                                                                onClick={async () => {
-                                                                    if (!referTargetDoc) return;
-                                                                    setReferring(true);
-                                                                    try {
-                                                                        const res = await api.post(`/scans/${selectedScan._id}/refer`, { doctorId: referTargetDoc });
-                                                                        if (res.data.success) {
-                                                                            setSelectedScan(res.data.data);
-                                                                            onRefresh();
-                                                                            alert('Report has been securely referred.');
-                                                                        }
-                                                                    } catch (err) {
-                                                                        alert(err.response?.data?.message || 'Referral failed.');
-                                                                    } finally {
-                                                                        setReferring(false);
-                                                                    }
-                                                                }}
-                                                                disabled={!referTargetDoc || referring}
-                                                                className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
-                                                            >
-                                                                {referring ? <Loader2 size={16} className="animate-spin" /> : <Link size={16} />}
-                                                                Refer Report to Doctor
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
+                                                    </div>
+                                                )}
 
-                                            <div className="pt-4 border-t border-slate-200">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Detected Findings</label>
-                                                <div className="space-y-2">
-                                                    {selectedScan.findings && selectedScan.findings.length > 0 ? selectedScan.findings.map((f, i) => (
-                                                        <div key={i} className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                                            <div className="size-1.5 rounded-full bg-primary" />
-                                                            {f}
-                                                        </div>
-                                                    )) : (
-                                                        <p className="text-sm font-bold text-slate-400 italic">No significant lesions detected.</p>
-                                                    )}
+                                                <div className="pt-4 border-t border-slate-200">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Detected Findings</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {scan.findings && scan.findings.length > 0 ? scan.findings.map((f, i) => (
+                                                            <div key={i} className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 uppercase tracking-tight">
+                                                                {f}
+                                                            </div>
+                                                        )) : (
+                                                            <p className="text-[10px] font-bold text-slate-400 italic">No significant lesions detected.</p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    ))}
                                 </div>
+
+                                {/* Shared Referral Section (only if both are analyzed or at least one is) */}
+                                {(selectedScan.status === 'Analyzed' || siblingScan?.status === 'Analyzed') && (
+                                    <div className="pt-8 border-t-2 border-dashed border-slate-100 no-print">
+                                        <div className="max-w-md mx-auto">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block text-center">Refer Bilateral Report to Specialist</label>
+                                            
+                                            {selectedScan.referredDoctor ? (
+                                                <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Successfully Referred to</p>
+                                                        <p className="text-lg font-black text-indigo-900 mt-1">Dr. {selectedScan.referredDoctor.name || 'Practitioner'}</p>
+                                                    </div>
+                                                    <div className="size-12 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
+                                                        <CheckCircle2 size={24} />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col gap-4">
+                                                    <select
+                                                        value={referTargetDoc}
+                                                        onChange={e => setReferTargetDoc(e.target.value)}
+                                                        className="w-full px-5 py-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-900 font-bold text-sm outline-none focus:border-primary/20 transition-all shadow-sm"
+                                                    >
+                                                        <option value="">Select a Specialist Doctor...</option>
+                                                        {allDoctors.map(d => <option key={d._id} value={d._id}>Dr. {d.name} ({d.specialization || 'Ophthalmologist'})</option>)}
+                                                    </select>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (!referTargetDoc) return;
+                                                            setReferring(true);
+                                                            try {
+                                                                // Refer both if sibling exists
+                                                                const scansToRefer = [selectedScan._id];
+                                                                if (siblingScan) scansToRefer.push(siblingScan._id);
+                                                                
+                                                                for (const id of scansToRefer) {
+                                                                    await api.post(`/scans/${id}/refer`, { doctorId: referTargetDoc });
+                                                                }
+                                                                
+                                                                // Refresh the main scan in view
+                                                                const res = await api.get(`/scans/${selectedScan._id}`);
+                                                                setSelectedScan(res.data.data);
+                                                                onRefresh();
+                                                                alert('Bilateral report has been securely referred to the specialist.');
+                                                            } catch (err) {
+                                                                alert(err.response?.data?.message || 'Referral failed.');
+                                                            } finally {
+                                                                setReferring(false);
+                                                            }
+                                                        }}
+                                                        disabled={!referTargetDoc || referring}
+                                                        className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2"
+                                                    >
+                                                        {referring ? <Loader2 size={16} className="animate-spin" /> : <Users size={18} />}
+                                                        Send Bilateral Report to Doctor
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 no-print">
@@ -769,6 +861,10 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                             try {
                                                 const res = await api.post(`/scans/${selectedScan._id}/generate-report`);
                                                 setSelectedScan(res.data.data);
+                                                if (siblingScan) {
+                                                    const res2 = await api.post(`/scans/${siblingScan._id}/generate-report`);
+                                                    setSiblingScan(res2.data.data);
+                                                }
                                                 onRefresh();
                                             } catch (err) {
                                                 alert('Regeneration failed. Please try again.');
@@ -780,11 +876,11 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                         className="px-6 py-3 bg-amber-500 text-white rounded-xl font-black text-sm hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 flex items-center gap-2"
                                     >
                                         {regenerating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                                        Generate AI Summary
+                                        Generate Full Analysis
                                     </button>
                                 ) : (
                                     <button onClick={() => window.print()} className="px-6 py-3 bg-primary text-white rounded-xl font-black text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-                                        <Download size={16} /> Print Diagnostic Report
+                                        <Printer size={16} /> Print Full Report
                                     </button>
                                 )}
                                 <button onClick={() => setShowReport(false)} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-black text-sm hover:bg-slate-100 transition-all shadow-sm">

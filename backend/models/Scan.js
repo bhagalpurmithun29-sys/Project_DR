@@ -13,6 +13,13 @@ const scanSchema = new mongoose.Schema({
     aiResult: {
         type: String,
     },
+    prediction: {
+        type: String,   // e.g. "Proliferate DR", "Mild NPDR"
+    },
+    aiConfidence: {
+        type: Number,   // 0-1 probability value
+        default: 0,
+    },
     lesionCount: {
         type: Number,
         default: 0,

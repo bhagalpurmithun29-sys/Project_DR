@@ -330,10 +330,10 @@ const DoctorRegistration = () => {
                   icon={Activity}
                   placeholder="Primary Focus"
                   options={[
-                    { value: 'general', label: 'General Ophthalmology' },
+                    { value: 'general', label: 'General Retina' },
                     { value: 'retina', label: 'Medical Retina' },
                     { value: 'surgery', label: 'Vitreoretinal Surgery' },
-                    { value: 'pediatric', label: 'Pediatric Ophthalmology' }
+                    { value: 'pediatric', label: 'Pediatric Retina' }
                   ]}
                 />
 

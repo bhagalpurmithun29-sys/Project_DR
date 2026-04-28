@@ -32,15 +32,15 @@ exports.createAppointment = async (req, res) => {
         }
 
         // Check if patient already has an active appointment with this doctor
-        const existingActive = await Appointment.findOne({ 
-            patientId, 
-            doctorId, 
-            status: { $in: ['pending', 'confirmed'] } 
+        const existingActive = await Appointment.findOne({
+            patientId,
+            doctorId,
+            status: { $in: ['pending', 'confirmed'] }
         });
         if (existingActive) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'You already have an active appointment (pending or confirmed) with this doctor. You must wait for it to be completed or cancelled before booking again.' 
+            return res.status(400).json({
+                success: false,
+                message: 'You already have an active appointment (pending or confirmed) with this doctor. You must wait for it to be completed or cancelled before booking again.'
             });
         }
 
@@ -111,7 +111,7 @@ exports.getDoctorAppointments = async (req, res) => {
                     user: req.user._id,
                     name: req.user.name,
                     email: req.user.email,
-                    specialization: 'Ophthalmology',
+                    specialization: 'Retina',
                     licenseNumber: `TEMP-${req.user._id.toString().substring(0, 8)}`,
                     country: 'Unknown',
                     experience: '0',

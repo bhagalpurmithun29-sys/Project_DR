@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useContext, useCallback } from "rea
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import patientService from "../services/patientService";
-import api from "../services/api";
+import api, { normalizeUrl } from "../services/api";
 import {
   Activity,
   LayoutDashboard,
@@ -25,10 +25,10 @@ import {
   Info,
   ShieldCheck,
   Mic,
-  MicOff,
-  Calendar
+  MicOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PatientPreferencesModal from './PatientPreferencesModal';
 
 // --- Message Bubble Component ---
 const MessageBubble = ({ message }) => {
@@ -119,6 +119,7 @@ const AiAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -320,19 +321,15 @@ const AiAssistant = () => {
             <History size={18} />
             <span className="text-sm">Reports</span>
           </Link>
-          <Link to="/appointments" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group">
-            <Calendar size={18} />
-            <span className="text-sm">Appointments</span>
-          </Link>
-          <Link to="/ai-assistant" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-primary text-white font-black shadow-lg shadow-primary/25 transition-all group">
-            <MessageCircle size={18} />
+          <Link to="/ai-assistant" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-primary text-white font-black shadow-lg shadow-primary/25 transition-all">
+            <MessageCircle size={18} strokeWidth={2.5} />
             <span className="text-sm">AI Assistant</span>
           </Link>
 
           <div className="pt-6 mt-6 border-t border-white/5">
             <p className="px-4 mb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Account</p>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => setIsPreferencesOpen(true)}
               className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold group text-left"
             >
               <Settings size={18} />
@@ -499,6 +496,21 @@ const AiAssistant = () => {
           </div>
         </div>
       </main>
+
+      <PatientPreferencesModal
+        isOpen={isPreferencesOpen}
+        onClose={() => setIsPreferencesOpen(false)}
+        patient={patient}
+        user={user}
+        onProfileUpdate={(updated) => setPatient(prev => {
+          const merged = { ...prev, ...updated };
+          if (updated.phone !== undefined) {
+            merged.phoneNumber = updated.phone;
+            delete merged.phone;
+          }
+          return merged;
+        })}
+      />
     </div>
   );
 };

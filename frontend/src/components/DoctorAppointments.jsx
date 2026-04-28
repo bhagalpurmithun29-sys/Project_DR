@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import appointmentService from "../services/appointmentService";
-import api from "../services/api";
+import api, { normalizeUrl } from "../services/api";
 import {
   Eye,
   LayoutDashboard,

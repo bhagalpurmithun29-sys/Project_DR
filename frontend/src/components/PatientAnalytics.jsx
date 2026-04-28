@@ -27,7 +27,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from './PatientPreferencesModal';
 import patientService from "../services/patientService";
-import api from "../services/api";
+import api, { normalizeUrl } from "../services/api";
 
 const X_AXIS_LABELS = ["Jan 2024", "Mar 2024", "May 2024", "Jul 2024", "Sep 2024", "Nov 2024"];
 
@@ -37,7 +37,44 @@ export default function PatientAnalytics() {
   const [activeEye, setActiveEye] = useState("OD");
   const [patient, setPatient] = useState(null);
   const [stats, setStats] = useState([]);
+  const [latestScan, setLatestScan] = useState(null);
+  const [odScan, setOdScan] = useState(null);
+  const [osScan, setOsScan] = useState(null);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+
+  // ── DR Stage helpers ──────────────────────────────────────────────────────
+  const getDRStage = (prediction, aiResult) => {
+    const t = (prediction || aiResult || '').toLowerCase();
+    if (t.includes('proliferat') || t.includes('pdr') || t.includes('high')) return 4;
+    if (t.includes('severe') || t.includes('stage 3')) return 3;
+    if (t.includes('moderate') || t.includes('stage 2')) return 2;
+    if (t.includes('mild') || t.includes('stage 1') || t.includes('npdr')) return 1;
+    return 0;
+  };
+
+  const DR_STAGE_LABELS = ['No DR', 'Mild NPDR', 'Moderate NPDR', 'Severe NPDR', 'Proliferative DR'];
+  const DR_STAGE_COLORS = ['#059669', '#10b981', '#f59e0b', '#f97316', '#f43f5e'];
+
+  const PENTAGON_ANGLES = [-90, -18, 54, 126, 198]; // degrees
+  const RADAR_CX = 200, RADAR_CY = 200, RADAR_MAX_R = 140;
+
+  const buildRadarPolygon = (scan) => {
+    if (!scan) return '200,200 200,200 200,200 200,200 200,200';
+    const drStage = getDRStage(scan.prediction, scan.aiResult);
+    const values = [
+      drStage / 4,                                   // DR Grade
+      scan.aiConfidence || 0,                        // AI Confidence
+      Math.min((scan.lesionCount || 0) / 8, 1),     // Lesions
+      (drStage / 4 + (scan.aiConfidence || 0)) / 2, // Risk Score
+      Math.min((scan.lesionPercent || 0) / 50, 1),  // Progression
+    ];
+    return values.map((v, i) => {
+      const rad = (PENTAGON_ANGLES[i] * Math.PI) / 180;
+      const x = RADAR_CX + RADAR_MAX_R * v * Math.cos(rad);
+      const y = RADAR_CY + RADAR_MAX_R * v * Math.sin(rad);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+  };
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -48,37 +85,69 @@ export default function PatientAnalytics() {
           const res = await patientService.getPatientScans(profile.data._id);
           const scanData = res.data;
 
-          // Calculate some dynamic stats for the cards based on latest scan
-          const latest = scanData[0] || {};
+          const sorted = [...scanData].sort((a, b) =>
+            new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)
+          );
+          const latest = sorted.find(s => s.status === 'Analyzed') || sorted[0] || {};
+
+          // Separate by eye side
+          const odScans = sorted.filter(s => s.eyeSide === 'OD');
+          const osScans = sorted.filter(s => s.eyeSide === 'OS');
+          setOdScan(odScans.find(s => s.status === 'Analyzed') || odScans[0] || null);
+          setOsScan(osScans.find(s => s.status === 'Analyzed') || osScans[0] || null);
+
+          // Determine colors based on risk
+          const isHighRisk   = latest.aiResult?.includes('High');
+          const isModRisk    = latest.aiResult?.includes('Moderate');
+          const confidence   = latest.aiConfidence || 0;
+          const confPct      = Math.round(confidence * 100);
+
+          const predictionName = latest.prediction
+            || latest.findings?.[0]?.replace('AI Analysis detects: ', '')
+            || (latest.status === 'Analyzed' ? latest.aiResult : 'No Scan Yet');
+
           const dynamicStats = [
+            // ── Card 1: Prediction (DR grade) ──────────────────
             {
               icon: Dna,
-              iconBg: "bg-teal-500/10",
-              iconColor: "text-teal-500",
-              barColor: "bg-teal-500",
-              label: "Vessel Density",
-              value: latest.aiResult === 'Low Risk' ? "44.2%" : "38.5%",
-              barWidth: latest.aiResult === 'Low Risk' ? 44.2 : 38.5,
-              trend: "+2.1%",
-              trendUp: true,
+              iconBg: isHighRisk ? "bg-rose-500/10" : isModRisk ? "bg-amber-500/10" : "bg-teal-500/10",
+              iconColor: isHighRisk ? "text-rose-500" : isModRisk ? "text-amber-500" : "text-teal-500",
+              label: "Prediction",
+              value: predictionName,
+              unit: "",
+              barWidth: isHighRisk ? 90 : isModRisk ? 55 : 20,
+              trend: latest.aiResult || "Pending",
+              trendUp: !isHighRisk,
             },
+            // ── Card 2: Confidence ──────────────────────────────
+            {
+              icon: BarChart3,
+              iconBg: isHighRisk ? "bg-rose-500/10" : isModRisk ? "bg-amber-500/10" : "bg-primary/10",
+              iconColor: isHighRisk ? "text-rose-500" : isModRisk ? "text-amber-500" : "text-primary",
+              label: "Confidence",
+              value: confidence ? `${confPct}%` : "—",
+              unit: confidence ? "certainty" : "",
+              barWidth: confPct || 0,
+              trend: isHighRisk ? "High Risk" : isModRisk ? "Moderate" : "Low Risk",
+              trendUp: !isHighRisk,
+            },
+            // ── Card 3: Lesions Detected ────────────────────────
             {
               icon: AlertCircle,
-              iconBg: "bg-rose-500/10",
-              iconColor: "text-rose-500",
-              barColor: "bg-rose-500",
-              label: "Lesion Count",
-              value: (latest.lesionCount || 0).toString(),
-              unit: "Focal",
-              barWidth: Math.min((latest.lesionCount || 0) * 5, 100),
-              trend: latest.aiResult,
-              trendUp: latest.aiResult === 'Low Risk',
+              iconBg: (latest.lesionCount || 0) > 2 ? "bg-rose-500/10" : (latest.lesionCount || 0) > 0 ? "bg-amber-500/10" : "bg-teal-500/10",
+              iconColor: (latest.lesionCount || 0) > 2 ? "text-rose-500" : (latest.lesionCount || 0) > 0 ? "text-amber-500" : "text-teal-500",
+              label: "Lesions Detected",
+              value: latest.status === 'Analyzed' ? (latest.lesionCount ?? 0).toString() : "—",
+              unit: latest.lesionCount > 0 ? "Focal" : "",
+              barWidth: Math.min((latest.lesionCount || 0) * 12, 100),
+              trend: (latest.lesionCount || 0) > 2 ? "High Risk" : (latest.lesionCount || 0) > 0 ? "Moderate" : "Stable",
+              trendUp: (latest.lesionCount || 0) <= 1,
             },
+            // ── Card 4: Scan Progress (original) ───────────────
             {
               icon: Activity,
               iconBg: "bg-primary/10",
               iconColor: "text-primary",
-              barColor: "bg-primary",
               label: "Scan Progress",
               value: scanData.length.toString(),
               unit: "Total",
@@ -88,6 +157,7 @@ export default function PatientAnalytics() {
             },
           ];
           setStats(dynamicStats);
+          setLatestScan(latest);
         }
       } catch (err) {
         console.error("Failed to fetch analytics", err);
@@ -181,7 +251,7 @@ export default function PatientAnalytics() {
         <header className="sticky top-0 z-40 h-24 bg-white/70 backdrop-blur-xl border-b border-white flex items-center justify-between px-10">
           <div className="flex flex-col">
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1">Health Hub / <span className="text-primary">Analytics</span></h2>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Biometric <span className="text-primary not-italic">Insights</span></h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Health <span className="text-primary not-italic">Analytics</span></h1>
           </div>
 
 
@@ -194,7 +264,7 @@ export default function PatientAnalytics() {
           className="p-10 space-y-10 w-full max-w-[1500px] mx-auto"
         >
           {/* KPI Row */}
-          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {stats.map((card, idx) => (
               <div key={idx} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/30 hover:shadow-2xl transition-all group relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -232,8 +302,8 @@ export default function PatientAnalytics() {
             <motion.div variants={itemVariants} className="lg:col-span-8 bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-xl shadow-slate-200/30 group">
               <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                  <h4 className="text-2xl font-black text-slate-900 tracking-tight italic">Lesion <span className="text-primary">Topography</span></h4>
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">Distribution analysis by quadrant</p>
+                  <h4 className="text-2xl font-black text-slate-900 tracking-tight italic">DR Stage <span className="text-primary">Analysis</span></h4>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">Bilateral retinal assessment</p>
                 </div>
                 <div className="flex p-1.5 bg-slate-50 rounded-2xl shadow-inner">
                   {["OD (Right)", "OS (Left)"].map((eye) => {
@@ -253,63 +323,94 @@ export default function PatientAnalytics() {
                 </div>
               </div>
 
-              <div className="relative flex h-[450px] items-center justify-center py-10">
-                <svg className="h-full w-full max-w-[450px] drop-shadow-2xl" viewBox="0 0 400 400">
-                  {/* Grid polygons with gradients */}
-                  {[
-                    "200,40 352,151 294,330 106,330 48,151",
-                    "200,80 314,163 271,298 129,298 86,163",
-                    "200,120 276,175 247,265 153,265 124,175",
-                  ].map((pts, i) => (
+              {/* DR Stage Info Bar */}
+              {(() => {
+                const eyeScan = activeEye === 'OD' ? odScan : osScan;
+                const stage = eyeScan ? getDRStage(eyeScan.prediction, eyeScan.aiResult) : null;
+                const stageLabel = stage !== null ? DR_STAGE_LABELS[stage] : null;
+                const stageColor = stage !== null ? DR_STAGE_COLORS[stage] : '#94a3b8';
+                return eyeScan ? (
+                  <div className="mb-6 flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stageColor }} />
+                      <span className="text-xs font-black text-slate-700 uppercase tracking-widest">{stageLabel}</span>
+                      <span className="text-[10px] font-bold text-slate-400">Stage {stage}/4</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <span>Confidence: <span className="text-slate-700">{Math.round((eyeScan.aiConfidence || 0) * 100)}%</span></span>
+                      <span>Lesions: <span className="text-slate-700">{eyeScan.lesionCount ?? 0}</span></span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    No scan data for {activeEye === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}
+                  </div>
+                );
+              })()}
+
+              <div className="relative flex h-[420px] items-center justify-center">
+                <svg className="h-full w-full max-w-[420px] drop-shadow-2xl" viewBox="0 0 400 400">
+                  {/* Grid rings */}
+                  {[1, 0.75, 0.5, 0.25].map((ratio, i) => (
                     <polygon
-                      key={pts}
-                      points={pts}
+                      key={i}
+                      points={PENTAGON_ANGLES.map(a => {
+                        const r = (PENTAGON_ANGLES[0], RADAR_MAX_R) * ratio;
+                        const rad = (a * Math.PI) / 180;
+                        return `${(RADAR_CX + RADAR_MAX_R * ratio * Math.cos(rad)).toFixed(1)},${(RADAR_CY + RADAR_MAX_R * ratio * Math.sin(rad)).toFixed(1)}`;
+                      }).join(' ')}
                       fill="none"
-                      stroke={i === 0 ? "rgba(5,150,105,0.1)" : "rgba(5,150,105,0.05)"}
-                      strokeWidth="2"
+                      stroke={i === 0 ? 'rgba(5,150,105,0.12)' : 'rgba(5,150,105,0.05)'}
+                      strokeWidth={i === 0 ? '2' : '1'}
                     />
                   ))}
                   {/* Axis lines */}
-                  {[
-                    [200, 200, 200, 40],
-                    [200, 200, 352, 151],
-                    [200, 200, 294, 330],
-                    [200, 200, 106, 330],
-                    [200, 200, 48, 151],
-                  ].map(([x1, y1, x2, y2], i) => (
-                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(5,150,105,0.05)" strokeWidth="1" />
-                  ))}
-                  {/* Data area */}
-                  <motion.polygon
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", duration: 2 }}
-                    points="200,80 320,165 240,280 140,250 80,140"
-                    fill="rgba(5,150,105,0.15)"
-                    stroke="var(--primary)"
-                    strokeWidth="4"
-                    strokeLinejoin="round"
-                    className="group-hover:fill-primary/25 transition-colors duration-500"
-                  />
-                  {/* Labels */}
-                  <g className="text-[10px] font-black text-slate-300 uppercase tracking-widest fill-slate-300">
-                    <text textAnchor="middle" x="200" y="25">Hemorrhages</text>
-                    <text textAnchor="start" x="365" y="155">Exudates</text>
-                    <text textAnchor="start" x="305" y="360">Cotton Wool</text>
-                    <text textAnchor="end" x="90" y="360">Vascular</text>
-                    <text textAnchor="end" x="30" y="155">Aneurysms</text>
+                  {PENTAGON_ANGLES.map((a, i) => {
+                    const rad = (a * Math.PI) / 180;
+                    return <line key={i} x1={RADAR_CX} y1={RADAR_CY} x2={(RADAR_CX + RADAR_MAX_R * Math.cos(rad)).toFixed(1)} y2={(RADAR_CY + RADAR_MAX_R * Math.sin(rad)).toFixed(1)} stroke="rgba(5,150,105,0.08)" strokeWidth="1" />;
+                  })}
+                  {/* Dynamic data polygon */}
+                  {(() => {
+                    const eyeScan = activeEye === 'OD' ? odScan : osScan;
+                    const pts = buildRadarPolygon(eyeScan);
+                    const stage = eyeScan ? getDRStage(eyeScan.prediction, eyeScan.aiResult) : 0;
+                    const fillColor = `${DR_STAGE_COLORS[stage]}25`;
+                    const strokeColor = DR_STAGE_COLORS[stage];
+                    return (
+                      <motion.polygon
+                        key={activeEye}
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: 'spring', duration: 1.5 }}
+                        points={pts}
+                        fill={fillColor}
+                        stroke={strokeColor}
+                        strokeWidth="3"
+                        strokeLinejoin="round"
+                      />
+                    );
+                  })()}
+                  {/* Axis labels */}
+                  <g fontSize="9" fontWeight="800" fill="#94a3b8" textAnchor="middle" style={{ fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    <text x="200" y="18">DR Grade</text>
+                    <text x="378" y="148" textAnchor="start">Confidence</text>
+                    <text x="318" y="372" textAnchor="start">Lesions</text>
+                    <text x="82" y="372" textAnchor="end">Risk Score</text>
+                    <text x="22" y="148" textAnchor="end">Progression</text>
                   </g>
+                  {/* Stage scale ticks */}
+                  {[0.25, 0.5, 0.75, 1].map((r, i) => (
+                    <text key={i} x={RADAR_CX + 5} y={(RADAR_CY - RADAR_MAX_R * r + 3).toFixed(1)} fontSize="7" fill="#cbd5e1" fontWeight="700">S{i + 1}</text>
+                  ))}
                 </svg>
 
-                <div className="absolute top-0 right-0 p-6 space-y-4 bg-main/50 backdrop-blur-sm rounded-3xl border border-white/50">
-                  <div className="flex items-center gap-3">
-                    <div className="size-3 bg-primary rounded-full shadow-[0_0_8px_rgba(5,150,105,0.6)]" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Scan</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="size-3 bg-slate-200 rounded-full" />
-                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Baseline</span>
-                  </div>
+                <div className="absolute top-2 right-2 p-4 space-y-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-sm">
+                  {[0, 1, 2, 3, 4].map(s => (
+                    <div key={s} className="flex items-center gap-2">
+                      <div className="size-2 rounded-full" style={{ backgroundColor: DR_STAGE_COLORS[s] }} />
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">S{s}: {DR_STAGE_LABELS[s].split(' ')[0]}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -334,119 +435,39 @@ export default function PatientAnalytics() {
                       <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" strokeDasharray="264" />
                       <motion.circle
                         initial={{ strokeDashoffset: 264 }}
-                        animate={{ strokeDashoffset: 264 - (264 * 0.68) }}
+                        animate={{ strokeDashoffset: 264 - (264 * (latestScan?.aiConfidence || 0)) }}
                         transition={{ duration: 2, ease: "easeOut" }}
-                        cx="50" cy="50" r="42" fill="none" stroke="#059669" strokeWidth="10" strokeDasharray="264" strokeLinecap="round"
-                        className="drop-shadow-[0_0_15px_rgba(5,150,105,0.6)]"
+                        cx="50" cy="50" r="42" fill="none"
+                        stroke={latestScan?.aiConfidence >= 0.7 ? '#f43f5e' : latestScan?.aiConfidence >= 0.4 ? '#f59e0b' : '#059669'}
+                        strokeWidth="10" strokeDasharray="264" strokeLinecap="round"
+                        className={latestScan?.aiConfidence >= 0.7 ? 'drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]' : 'drop-shadow-[0_0_15px_rgba(5,150,105,0.6)]'}
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                      <span className="text-6xl font-black tracking-tighter leading-none">68<span className="text-2xl text-primary">%</span></span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mt-3">High Probability</span>
+                      <span className="text-6xl font-black tracking-tighter leading-none">
+                        {latestScan?.aiConfidence ? Math.round(latestScan.aiConfidence * 100) : '—'}
+                        {latestScan?.aiConfidence ? <span className="text-2xl text-primary">%</span> : null}
+                      </span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mt-3">
+                        {latestScan?.aiConfidence >= 0.7 ? 'High Probability' : latestScan?.aiConfidence >= 0.4 ? 'Moderate Probability' : latestScan?.aiConfidence ? 'Low Probability' : 'No Scan Yet'}
+                      </span>
                     </div>
                   </div>
 
                   <div className="mt-12 w-full space-y-4">
                     <div className="p-6 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-sm text-center">
                       <p className="text-xs font-bold text-white/70 leading-relaxed">
-                        Likely clinical progression to <span className="text-primary font-black uppercase">Severe NPDR</span> detected.
+                        {latestScan?.prediction
+                          ? <>Detected: <span className="text-primary font-black uppercase">{latestScan.prediction}</span> with {Math.round((latestScan.aiConfidence || 0) * 100)}% confidence.</>
+                          : 'Run an AI analysis to see your risk assessment here.'}
                       </p>
                     </div>
-                    <button className="w-full py-5 bg-white text-slate-900 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-black/40 hover:scale-[1.02] active:scale-95 transition-all">
-                      Initialize Action Plan
-                    </button>
+
                   </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Longitudinal Health */}
-            <motion.div variants={itemVariants} className="lg:col-span-12 bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-xl shadow-slate-200/30">
-              <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                  <h4 className="text-2xl font-black text-slate-900 tracking-tight italic">Longitudinal <span className="text-primary">Correlation</span></h4>
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">HbA1c levels mapped against focal lesion counts</p>
-                </div>
-                <div className="flex gap-8 px-6 py-4 bg-main rounded-2xl border border-slate-50">
-                  <div className="flex items-center gap-3">
-                    <div className="size-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">HbA1c Sync (%)</span>
-                  </div>
-
-                </div>
-              </div>
-
-              <div className="relative h-72 w-full group">
-                <svg className="h-full w-full" viewBox="0 0 1000 200" preserveAspectRatio="none">
-                  {/* Grid System */}
-                  {[40, 100, 160].map((y) => (
-                    <line key={y} x1="0" y1={y} x2="1000" y2={y} stroke="rgba(5,150,105,0.03)" strokeWidth="1" />
-                  ))}
-
-                  {/* HbA1c Line */}
-                  <motion.path
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 2 }}
-                    d="M0,140 L200,150 L400,130 L600,80 L800,110 L1000,90"
-                    fill="none"
-                    stroke="#f43f5e"
-                    strokeWidth="3"
-                    strokeDasharray="8 8"
-                    className="opacity-50"
-                  />
-                  {[[200, 150], [400, 130], [600, 80], [800, 110]].map(([cx, cy], i) => (
-                    <circle key={i} cx={cx} cy={cy} r="5" fill="#f43f5e" className="shadow-lg" />
-                  ))}
-
-                  {/* Lesion Line */}
-                  <motion.path
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 2.5 }}
-                    d="M0,160 L200,165 L400,155 L600,120 L800,130 L1000,70"
-                    fill="none"
-                    stroke="#059669"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                  {[[200, 165], [400, 155], [600, 120], [800, 130], [1000, 70]].map(([cx, cy], i) => (
-                    <circle key={i} cx={cx} cy={cy} r="6" fill="#059669" className="group-hover:scale-125 transition-transform" />
-                  ))}
-                </svg>
-
-                <div className="mt-8 flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
-                  {X_AXIS_LABELS.map((l) => <span key={l}>{l}</span>)}
                 </div>
               </div>
             </motion.div>
           </div>
-
-          {/* Footer CTA */}
-          <motion.div variants={itemVariants} className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 bg-slate-900 rounded-[2.5rem] p-10 text-white flex items-center justify-between group overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-150 transition-transform duration-700">
-                <ShieldCheck size={120} />
-              </div>
-              <div className="relative z-10">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-2">Diagnostic Status</h4>
-                <h3 className="text-xl font-black tracking-tight leading-relaxed italic">Moderate <span className="text-primary">NPDR</span> / Clinical Stage <span className="text-rose-500">2B</span></h3>
-              </div>
-              <div className="relative z-10 px-6 py-3 bg-white/5 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest">
-                Synchronized Oct 2024
-              </div>
-            </div>
-
-            <button className="lg:w-96 bg-primary rounded-[2.5rem] p-10 text-white flex items-center justify-between shadow-2xl shadow-primary/30 hover:bg-primary/90 transition-all hover:-translate-y-1 group">
-              <div className="text-left">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/50 mb-2">Protocol</h4>
-                <h3 className="text-xl font-black italic">Anti-VEGF Therapy</h3>
-              </div>
-              <div className="size-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
-                <ChevronRight size={24} strokeWidth={3} />
-              </div>
-            </button>
-          </motion.div>
         </motion.div>
 
         {/* Footer */}

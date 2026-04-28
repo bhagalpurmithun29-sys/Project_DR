@@ -79,14 +79,13 @@ api.interceptors.response.use(
 
 export const normalizeUrl = (url) => {
     if (!url) return null;
-    // Handle Cloudinary failure: convert to local upload path if it matches our pattern
-    if (url.startsWith('http') && url.includes('cloudinary.com')) {
-        const filename = url.split('/').pop();
-        const baseUrl = resolveApiBaseUrl().replace('/api', '');
-        return `${baseUrl}/uploads/${filename}`;
-    }
     const baseUrl = resolveApiBaseUrl().replace('/api', '');
-    return url.startsWith('http') ? url : `${baseUrl}${url}`;
+    
+    // If it's a full URL (Cloudinary or otherwise), return as is
+    if (url.startsWith('http')) return url;
+    
+    // If it's a relative path, prepend the base URL
+    return `${baseUrl}${url}`;
 };
 
 export default api;

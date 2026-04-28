@@ -12,7 +12,6 @@ import {
     Settings,
     LogOut,
     ChevronRight,
-    Download,
     PlusCircle,
     Calendar,
     Mail,
@@ -20,7 +19,6 @@ import {
     Search,
     AlertCircle,
     CheckCircle,
-    FileText,
     ZoomIn,
     Brain,
     BookOpen,
@@ -45,7 +43,6 @@ const PatientDashboard = () => {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
-    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
     const navigate = useNavigate();
 
@@ -141,43 +138,7 @@ const PatientDashboard = () => {
         }
     };
 
-    const handleExportJSON = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(scans, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", `RetinaAI_Scan_History_${new Date().toISOString().split('T')[0]}.json`);
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-        setIsExportModalOpen(false);
-    };
 
-    const handleExportCSV = () => {
-        if (scans.length === 0) return setIsExportModalOpen(false);
-
-        const headers = ['Date', 'AI Result', 'Lesion Count', 'Status'];
-        const csvRows = [headers.join(',')];
-
-        scans.forEach(scan => {
-            const values = [
-                new Date(scan.date).toLocaleDateString(),
-                scan.aiResult || 'Pending',
-                scan.lesionCount || 0,
-                scan.status || 'Pending'
-            ];
-            csvRows.push(values.map(v => `"${v}"`).join(','));
-        });
-
-        const csvString = csvRows.join('\n');
-        const blob = new Blob([csvString], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.setAttribute('href', url);
-        a.setAttribute('download', `RetinaAI_Scan_History_${new Date().toISOString().split('T')[0]}.csv`);
-        a.click();
-        setIsExportModalOpen(false);
-    };
 
     if (loading) {
         return (
@@ -345,63 +306,7 @@ const PatientDashboard = () => {
                     </div>
                 </header>
 
-                <AnimatePresence>
-                    {isExportModalOpen && (
-                        <>
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm"
-                                onClick={() => setIsExportModalOpen(false)}
-                            />
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 border border-slate-100 pointer-events-auto"
-                            >
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
-                                        <Download size={24} strokeWidth={2.5} />
-                                    </div>
-                                    <button onClick={() => setIsExportModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
-                                        <X size={20} />
-                                    </button>
-                                </div>
-                                <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Export Reports</h3>
-                                <p className="text-sm font-medium text-slate-500 mb-8 leading-relaxed">Download a comprehensive spreadsheet or dataset of your retinal scans and insights.</p>
 
-                                <div className="space-y-3">
-                                    <button
-                                        onClick={handleExportCSV}
-                                        className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:border-primary transition-all group flex items-center text-left gap-4"
-                                    >
-                                        <div className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-primary/10 flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
-                                            <FileText size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-black text-slate-900 dark:text-white mb-0.5">Spreadsheet (.csv)</p>
-                                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Best for Excel or Google Sheets</p>
-                                        </div>
-                                    </button>
-                                    <button
-                                        onClick={handleExportJSON}
-                                        className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:border-primary transition-all group flex items-center text-left gap-4"
-                                    >
-                                        <div className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-primary/10 flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
-                                            <FileText size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-black text-slate-900 dark:text-white mb-0.5">Raw Data (.json)</p>
-                                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Best for developers or APIs</p>
-                                        </div>
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
 
                 <motion.div
                     variants={containerVariants}
@@ -420,12 +325,7 @@ const PatientDashboard = () => {
                                 {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                             </p>
                         </div>
-                        <div className="flex gap-4">
-                            <button onClick={() => setIsExportModalOpen(true)} className="h-14 px-8 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 text-sm font-black text-slate-600 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm">
-                                <Download size={18} />
-                                Export History
-                            </button>
-                        </div>
+
                     </motion.section>
 
                     {/* Patient Card */}

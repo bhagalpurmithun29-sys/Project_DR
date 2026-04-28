@@ -61,7 +61,7 @@ if uploaded_file is not None:
         with st.spinner("Generating report..."):
 
             prompt = f"""
-You are an ophthalmology AI assistant.
+You are an Retina-AI assistant.
 
 Detected lesions in retinal scan:
 

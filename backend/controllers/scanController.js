@@ -98,7 +98,7 @@ exports.analyzeScan = async (req, res) => {
         
         const venvPath = venvPaths.find(p => fs.existsSync(p));
         const pythonPath = venvPath || 'python3';
-        const scriptPath = path.resolve(__dirname, '../ai/predict.py');
+        const scriptPath = path.resolve(__dirname, '../ai/resnet_predict.py');
         
         // Detect if imageUrl is a remote URL or a local file path
         const imagePath = scan.imageUrl.startsWith('http') 
@@ -157,6 +157,8 @@ exports.analyzeScan = async (req, res) => {
             }
 
             currentScan.aiResult = aiResults.riskLevel;
+            currentScan.prediction = aiResults.prediction || aiResults.riskLevel;
+            currentScan.aiConfidence = aiResults.probability || 0;
             currentScan.lesionCount = aiResults.lesionCount;
             currentScan.findings = aiResults.findings || [];
             
