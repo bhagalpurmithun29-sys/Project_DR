@@ -19,7 +19,9 @@ import {
     FilterX,
     ClipboardList,
     Shield,
-    CheckCircle
+    CheckCircle,
+    Target,
+    AlertCircle
 } from 'lucide-react';
 import CentralAlertsModal from '../components/CentralAlertsModal';
 import NodeSettingsModal from '../components/NodeSettingsModal';
@@ -45,6 +47,7 @@ const DoctorScanHistory = () => {
     const [sortOrder, setSortOrder] = useState('newest');
     const [filterPanelOpen, setFilterPanelOpen] = useState(false);
     const [selectedScan, setSelectedScan] = useState(null);
+    const [siblingScan, setSiblingScan] = useState(null);
     const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [isAlertsOpen, setIsAlertsOpen] = useState(false);
@@ -111,11 +114,13 @@ const DoctorScanHistory = () => {
                 patientAge: scan.patient?.age || "N/A",
                 date: new Date(scan.createdAt).toLocaleDateString(),
                 time: new Date(scan.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                createdAt: scan.createdAt,
                 risk: scan.aiResult || "Pending",
                 status: scan.status,
                 type: scan.eyeSide === 'OD' ? 'Right Eye' : 'Left Eye',
                 imageUrl: scan.imageUrl,
                 lesionCount: scan.lesionCount,
+                aiConfidence: scan.aiConfidence,
                 insights: scan.insights,
                 notes: scan.clinicalNotes,
                 aiReportSummary: scan.aiReportSummary,
@@ -132,23 +137,29 @@ const DoctorScanHistory = () => {
         }
     };
 
-    const handleAnalyzeClick = async (scan) => {
-        if (scan.status === 'Analyzed' || scan.status === 'Reviewed') {
-            setSelectedScan(scan);
-            setDoctorPrescription(scan.prescription || '');
+    const handleAnalyzeClick = async (group) => {
+        const { mainScan, siblingScan: sib } = group;
+        if (mainScan.status === 'Analyzed' || mainScan.status === 'Reviewed') {
+            setSelectedScan(mainScan);
+            setSiblingScan(sib);
+            setDoctorPrescription(mainScan.prescription || '');
             setIsAnalysisModalOpen(true);
             return;
         }
 
         // If Pending, trigger analysis
         try {
-            const res = await scanService.analyzeScan(scan.id);
+            const res = await scanService.analyzeScan(mainScan.id);
+            if (sib && sib.status === 'Pending') {
+                await scanService.analyzeScan(sib.id);
+            }
             if (res.success) {
                 // Refresh data and open modal
                 await fetchScans();
                 // We need the updated scan object from the list
                 const updatedScansRes = await scanService.getScans();
-                const updatedScan = updatedScansRes.data.find(s => s._id === scan.id);
+                const updatedScan = updatedScansRes.data.find(s => s._id === mainScan.id);
+                const updatedSib = sib ? updatedScansRes.data.find(s => s._id === sib.id) : null;
                 if (updatedScan) {
                     setSelectedScan({
                         id: updatedScan._id,
@@ -162,6 +173,7 @@ const DoctorScanHistory = () => {
                         type: updatedScan.eyeSide === 'OD' ? 'Right Eye' : 'Left Eye',
                         imageUrl: updatedScan.imageUrl,
                         lesionCount: updatedScan.lesionCount,
+                        aiConfidence: updatedScan.aiConfidence,
                         insights: updatedScan.insights,
                         notes: updatedScan.clinicalNotes,
                         aiReportSummary: updatedScan.aiReportSummary,
@@ -169,6 +181,31 @@ const DoctorScanHistory = () => {
                         prescription: updatedScan.doctorPrescription,
                         sentToPatient: updatedScan.sentToPatient
                     });
+                    if (updatedSib) {
+                        setSiblingScan({
+                            id: updatedSib._id,
+                            patientId: updatedSib.patient?.patientId || `DR-${updatedSib._id.substring(0, 5)}`,
+                            patientName: updatedSib.patient?.name || "Unknown Patient",
+                            patientAge: updatedSib.patient?.age || "N/A",
+                            date: new Date(updatedSib.createdAt).toLocaleDateString(),
+                            time: new Date(updatedSib.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            createdAt: updatedSib.createdAt,
+                            risk: updatedSib.aiResult,
+                            status: updatedSib.status,
+                            type: updatedSib.eyeSide === 'OD' ? 'Right Eye' : 'Left Eye',
+                            imageUrl: updatedSib.imageUrl,
+                            lesionCount: updatedSib.lesionCount,
+                            aiConfidence: updatedSib.aiConfidence,
+                            insights: updatedSib.insights,
+                            notes: updatedSib.clinicalNotes,
+                            aiReportSummary: updatedSib.aiReportSummary,
+                            doctorName: updatedSib.referredDoctor?.name,
+                            prescription: updatedSib.doctorPrescription,
+                            sentToPatient: updatedSib.sentToPatient
+                        });
+                    } else {
+                        setSiblingScan(null);
+                    }
                     setDoctorPrescription(updatedScan.doctorPrescription || '');
                     setIsAnalysisModalOpen(true);
                 }
@@ -196,6 +233,9 @@ const DoctorScanHistory = () => {
             }
 
             await scanService.updateScan(selectedScan.id, updateData);
+            if (siblingScan) {
+                await scanService.updateScan(siblingScan.id, updateData);
+            }
             setIsAnalysisModalOpen(false);
             fetchScans();
             if (send) alert('Report and prescription have been securely sent to the patient.');
@@ -232,9 +272,39 @@ const DoctorScanHistory = () => {
             return matchesSearch && matchesRisk && matchesStatus && matchesType;
         })
         .sort((a, b) => {
-            const dA = new Date(a.date), dB = new Date(b.date);
+            const dA = new Date(a.createdAt || a.date), dB = new Date(b.createdAt || b.date);
             return sortOrder === 'newest' ? dB - dA : dA - dB;
         });
+
+    const groupedScans = [];
+    const seen = new Set();
+    filteredScans.forEach(s => {
+        if (seen.has(s.id)) return;
+        const sibling = filteredScans.find(sib =>
+            sib.id !== s.id &&
+            sib.patientId === s.patientId &&
+            sib.type !== s.type &&
+            Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 5 * 60 * 1000
+        );
+        if (sibling) {
+            groupedScans.push({
+                id: s.id,
+                groupType: 'Bilateral',
+                mainScan: s.type === 'Right Eye' ? s : sibling,
+                siblingScan: s.type === 'Right Eye' ? sibling : s,
+            });
+            seen.add(s.id);
+            seen.add(sibling.id);
+        } else {
+            groupedScans.push({
+                id: s.id,
+                groupType: 'Single',
+                mainScan: s,
+                siblingScan: null
+            });
+            seen.add(s.id);
+        }
+    });
 
     if (loading) {
         return (
@@ -478,6 +548,7 @@ const DoctorScanHistory = () => {
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Patient ID</th>
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Patient Name</th>
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Age</th>
+                                        <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Scan Type</th>
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Scan Date</th>
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Source Portfolio</th>
                                         <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Status</th>
@@ -486,9 +557,11 @@ const DoctorScanHistory = () => {
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
                                     <AnimatePresence>
-                                        {filteredScans.length > 0 ? filteredScans.map((scan) => (
+                                        {groupedScans.length > 0 ? groupedScans.map((group) => {
+                                            const { mainScan: scan, groupType } = group;
+                                            return (
                                             <motion.tr
-                                                key={scan.id}
+                                                key={group.id}
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 exit={{ opacity: 0, x: -20 }}
@@ -509,6 +582,16 @@ const DoctorScanHistory = () => {
                                                     <p className="text-sm font-bold text-slate-600 italic">{scan.patientAge}</p>
                                                 </td>
                                                 <td className="px-10 py-8">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                            {groupType}
+                                                        </span>
+                                                        {groupType === 'Single' && (
+                                                            <span className="text-[10px] font-bold text-slate-400">{scan.type === 'Right Eye' ? 'OD' : 'OS'}</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-10 py-8">
                                                     <p className="text-sm font-black text-slate-700">{scan.date}</p>
                                                 </td>
                                                 <td className="px-10 py-8">
@@ -527,7 +610,7 @@ const DoctorScanHistory = () => {
                                                     <div className="flex items-center justify-end gap-3">
                                                         {scan.status === 'Pending' ? (
                                                             <button
-                                                                onClick={() => handleAnalyzeClick(scan)}
+                                                                onClick={() => handleAnalyzeClick(group)}
                                                                 className="h-10 px-6 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 hover:-translate-y-1 shadow-xl shadow-primary/20 transition-all flex items-center gap-2"
                                                             >
                                                                 Analyze
@@ -535,7 +618,7 @@ const DoctorScanHistory = () => {
                                                             </button>
                                                         ) : (
                                                             <button
-                                                                onClick={() => handleAnalyzeClick(scan)}
+                                                                onClick={() => handleAnalyzeClick(group)}
                                                                 className={`h-10 px-6 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 ${
                                                                     scan.status === 'Reviewed' 
                                                                     ? 'bg-slate-100 text-slate-500 border border-slate-200' 
@@ -549,7 +632,7 @@ const DoctorScanHistory = () => {
                                                     </div>
                                                 </td>
                                             </motion.tr>
-                                        )) : (
+                                        )}) : (
                                             <tr>
                                                 <td colSpan="6" className="px-10 py-24 text-center">
                                                     <div className="flex flex-col items-center gap-4">
@@ -599,19 +682,27 @@ const DoctorScanHistory = () => {
                                 className="relative w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl border border-white/20 overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
                             >
                                 {/* Image Section */}
-                                <div className="md:w-1/2 bg-slate-950 flex items-center justify-center p-4 relative min-h-[300px]">
-                                    <img
-                                        src={normalizeUrl(selectedScan.imageUrl) || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
-                                        alt="Retinal Fundus"
-                                        className="max-w-full max-h-full rounded-2xl shadow-2xl border border-white/5"
-                                    />
-                                    <div className="absolute top-8 left-8 bg-white/10 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-xl">
-                                        <span className="text-[10px] font-black text-white uppercase tracking-widest">{selectedScan.type}</span>
-                                    </div>
+                                <div className="md:w-1/2 bg-slate-950 p-8 flex flex-col gap-6 overflow-y-auto custom-scrollbar relative border-r border-slate-800">
+                                    {[selectedScan, siblingScan].filter(Boolean).sort((a,b) => a.type === 'Right Eye' ? -1 : 1).map((scan, idx) => (
+                                        <div key={idx} className="w-full flex flex-col gap-3">
+                                            <div className="flex items-center">
+                                                <span className="px-3 py-1.5 bg-white/10 rounded-xl border border-white/20 text-[9px] font-black text-white uppercase tracking-widest backdrop-blur-md">
+                                                    {scan.type}
+                                                </span>
+                                            </div>
+                                            <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 bg-black shadow-2xl relative group">
+                                                <img
+                                                    src={normalizeUrl(scan.imageUrl) || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
+                                                    alt={scan.type}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
 
                                 {/* Info Section */}
-                                <div className="md:w-1/2 p-10 flex flex-col overflow-y-auto">
+                                <div className="md:w-1/2 p-10 flex flex-col overflow-y-auto custom-scrollbar">
                                     <div className="flex justify-between items-start mb-10">
                                         <div>
                                             <h3 className="text-2xl font-black text-slate-900 tracking-tight italic">Scan <span className="text-primary not-italic">Analysis</span></h3>
@@ -635,15 +726,74 @@ const DoctorScanHistory = () => {
                                         </div>
 
                                         {/* Results Grid */}
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
                                                 <div className="absolute top-0 right-0 p-3">
                                                     <Activity className="text-slate-50" size={40} />
                                                 </div>
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">AI Scoring</p>
-                                                <h5 className={`text-xl font-black italic relative z-10 ${selectedScan.risk === 'High Risk' ? 'text-rose-500' :
-                                                    selectedScan.risk === 'Moderate' ? 'text-amber-500' : 'text-emerald-500'
-                                                    }`}>{selectedScan.risk}</h5>
+                                                <div className="space-y-2 relative z-10">
+                                                    <div className="flex items-center gap-2">
+                                                        {siblingScan && <span className="text-[10px] font-black text-slate-300 w-6">OD:</span>}
+                                                        <h5 className={`text-base font-black italic ${selectedScan.risk === 'High Risk' ? 'text-rose-500' :
+                                                            selectedScan.risk === 'Moderate' ? 'text-amber-500' : 'text-emerald-500'
+                                                            }`}>{selectedScan.risk}</h5>
+                                                    </div>
+                                                    {siblingScan && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-black text-slate-300 w-6">OS:</span>
+                                                            <h5 className={`text-base font-black italic ${siblingScan.risk === 'High Risk' ? 'text-rose-500' :
+                                                                siblingScan.risk === 'Moderate' ? 'text-amber-500' : 'text-emerald-500'
+                                                                }`}>{siblingScan.risk}</h5>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 p-3">
+                                                    <Target className="text-slate-50" size={40} />
+                                                </div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">AI Confidence</p>
+                                                <div className="space-y-2 relative z-10">
+                                                    <div className="flex items-center gap-2">
+                                                        {siblingScan && <span className="text-[10px] font-black text-slate-300 w-6">OD:</span>}
+                                                        <h5 className="text-base font-black text-slate-900">{selectedScan.aiConfidence ? `${(selectedScan.aiConfidence * 100).toFixed(1)}%` : '—'}</h5>
+                                                    </div>
+                                                    {siblingScan && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-black text-slate-300 w-6">OS:</span>
+                                                            <h5 className="text-base font-black text-slate-900">{siblingScan.aiConfidence ? `${(siblingScan.aiConfidence * 100).toFixed(1)}%` : '—'}</h5>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 p-3">
+                                                    <AlertCircle className="text-slate-50" size={40} />
+                                                </div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Lesions Detected</p>
+                                                <div className="space-y-2 relative z-10">
+                                                    <div className="flex items-center gap-2">
+                                                        {siblingScan && <span className="text-[10px] font-black text-slate-300 w-6">OD:</span>}
+                                                        <h5 className="text-base font-black text-slate-900">{selectedScan.lesionCount ?? '—'}</h5>
+                                                    </div>
+                                                    {siblingScan && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-black text-slate-300 w-6">OS:</span>
+                                                            <h5 className="text-base font-black text-slate-900">{siblingScan.lesionCount ?? '—'}</h5>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 p-3">
+                                                    <User className="text-slate-50" size={40} />
+                                                </div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Technician</p>
+                                                <h5 className="text-lg font-black text-slate-900 relative z-10 capitalize">{selectedScan.technician || "Unknown"}</h5>
                                             </div>
 
                                             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
@@ -651,34 +801,28 @@ const DoctorScanHistory = () => {
                                                     <Shield className="text-slate-50" size={40} />
                                                 </div>
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Physician</p>
-                                                <h5 className="text-xl font-black text-slate-900 relative z-10">Dr. {selectedScan.doctorName || "Review Pending"}</h5>
+                                                <h5 className="text-lg font-black text-slate-900 relative z-10 leading-tight">Dr. {selectedScan.doctorName || "Review Pending"}</h5>
                                             </div>
                                         </div>
 
                                         {/* Clinical Summary */}
-                                        {selectedScan.aiReportSummary && (
+                                        {(selectedScan.aiReportSummary || (siblingScan && siblingScan.aiReportSummary)) && (
                                             <div className="space-y-3 pt-2">
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 text-primary">Clinical Summary (Generative AI)</p>
-                                                <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-inner italic text-xs font-bold text-slate-600 leading-relaxed">
-                                                    {selectedScan.aiReportSummary}
+                                                <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-inner italic text-xs font-bold text-slate-600 leading-relaxed space-y-4">
+                                                    <div>
+                                                        {siblingScan && <span className="font-black text-[10px] text-slate-400 uppercase block mb-1">Right Eye (OD)</span>}
+                                                        {selectedScan.aiReportSummary}
+                                                    </div>
+                                                    {siblingScan && siblingScan.aiReportSummary && (
+                                                        <div className="pt-4 border-t border-slate-100">
+                                                            <span className="font-black text-[10px] text-slate-400 uppercase block mb-1">Left Eye (OS)</span>
+                                                            {siblingScan.aiReportSummary}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
-
-                                        {/* Insights */}
-                                        <div className="space-y-4">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Clinical Insights</p>
-                                            <div className="space-y-3">
-                                                {selectedScan.insights?.map((insight, idx) => (
-                                                    <div key={idx} className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                                                        <div className={`size-2 rounded-full mt-1.5 shrink-0 ${insight.type === 'high_risk' ? 'bg-rose-500' : 'bg-primary'}`} />
-                                                        <p className="text-xs font-bold text-slate-600 leading-relaxed">{insight.message}</p>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-
 
                                         {/* Prescription Section */}
                                         <div className="space-y-3 pt-2">

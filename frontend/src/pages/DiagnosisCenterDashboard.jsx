@@ -523,8 +523,8 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                                         <td className="px-5 py-4 text-xs font-bold text-slate-500">{new Date(s.date || s.createdAt).toLocaleDateString()}</td>
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col">
-                                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none truncate max-w-[120px]" title={s.diagnosisCenter?.centerName || 'Direct'}>
-                                                    {s.diagnosisCenter?.centerName || 'Direct'}
+                                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none truncate max-w-[120px]" title={s.diagnosisCenter?.name || 'Direct'}>
+                                                    {s.diagnosisCenter?.name || 'Direct'}
                                                 </p>
                                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">{s.technician || 'Technician'}</p>
                                             </div>

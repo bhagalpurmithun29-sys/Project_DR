@@ -213,7 +213,7 @@ const DoctorDashboard = () => {
         _id: scan._id,
         name: scan.patient?.name || "Unknown Patient",
         initials: (scan.patient?.name || "UP").split(' ').map(n => n[0]).join(''),
-        time: new Date(scan.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date(scan.createdAt || scan.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         risk: scan.aiResult,
         riskStyle: scan.aiResult === 'High Risk' ? "bg-rose-50 text-rose-600 border-rose-100" :
             scan.aiResult === 'Moderate' ? "bg-amber-50 text-amber-600 border-amber-100" :
@@ -533,7 +533,7 @@ const DoctorDashboard = () => {
                                                         </div>
                                                         <div>
                                                             <p className="text-base font-black text-slate-900 dark:text-white leading-none mb-1">{row.name}</p>
-                                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">ID: {scans[i]?._id?.slice(-8).toUpperCase() || '—'}</p>
+                                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">ID: {row._id?.slice(-8).toUpperCase() || '—'}</p>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -671,15 +671,7 @@ const DoctorDashboard = () => {
                             </motion.div>
                         
                             
-                            {/* Clinical Security Signature */}
-                            <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800 flex items-center gap-4 shadow-inner">
-                                <div className="size-11 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-primary border border-slate-100 dark:border-slate-800 italic font-black text-sm">R</div>
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest mb-0.5">Secure Physician Instance</p>
-                                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 italic">Auth ID: 88A-29C-77X</p>
-                                </div>
-                                <div className="ml-auto size-2 bg-primary rounded-full shadow-[0_0_8px_rgba(5,150,105,0.6)]" />
-                            </div>
+
                         </div>
                     </div>
                 </motion.div>

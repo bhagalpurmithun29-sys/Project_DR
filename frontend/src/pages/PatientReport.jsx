@@ -102,7 +102,7 @@ const PatientReport = () => {
             doc.text(`Identity ID: ${scan.patient?.patientId || 'Pending'}`, 20, 62);
             doc.text(`Age/Gender: ${scan.patient?.age || 'N/A'} yrs / ${scan.patient?.gender || 'N/A'}`, 20, 69);
 
-            const pdfScans = [scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1);
+            const pdfScans = [scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : (b.eyeSide === 'OD' ? 1 : 0));
 
             // Add Scan Images
             for (let i = 0; i < pdfScans.length; i++) {
@@ -422,7 +422,7 @@ const PatientReport = () => {
                     {/* Dynamic Scans Grid */}
                     <div className="lg:col-span-3">
                         <div className={`grid ${siblingScan ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-10`}>
-                            {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map((s, idx) => (
+                            {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : (b.eyeSide === 'OD' ? 1 : 0)).map((s, idx) => (
                                 <motion.div 
                                     key={s._id}
                                     initial={{ opacity: 0, y: 20 }}
@@ -555,7 +555,7 @@ const PatientReport = () => {
                             <div className="print-info-item"><span className="print-info-label">Age/Gender:</span> {scan.patient?.age || 'N/A'} yrs / {scan.patient?.gender || 'N/A'}</div>
                         </div>
                         <div className="flex gap-4 items-center justify-end">
-                            {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map(s => (
+                            {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : (b.eyeSide === 'OD' ? 1 : 0)).map(s => (
                                 s.imageUrl && (
                                     <div key={s._id} className="print-image-box">
                                         <img src={normalizeUrl(s.imageUrl)} className="print-image" alt="Retina Scan" />
@@ -570,7 +570,7 @@ const PatientReport = () => {
                 <div className="print-section">
                     <h2 className="print-section-title">ANALYSIS STATUS</h2>
                     <div className="print-info-list">
-                        {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map(s => (
+                        {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : (b.eyeSide === 'OD' ? 1 : 0)).map(s => (
                             <div key={s._id} className="mb-4">
                                 {siblingScan && <h3 className="text-[10px] font-bold text-slate-500 mb-1">{s.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</h3>}
                                 <div className="print-info-item">
@@ -587,7 +587,7 @@ const PatientReport = () => {
                     </div>
                 </div>
 
-                {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map(s => (
+                {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : (b.eyeSide === 'OD' ? 1 : 0)).map(s => (
                     s.aiReportSummary && (
                         <div key={s._id} className="print-section">
                             <h2 className="print-section-title print-summary-title">CLINICAL SUMMARY {siblingScan ? (s.eyeSide === 'OD' ? '(RIGHT EYE)' : '(LEFT EYE)') : '(GENERATIVE AI)'}</h2>

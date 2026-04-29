@@ -160,9 +160,10 @@ exports.updateAppointmentStatus = async (req, res) => {
         }
 
         // Only the assigned doctor can update status
-        // if (appointment.doctorId.toString() !== req.user.doctorId.toString()) {
-        //     return res.status(403).json({ success: false, message: 'Unauthorized to update this appointment.' });
-        // }
+        const doctor = await Doctor.findOne({ user: req.user._id });
+        if (!doctor || appointment.doctorId.toString() !== doctor._id.toString()) {
+            return res.status(403).json({ success: false, message: 'Unauthorized to update this appointment.' });
+        }
 
         appointment.status = status;
         await appointment.save();

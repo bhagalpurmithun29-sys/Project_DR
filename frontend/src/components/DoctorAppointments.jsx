@@ -212,9 +212,10 @@ const DoctorAppointments = () => {
                         </td>
                         <td className="px-10 py-8">
                           <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                            app.status === 'confirmed' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100' :
-                            app.status === 'pending' ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100' :
-                            app.status === 'rejected' ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100' :
+                            app.status === 'confirmed' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20' :
+                            app.status === 'completed' ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 border-indigo-100 dark:border-indigo-500/20' :
+                            app.status === 'pending' ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20' :
+                            app.status === 'rejected' ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20' :
                             'bg-slate-50 dark:bg-slate-800 text-slate-600 border-slate-100'
                           }`}>
                             {app.status}
@@ -239,6 +240,16 @@ const DoctorAppointments = () => {
                                 title="Reject"
                               >
                                 <X size={18} strokeWidth={3} />
+                              </button>
+                            </div>
+                          ) : app.status === 'confirmed' ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button 
+                                onClick={() => handleUpdateStatus(app._id, 'completed')}
+                                className="px-4 h-10 rounded-xl bg-primary text-white flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-lg shadow-primary/20 text-[10px] font-black uppercase tracking-widest"
+                                title="Mark as Completed"
+                              >
+                                <CheckCircle size={14} strokeWidth={2.5} /> Checkup Done
                               </button>
                             </div>
                           ) : (

@@ -455,7 +455,7 @@ const PatientDashboard = () => {
                                             {scans.length > 0 ? scans.map((scan) => (
                                                 <tr key={scan._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all group">
                                                     <td className="px-8 py-6">
-                                                        <p className="text-sm font-black text-slate-900 dark:text-white">{new Date(scan.date || scan.createdAt).toLocaleDateString()}</p>
+                                                        <p className="text-sm font-black text-slate-900 dark:text-white">{new Date(scan.date || scan.createdAt || Date.now()).toLocaleDateString()}</p>
                                                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                                             {scan.eyeSide === 'OD' ? 'Right Eye (OD)' : scan.eyeSide === 'OS' ? 'Left Eye (OS)' : scan.eyeSide || 'N/A'}
                                                         </p>
