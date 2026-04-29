@@ -85,7 +85,12 @@ export const normalizeUrl = (url) => {
     if (url.startsWith('http')) return url;
     
     // If it's a relative path, prepend the base URL
-    return `${baseUrl}${url}`;
+    const separator = url.startsWith('/') ? '' : '/';
+    // If backend returns just the filename, we assume it's in /uploads/
+    const isFilenameOnly = !url.includes('/') && !url.startsWith('http');
+    const path = isFilenameOnly ? `/uploads/${url}` : `${separator}${url}`;
+    
+    return `${baseUrl}${path}`;
 };
 
 export default api;

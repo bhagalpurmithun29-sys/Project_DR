@@ -536,7 +536,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                         <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{background: s.aiConfidence >= 0.7 ? '#fff1f2' : s.aiConfidence >= 0.4 ? '#fffbeb' : '#f0fdf4'}}>
                                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Conf:</span>
                                                             <span className={`text-[9px] font-black ${s.aiConfidence >= 0.7 ? 'text-rose-600' : s.aiConfidence >= 0.4 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                                                {s.aiConfidence ? `${(s.aiConfidence * 100).toFixed(1)}%` : '—'}
+                                                                {s.aiConfidence ? `${(s.aiConfidence * 100).toFixed(2)}%` : '—'}
                                                             </span>
                                                         </div>
                                                         {/* Lesions */}
@@ -571,7 +571,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                             const sibling = scans.find(sib => 
                                                                 sib.patient?._id === s.patient?._id && 
                                                                 sib.eyeSide !== s.eyeSide &&
-                                                                Math.abs(new Date(sib.date) - new Date(s.date)) < 10 * 60 * 1000
+                                                                Math.abs(new Date(sib.date || sib.createdAt) - new Date(s.date || s.createdAt)) < 24 * 60 * 60 * 1000
                                                             );
                                                             setSelectedScan(s);
                                                             setSiblingScan(sibling);
@@ -751,7 +751,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                     <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Confidence</span>
                                                         <span className={`text-lg font-black ${scan.aiConfidence >= 0.7 ? 'text-rose-500' : scan.aiConfidence >= 0.4 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                                                            {scan.aiConfidence ? `${(scan.aiConfidence * 100).toFixed(1)}%` : '—'}
+                                                            {scan.aiConfidence ? `${(scan.aiConfidence * 100).toFixed(2)}%` : '—'}
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
@@ -1031,6 +1031,7 @@ const AnalyticsSection = ({ scans, patients }) => {
                                     const monthsToShow = [];
                                     for (let i = 3; i >= 0; i--) {
                                         const d = new Date();
+                                        d.setDate(1); // Set to 1st to prevent month skipping issues on 31st
                                         d.setMonth(d.getMonth() - i);
                                         monthsToShow.push(d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
                                     }

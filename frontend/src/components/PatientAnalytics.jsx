@@ -100,7 +100,7 @@ export default function PatientAnalytics() {
           const isHighRisk   = latest.aiResult?.includes('High');
           const isModRisk    = latest.aiResult?.includes('Moderate');
           const confidence   = latest.aiConfidence || 0;
-          const confPct      = Math.round(confidence * 100);
+          const confPct      = (confidence * 100).toFixed(2);
 
           const predictionName = latest.prediction
             || latest.findings?.[0]?.replace('AI Analysis detects: ', '')
@@ -333,7 +333,7 @@ export default function PatientAnalytics() {
                       <span className="text-[10px] font-bold text-slate-400">Stage {stage}/4</span>
                     </div>
                     <div className="flex items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                      <span>Confidence: <span className="text-slate-700">{Math.round((eyeScan.aiConfidence || 0) * 100)}%</span></span>
+                      <span>Confidence: <span className="text-slate-700">{((eyeScan.aiConfidence || 0) * 100).toFixed(2)}%</span></span>
                       <span>Lesions: <span className="text-slate-700">{eyeScan.lesionCount ?? 0}</span></span>
                     </div>
                   </div>
@@ -441,7 +441,7 @@ export default function PatientAnalytics() {
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center group-hover:scale-110 transition-transform duration-500">
                       <span className="text-6xl font-black tracking-tighter leading-none">
-                        {latestScan?.aiConfidence ? Math.round(latestScan.aiConfidence * 100) : '—'}
+                        {latestScan?.aiConfidence ? (latestScan.aiConfidence * 100).toFixed(2) : '—'}
                         {latestScan?.aiConfidence ? <span className="text-2xl text-primary">%</span> : null}
                       </span>
                       <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mt-3">
@@ -454,7 +454,7 @@ export default function PatientAnalytics() {
                     <div className="p-6 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-sm text-center">
                       <p className="text-xs font-bold text-white/70 leading-relaxed">
                         {latestScan?.prediction
-                          ? <>Detected: <span className="text-primary font-black uppercase">{latestScan.prediction}</span> with {Math.round((latestScan.aiConfidence || 0) * 100)}% confidence.</>
+                          ? <>Detected: <span className="text-primary font-black uppercase">{latestScan.prediction}</span> with {((latestScan.aiConfidence || 0) * 100).toFixed(2)}% confidence.</>
                           : 'Run an AI analysis to see your risk assessment here.'}
                       </p>
                     </div>
