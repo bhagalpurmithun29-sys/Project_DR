@@ -414,8 +414,10 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
     };
 
     const filtered = scans.filter(s =>
-        s.patientName?.toLowerCase().includes(search.toLowerCase()) ||
-        s._id?.includes(search)
+        s.patient?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        s.patient?.email?.toLowerCase().includes(search.toLowerCase()) ||
+        s._id?.slice(-8).toLowerCase().includes(search.toLowerCase()) ||
+        s.aiResult?.toLowerCase().includes(search.toLowerCase())
     );
 
     const handleNewScan = async (e) => {
@@ -518,7 +520,7 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                                         <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">{s._id?.slice(-8).toUpperCase()}</td>
                                         <td className="px-5 py-4 text-sm font-black text-slate-900">{s.patient?.name || '—'}</td>
                                         <td className="px-5 py-4 text-sm font-bold text-slate-700">{s.eyeSide === 'OD' ? 'Right Eye (OD)' : s.eyeSide === 'OS' ? 'Left Eye (OS)' : '—'}</td>
-                                        <td className="px-5 py-4 text-xs font-bold text-slate-500">{s.date ? new Date(s.date).toLocaleDateString() : '—'}</td>
+                                        <td className="px-5 py-4 text-xs font-bold text-slate-500">{new Date(s.date || s.createdAt).toLocaleDateString()}</td>
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col">
                                                 <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none truncate max-w-[120px]" title={s.diagnosisCenter?.centerName || 'Direct'}>

@@ -237,7 +237,7 @@ exports.getScans = async (req, res) => {
 
         const scans = await Scan.find(query)
             .populate('patient')
-            .populate('diagnosisCenter', 'centerName')
+            .populate('diagnosisCenter', 'name email')
             .populate('referredDoctor', 'name')
             .sort('-createdAt');
 
@@ -295,6 +295,7 @@ exports.getScan = async (req, res) => {
     try {
         const scan = await Scan.findById(req.params.id)
             .populate('patient', 'name email patientId age gender')
+            .populate('diagnosisCenter', 'name email')
             .populate('referredDoctor', 'name');
         if (!scan) {
             return res.status(404).json({ success: false, message: 'Scan not found' });

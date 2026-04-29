@@ -455,8 +455,10 @@ const PatientDashboard = () => {
                                             {scans.length > 0 ? scans.map((scan) => (
                                                 <tr key={scan._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all group">
                                                     <td className="px-8 py-6">
-                                                        <p className="text-sm font-black text-slate-900 dark:text-white">{new Date(scan.date).toLocaleDateString()}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">OS (Left Eye)</p>
+                                                        <p className="text-sm font-black text-slate-900 dark:text-white">{new Date(scan.date || scan.createdAt).toLocaleDateString()}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                                            {scan.eyeSide === 'OD' ? 'Right Eye (OD)' : scan.eyeSide === 'OS' ? 'Left Eye (OS)' : scan.eyeSide || 'N/A'}
+                                                        </p>
                                                     </td>
                                                     <td className="px-8 py-6">
                                                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors ${
@@ -469,8 +471,16 @@ const PatientDashboard = () => {
                                                     </td>
                                                     <td className="px-8 py-6 text-sm font-bold text-slate-600 dark:text-slate-400">{scan.lesionCount} lesions</td>
                                                     <td className="px-8 py-6">
-                                                        <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${scan.status === 'Reviewed' ? 'text-primary' : 'text-amber-600'}`}>
-                                                            <span className={`size-1.5 rounded-full ${scan.status === 'Reviewed' ? 'bg-primary' : 'bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.5)] animate-pulse'}`}></span>
+                                                        <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${
+                                                            scan.status === 'Reviewed' || scan.status === 'Analyzed' 
+                                                                ? 'text-primary' 
+                                                                : 'text-amber-600'
+                                                        }`}>
+                                                            <span className={`size-1.5 rounded-full ${
+                                                                scan.status === 'Reviewed' || scan.status === 'Analyzed' 
+                                                                    ? 'bg-primary' 
+                                                                    : 'bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.5)] animate-pulse'
+                                                            }`}></span>
                                                             {scan.status}
                                                         </div>
                                                     </td>

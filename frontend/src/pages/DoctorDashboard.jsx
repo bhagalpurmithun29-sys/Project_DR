@@ -128,15 +128,15 @@ const DoctorDashboard = () => {
     };
 
     const analyzedScans = scans.filter(s => s.status !== 'Pending');
-    const totalAnalyzed = analyzedScans.length || 1;
+    const totalAnalyzed = analyzedScans.length;
     const highRiskCount = analyzedScans.filter(s => s.aiResult === 'High Risk').length;
     const moderateCount = analyzedScans.filter(s => s.aiResult === 'Moderate').length;
     const lowRiskCount = Math.max(0, totalAnalyzed - highRiskCount - moderateCount);
 
     const severityStats = [
-        { label: "Healthy / Controlled", percent: Math.round((lowRiskCount / totalAnalyzed) * 100), color: "bg-primary", stroke: "text-primary" },
-        { label: "Moderate Retinopathy", percent: Math.round((moderateCount / totalAnalyzed) * 100), color: "bg-amber-500", stroke: "text-amber-500" },
-        { label: "High Risk Proliferative", percent: Math.round((highRiskCount / totalAnalyzed) * 100), color: "bg-rose-500", stroke: "text-rose-500" }
+        { label: "Healthy / Controlled", percent: totalAnalyzed > 0 ? Math.round((lowRiskCount / totalAnalyzed) * 100) : 0, color: "bg-primary", stroke: "text-primary" },
+        { label: "Moderate Retinopathy", percent: totalAnalyzed > 0 ? Math.round((moderateCount / totalAnalyzed) * 100) : 0, color: "bg-amber-500", stroke: "text-amber-500" },
+        { label: "High Risk Proliferative", percent: totalAnalyzed > 0 ? Math.round((highRiskCount / totalAnalyzed) * 100) : 0, color: "bg-rose-500", stroke: "text-rose-500" }
     ];
 
     if (loading) {
@@ -160,6 +160,11 @@ const DoctorDashboard = () => {
         visible: { opacity: 1, y: 0 }
     };
 
+    // Real new patients count (patients whose first scan was created today)
+    const todayStr = new Date().toDateString();
+    const todayScans = scans.filter(s => new Date(s.createdAt).toDateString() === todayStr);
+    const newPatientsToday = new Set(todayScans.map(s => s.patient?._id)).size;
+
     const KPI_CARDS = [
         {
             icon: Users,
@@ -167,7 +172,7 @@ const DoctorDashboard = () => {
             iconColor: "text-primary",
             label: "Patient Base",
             value: new Set(scans.map(s => s.patient?._id)).size.toString(),
-            trend: "+0",
+            trend: newPatientsToday > 0 ? `+${newPatientsToday} today` : "+0 today",
             trendUp: true,
         },
         {
@@ -217,8 +222,8 @@ const DoctorDashboard = () => {
         statusStyle: scan.status === 'Pending' ? "text-amber-600" : "text-primary",
         statusDot: scan.status === 'Pending' ? "bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.4)] animate-pulse" : "bg-primary",
         action: scan.status === 'Pending' ? "Analyze" : "Details",
-        source: scan.diagnosisCenter?.name || "Self",
-        diagnosor: scan.technician || "Direct Entry"
+        source: scan.diagnosisCenter?.name || 'Self',
+        diagnosor: scan.technician || 'Direct Entry'
     }));
 
     const filteredPatients = patients.filter(p =>
@@ -448,7 +453,14 @@ const DoctorDashboard = () => {
                     <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between items-end gap-6">
                         <div className="space-y-2">
                             <h3 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none italic">Active <span className="text-primary not-italic">Clinical Environment</span></h3>
-                            <p className="text-lg font-medium text-slate-500 dark:text-slate-400 max-w-xl">Diagnostic metrics sync completed. You have 3 urgent reviews remaining in your queue.</p>
+                            <p className="text-lg font-medium text-slate-500 dark:text-slate-400 max-w-xl">
+                                Diagnostic metrics sync completed.
+                                {highRiskCount > 0
+                                    ? ` You have ${highRiskCount} high-risk case${highRiskCount !== 1 ? 's' : ''} requiring urgent review.`
+                                    : scans.filter(s => s.status === 'Pending').length > 0
+                                    ? ` You have ${scans.filter(s => s.status === 'Pending').length} scan${scans.filter(s => s.status === 'Pending').length !== 1 ? 's' : ''} pending analysis.`
+                                    : ' All cases are up to date.'}
+                            </p>
                         </div>
 
                     </motion.div>
@@ -521,14 +533,22 @@ const DoctorDashboard = () => {
                                                         </div>
                                                         <div>
                                                             <p className="text-base font-black text-slate-900 dark:text-white leading-none mb-1">{row.name}</p>
-                                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">ID: 8829-{i}X</p>
+                                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">ID: {scans[i]?._id?.slice(-8).toUpperCase() || '—'}</p>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-8 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{row.time}</td>
                                                 <td className="px-8 py-8">
-                                                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.risk === 'High Risk' ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20' : row.risk === 'Moderate' ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20' : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20'}`}>
-                                                        {row.risk}
+                                                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                                        row.risk === 'High Risk' 
+                                                            ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20' 
+                                                            : row.risk === 'Moderate' 
+                                                            ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20' 
+                                                            : row.risk 
+                                                            ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20'
+                                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700'
+                                                    }`}>
+                                                        {row.risk || 'Pending'}
                                                     </span>
                                                 </td>
                                                 <td className="px-8 py-8">
