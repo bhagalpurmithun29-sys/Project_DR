@@ -1,6 +1,6 @@
 # 👁️ Project DR: Next-Gen AI Retinal Diagnostics
 
-Project DR is a production-grade, AI-powered diagnostic platform designed to revolutionize Diabetic Retinopathy (DR) screening. By leveraging state-of-the-art computer vision (YOLOv8) and large language models (Llama 3.3), it provides clinicians with instant, high-precision analysis of retinal fundus images.
+Project DR is a production-grade, AI-powered diagnostic platform designed to revolutionize Diabetic Retinopathy (DR) screening. By leveraging state-of-the-art computer vision (ResNet50) and large language models (Llama 3.3), it provides clinicians with instant, high-precision analysis of retinal fundus images.
 
 ---
 
@@ -36,7 +36,7 @@ Project DR is a production-grade, AI-powered diagnostic platform designed to rev
 ### **Backend & AI**
 - **Server**: Node.js 22+ & Express 5 (Experimental)
 - **Database**: MongoDB Atlas with Mongoose
-- **AI Vision**: YOLOv8 (Ultralytics) for lesion segmentation
+- **AI Vision**: ResNet50 (PyTorch) for multi-class DR classification
 - **AI Language**: Groq Llama 3.3 (70B) for clinical report summarization
 - **Storage**: Cloudinary (for secure medical image hosting)
 
@@ -61,7 +61,7 @@ graph TD
     end
 
     subgraph AI_Engine
-        Vision[YOLOv8 Segmentation]
+        Vision[ResNet50 Classification]
         LLM[Groq Llama 3.3]
     end
 
