@@ -28,10 +28,11 @@ import { AuthContext } from '../context/AuthContext';
 import doctorService from '../services/doctorService';
 import scanService from '../services/scanService';
 import patientService from '../services/patientService';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { normalizeUrl } from '../services/api';
 import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
+import Toast from '../components/Toast';
 
 
 const DoctorDashboard = () => {
@@ -46,6 +47,20 @@ const DoctorDashboard = () => {
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [search, setSearch] = useState('');
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+    const location = useLocation();
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+    };
+
+    useEffect(() => {
+        if (location.state?.loginSuccess) {
+            showToast(`Welcome back, Dr. ${user?.name || 'Provider'}!`, 'success');
+            // Clear state to prevent re-showing
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state, user?.name]);
 
     const fetchData = async () => {
         try {
@@ -662,6 +677,16 @@ const DoctorDashboard = () => {
             {/* System Modals */}
             <CentralAlertsModal isOpen={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />
             <NodeSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+            <AnimatePresence>
+                {toast.show && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

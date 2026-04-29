@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import Toast from '../components/Toast';
 import patientService from '../services/patientService';
 import api, { normalizeUrl } from '../services/api';
 import notificationService from '../services/notificationService';
@@ -45,6 +46,20 @@ const PatientDashboard = () => {
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+    };
+
+    useEffect(() => {
+        if (location.state?.loginSuccess) {
+            showToast(`Welcome back, ${user?.name || 'Patient'}!`, 'success');
+            // Clear state to prevent re-showing
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state, user?.name]);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -580,7 +595,15 @@ const PatientDashboard = () => {
                 })}
             />
 
-
+            <AnimatePresence>
+                {toast.show && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

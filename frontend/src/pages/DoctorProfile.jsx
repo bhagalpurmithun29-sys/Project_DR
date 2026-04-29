@@ -278,7 +278,7 @@ const DoctorProfile = () => {
                                         {user?.name || "Dr. Identity Unknown"}
                                     </h2>
                                     <p className="text-slate-500 text-sm font-medium mb-8 max-w-xl">
-                                        Board-certified ophthalmologist specializing in advanced diabetic retinopathy grading, macular degeneration intervention, and AI-assisted clinical diagnoses.
+                                        Board-certified Retina Specialist specializing in advanced diabetic retinopathy grading, macular degeneration intervention, and AI-assisted clinical diagnoses.
                                     </p>
 
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -21,6 +21,7 @@ import { AuthContext } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGoogleLogin } from '@react-oauth/google';
 import { getApiErrorMessage } from "../services/api";
+import Toast from "../components/Toast";
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -41,6 +42,11 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
 
   const { login, loginWithGoogle } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -62,15 +68,17 @@ export default function Login() {
       }
       const userRole = res?.data?.role;
       
-      if (userRole === 'doctor' || userRole === 'technician') {
-        navigate("/doctor-dashboard");
-      } else if (userRole === 'diagnosis_center') {
-        navigate("/diagnosis-center/");
-      } else {
-        navigate("/dashboard");
-      }
+      const targetPath = userRole === 'doctor' || userRole === 'technician'
+        ? "/doctor-dashboard"
+        : userRole === 'diagnosis_center'
+          ? "/diagnosis-center/"
+          : "/dashboard";
+
+      navigate(targetPath, { state: { loginSuccess: true } });
     } catch (err) {
-      setError(getApiErrorMessage(err, "Google Login failed. Please try again."));
+      const errorMessage = getApiErrorMessage(err, "Google Login failed.");
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setGoogleLoading(false);
     }
@@ -78,7 +86,11 @@ export default function Login() {
 
   const googleLoginHandler = useGoogleLogin({
     onSuccess: handleGoogleLoginSuccess,
-    onError: () => setError("Google Login was unsuccessful"),
+    onError: () => {
+      const msg = "Google Login was unsuccessful";
+      setError(msg);
+      showToast(msg, 'error');
+    },
   });
 
   const handleSubmit = async (e) => {
@@ -87,15 +99,17 @@ export default function Login() {
       // AuthContext.login() returns res.data directly, so role lives at res.role (not res.data.role)
       const res = await login(email, password, role);
       const userRole = res?.data?.role;
-      if (userRole === 'doctor' || userRole === 'technician') {
-        navigate("/doctor-dashboard");
-      } else if (userRole === 'diagnosis_center') {
-        navigate("/diagnosis-center/");
-      } else {
-        navigate("/dashboard");
-      }
+      const targetPath = userRole === 'doctor' || userRole === 'technician' 
+        ? "/doctor-dashboard" 
+        : userRole === 'diagnosis_center' 
+          ? "/diagnosis-center/" 
+          : "/dashboard";
+      
+      navigate(targetPath, { state: { loginSuccess: true } });
     } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to login"));
+      const errorMessage = getApiErrorMessage(err, "Failed to login");
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -342,6 +356,15 @@ export default function Login() {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {toast.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(prev => ({ ...prev, show: false }))}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -28,11 +28,26 @@ const PatientReport = () => {
     const [scan, setScan] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [siblingScan, setSiblingScan] = useState(null);
+
     useEffect(() => {
         const fetchScanData = async () => {
             try {
                 const res = await scanService.getScan(id);
-                setScan(res.data);
+                const currentScan = res.data;
+                setScan(currentScan);
+                
+                if (currentScan?.patient?._id) {
+                    const allScansRes = await api.get(`/patients/${currentScan.patient._id}/scans`);
+                    const allScans = allScansRes.data.data || [];
+                    const sibling = allScans.find(sib => 
+                        sib._id !== currentScan._id &&
+                        sib.patient?._id === currentScan.patient?._id && 
+                        sib.eyeSide !== currentScan.eyeSide &&
+                        Math.abs(new Date(sib.createdAt) - new Date(currentScan.createdAt)) < 24 * 60 * 60 * 1000
+                    );
+                    setSiblingScan(sibling || null);
+                }
             } catch (err) {
                 console.error('Failed to fetch scan data', err);
             } finally {
@@ -87,19 +102,27 @@ const PatientReport = () => {
             doc.text(`Identity ID: ${scan.patient?.patientId || 'Pending'}`, 20, 62);
             doc.text(`Age/Gender: ${scan.patient?.age || 'N/A'} yrs / ${scan.patient?.gender || 'N/A'}`, 20, 69);
 
-            // Add Scan Image
-            if (scan.imageUrl) {
-                try {
-                    const absoluteUrl = normalizeUrl(scan.imageUrl);
-                    const img = await loadImage(absoluteUrl);
-                    doc.addImage(img, 'JPEG', 140, 40, 50, 50);
-                    doc.setDrawColor(230);
-                    doc.rect(140, 40, 50, 50);
-                    doc.setFontSize(8);
-                    doc.setTextColor(150);
-                    doc.text(`${scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}`, 165, 95, { align: 'center' });
-                } catch (e) {
-                    console.error('Failed to add image to PDF', e);
+            const pdfScans = [scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1);
+
+            // Add Scan Images
+            for (let i = 0; i < pdfScans.length; i++) {
+                const s = pdfScans[i];
+                if (s.imageUrl) {
+                    try {
+                        const absoluteUrl = normalizeUrl(s.imageUrl);
+                        const img = await loadImage(absoluteUrl);
+                        const imgSize = pdfScans.length === 2 ? 35 : 50;
+                        const xOffset = pdfScans.length === 2 ? 115 + (i * 40) : 140;
+                        
+                        doc.addImage(img, 'JPEG', xOffset, 40, imgSize, imgSize);
+                        doc.setDrawColor(230);
+                        doc.rect(xOffset, 40, imgSize, imgSize);
+                        doc.setFontSize(8);
+                        doc.setTextColor(150);
+                        doc.text(`${s.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}`, xOffset + (imgSize/2), 40 + imgSize + 5, { align: 'center' });
+                    } catch (e) {
+                        console.error('Failed to add image to PDF', e);
+                    }
                 }
             }
 
@@ -113,36 +136,49 @@ const PatientReport = () => {
             doc.setTextColor(0);
             doc.setFont('helvetica', 'normal');
             
-            doc.text('Risk Index:', 20, 95);
-            doc.setTextColor(scan.aiResult === 'High Risk' ? 225 : 5, scan.aiResult === 'High Risk' ? 29 : 150, scan.aiResult === 'High Risk' ? 72 : 105);
-            doc.text(`${scan.aiResult || 'Pending'}`, 50, 95);
+            let statusY = 95;
+            pdfScans.forEach((s) => {
+                const prefix = pdfScans.length === 2 ? (s.eyeSide === 'OD' ? '[OD] ' : '[OS] ') : '';
+                
+                doc.setTextColor(0);
+                doc.text(`${prefix}Risk Index:`, 20, statusY);
+                doc.setTextColor(s.aiResult?.includes('High') ? 225 : 5, s.aiResult?.includes('High') ? 29 : 150, s.aiResult?.includes('High') ? 72 : 105);
+                doc.text(`${s.aiResult || 'Pending'}`, 55, statusY);
+                
+                doc.setTextColor(0);
+                doc.text(`Confidence:`, 115, statusY); // Use right column for confidence
+                doc.text(`${s.aiConfidence ? (s.aiConfidence * 100).toFixed(2) : s.confidence || '94.2'}%`, 140, statusY);
+                
+                statusY += 7;
+            });
             
             doc.setTextColor(0);
-            doc.text(`Confidence:`, 20, 102);
-            doc.text(`${scan.confidence || '94.2'}%`, 50, 102);
+            doc.text(`Technician:`, 20, statusY);
+            doc.text(`${scan.technician || 'Automatic AI'}`, 55, statusY);
+            statusY += 7;
             
-            doc.text(`Technician:`, 20, 109);
-            doc.text(`${scan.technician || 'Automatic AI'}`, 50, 109);
-            
-            doc.text(`Doctor Name:`, 20, 116);
-            doc.text(`Dr. ${scan.referredDoctor?.name || 'Review Pending'}`, 50, 116);
+            doc.text(`Doctor Name:`, 20, statusY);
+            doc.text(`Dr. ${scan.referredDoctor?.name || 'Review Pending'}`, 55, statusY);
 
-            let currentY = 130;
+            let currentY = statusY + 15;
 
             // Clinical Summary (Generative AI)
-            if (scan.aiReportSummary) {
-                doc.setFontSize(12);
-                doc.setTextColor(5, 150, 105);
-                doc.setFont('helvetica', 'bold');
-                doc.text('CLINICAL SUMMARY (GENERATIVE AI)', 20, currentY);
-                
-                doc.setFontSize(9);
-                doc.setTextColor(60);
-                doc.setFont('helvetica', 'normal');
-                const summaryLines = doc.splitTextToSize(scan.aiReportSummary, 170);
-                doc.text(summaryLines, 20, currentY + 10);
-                currentY += (summaryLines.length * 5) + 20;
-            }
+            pdfScans.forEach((s) => {
+                if (s.aiReportSummary) {
+                    if (currentY > 260) { doc.addPage(); currentY = 20; }
+                    doc.setFontSize(12);
+                    doc.setTextColor(5, 150, 105);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(`CLINICAL SUMMARY ${pdfScans.length === 2 ? (s.eyeSide === 'OD' ? '(OD)' : '(OS)') : '(GENERATIVE AI)'}`, 20, currentY);
+                    
+                    doc.setFontSize(9);
+                    doc.setTextColor(60);
+                    doc.setFont('helvetica', 'normal');
+                    const summaryLines = doc.splitTextToSize(s.aiReportSummary, 170);
+                    doc.text(summaryLines, 20, currentY + 10);
+                    currentY += (summaryLines.length * 5) + 20;
+                }
+            });
 
             // Prescription
             if (scan.doctorPrescription) {
@@ -346,135 +382,117 @@ const PatientReport = () => {
             <main className="flex-1 w-full max-w-6xl mx-auto p-10 space-y-10 main-dashboard-content">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                     {/* Left Column: Image and Summary */}
-                    <div className="lg:col-span-1 space-y-8">
+                    {/* Patient Profile - Full Width */}
+                    <div className="lg:col-span-3 space-y-8">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-slate-950 rounded-[2.5rem] p-4 shadow-2xl overflow-hidden relative group"
+                            className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/30 flex flex-wrap items-center justify-between gap-6"
                         >
-                            <img
-                                src={normalizeUrl(scan.imageUrl) || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=800&auto=format"}
-                                alt="Retina Scan"
-                                className="w-full aspect-square object-cover rounded-[2rem] border border-white/5 opacity-90 group-hover:scale-105 transition-transform duration-700"
-                            />
-                            <div className="absolute top-8 left-8 bg-white/10 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-xl">
-                                <span className="text-[10px] font-black text-white uppercase tracking-widest">{scan.eyeSide === 'OD' ? 'Right Eye' : 'Left Eye'}</span>
+                            <div className="flex items-center gap-4">
+                                <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <User size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient Name</p>
+                                    <p className="text-xl font-black text-slate-900 leading-tight">{scan.patient?.name || 'N/A'}</p>
+                                </div>
                             </div>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/30"
-                        >
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-3">
-                                <Activity size={18} className="text-primary" />
-                                Analysis Status
-                            </h3>
-                            <div className="space-y-6">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Risk Index</span>
-                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${scan.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
-                                             scan.aiResult === 'Moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                                         }`}>
-                                        {scan.aiResult || 'Pending'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Confidence</span>
-                                    <span className="text-sm font-black text-slate-900">{scan.confidence || '94.2'}%</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician</span>
-                                    <span className="text-sm font-black text-slate-900 capitalize">{scan.technician || 'Automatic AI'}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Doctor Name</span>
-                                    <span className="text-sm font-black text-slate-900">Dr. {scan.referredDoctor?.name || 'Review Pending'}</span>
-                                </div>
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Identity ID</p>
+                                <p className="text-base font-black text-slate-900 leading-tight">{scan.patient?.patientId || 'Pending'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Age / Gender</p>
+                                <p className="text-base font-black text-slate-900 leading-tight">
+                                    {scan.patient?.age !== undefined && scan.patient?.age !== null ? scan.patient.age : 'N/A'} yrs / <span className="capitalize">{scan.patient?.gender || 'N/A'}</span>
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</p>
+                                <p className="text-base font-black text-slate-900 leading-tight">{new Date(scan.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div className="pl-6 border-l border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Physician</p>
+                                <p className="text-base font-black text-slate-900 leading-tight">Dr. {scan.referredDoctor?.name || 'Pending'}</p>
                             </div>
                         </motion.div>
                     </div>
 
-                    {/* Right Column: Details */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Patient Profile */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-xl shadow-slate-200/30 grid grid-cols-2 md:grid-cols-4 gap-8"
-                        >
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Patient Name</p>
-                                <p className="text-lg font-black text-slate-900 leading-tight">{scan.patient?.name || 'N/A'}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Identity ID</p>
-                                <p className="text-lg font-black text-slate-900 leading-tight">{scan.patient?.patientId || 'Pending'}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Patient Age</p>
-                                <p className="text-lg font-black text-slate-900 leading-tight">
-                                    {scan.patient?.age !== undefined && scan.patient?.age !== null ? scan.patient.age : 'N/A'} yrs
-                                </p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Gender</p>
-                                <p className="text-lg font-black text-slate-900 leading-tight capitalize">{scan.patient?.gender || 'N/A'}</p>
-                            </div>
-                        </motion.div>
-
-                        {/* Clinical Summary Section */}
-                        {scan.aiReportSummary && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.15 }}
-                                className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-xl shadow-slate-200/30 space-y-4"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                        <FileText size={18} />
+                    {/* Dynamic Scans Grid */}
+                    <div className="lg:col-span-3">
+                        <div className={`grid ${siblingScan ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-10`}>
+                            {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map((s, idx) => (
+                                <motion.div 
+                                    key={s._id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.1 * (idx + 1) }}
+                                    className="space-y-6"
+                                >
+                                    <div className="flex items-center justify-between px-2">
+                                        <h4 className="text-base font-black text-slate-900 uppercase tracking-widest flex items-center gap-3">
+                                            <div className="size-3 rounded-full bg-primary" />
+                                            {s.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}
+                                        </h4>
+                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${
+                                            s.aiResult?.includes('High') ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                                            s.aiResult?.includes('Moderate') ? 'bg-amber-50 text-amber-600 border border-amber-100' : 
+                                            'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                        }`}>
+                                            {s.aiResult || 'Pending'}
+                                        </span>
                                     </div>
-                                    <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Clinical Summary (Generative AI)</h3>
-                                </div>
-                                <div className="p-8 bg-slate-50 border border-slate-100 rounded-3xl italic text-sm font-bold text-slate-600 leading-relaxed shadow-inner">
-                                    {scan.aiReportSummary}
-                                </div>
-                            </motion.div>
-                        )}
 
-                        {/* Diagnostic Findings */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-xl shadow-slate-200/30 space-y-10"
-                        >
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-xl font-black text-slate-900 tracking-tight italic">Diagnostic <span className="text-primary not-italic">Findings</span></h3>
-                                <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
-                                    <Calendar size={14} className="text-slate-400" />
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(scan.createdAt).toLocaleDateString()}</span>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 space-y-4">
-                                    <div className="flex items-center gap-3">
-                                         <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                             <CheckCircle size={18} />
-                                         </div>
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">AI Confidence</span>
+                                    <div className="aspect-[4/3] rounded-[2.5rem] overflow-hidden border-4 border-slate-50 bg-slate-900 shadow-2xl relative group">
+                                        <img src={normalizeUrl(s.imageUrl)} alt={`${s.eyeSide} Retina`} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                                            <p className="text-white text-xs font-black uppercase tracking-widest">
+                                                {s.eyeSide === 'OD' ? 'Right Fundus Image' : 'Left Fundus Image'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-3xl font-black text-slate-900">{scan.confidence || '94.2'}%</p>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Classification Stability</p>
+
+                                    <div className="p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-xl shadow-slate-200/30 space-y-6">
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-4 border border-slate-100/50">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Prediction</span>
+                                                <span className="text-xs font-black text-slate-900 text-center leading-tight">
+                                                    {s.prediction || s.findings?.[0]?.replace('AI Analysis detects: ', '') || '—'}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-4 border border-slate-100/50">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Confidence</span>
+                                                <span className={`text-xl font-black ${s.aiConfidence >= 0.7 ? 'text-rose-500' : s.aiConfidence >= 0.4 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                                    {s.aiConfidence ? `${(s.aiConfidence * 100).toFixed(2)}%` : '—'}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-4 border border-slate-100/50">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Lesions</span>
+                                                <span className={`text-xl font-black ${(s.lesionCount || 0) > 2 ? 'text-rose-500' : (s.lesionCount || 0) > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                                    {s.lesionCount ?? '—'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {s.aiReportSummary && (
+                                            <div className="space-y-3 pt-2">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <FileText size={14} className="text-primary" />
+                                                    <label className="text-[10px] font-black text-primary uppercase tracking-widest block">AI Clinical Analysis</label>
+                                                </div>
+                                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100/50 shadow-inner">
+                                                    <div className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-wrap italic">
+                                                        {s.aiReportSummary}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
 
 
 
@@ -506,9 +524,6 @@ const PatientReport = () => {
                                 </motion.div>
                             )}
 
-
-                        </motion.div>
-                    </div>
                 </div>
 
                 {/* Secure Footer Section */}
@@ -539,38 +554,49 @@ const PatientReport = () => {
                             <div className="print-info-item"><span className="print-info-label">Identity ID:</span> {scan.patient?.patientId || 'Pending'}</div>
                             <div className="print-info-item"><span className="print-info-label">Age/Gender:</span> {scan.patient?.age || 'N/A'} yrs / {scan.patient?.gender || 'N/A'}</div>
                         </div>
-                        {scan.imageUrl && (
-                            <div className="print-image-box">
-                                <img src={normalizeUrl(scan.imageUrl)} className="print-image" alt="Retina Scan" />
-                                <p className="print-image-caption">{scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</p>
-                            </div>
-                        )}
+                        <div className="flex gap-4 items-center justify-end">
+                            {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map(s => (
+                                s.imageUrl && (
+                                    <div key={s._id} className="print-image-box">
+                                        <img src={normalizeUrl(s.imageUrl)} className="print-image" alt="Retina Scan" />
+                                        <p className="print-image-caption">{s.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</p>
+                                    </div>
+                                )
+                            ))}
+                        </div>
                     </div>
                 </div>
 
                 <div className="print-section">
                     <h2 className="print-section-title">ANALYSIS STATUS</h2>
                     <div className="print-info-list">
-                        <div className="print-info-item">
-                            <span className="print-info-label">Risk Index:</span>
-                            <span className={scan.aiResult === 'High Risk' ? 'print-risk-high' : scan.aiResult === 'Moderate' ? 'print-risk-mod' : 'print-risk-low'}>
-                                {scan.aiResult || 'Pending'}
-                            </span>
-                        </div>
-                        <div className="print-info-item"><span className="print-info-label">Confidence:</span> {scan.confidence || '94.2'}%</div>
-                        <div className="print-info-item"><span className="print-info-label">Technician:</span> {scan.technician || 'Automatic AI'}</div>
+                        {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map(s => (
+                            <div key={s._id} className="mb-4">
+                                {siblingScan && <h3 className="text-[10px] font-bold text-slate-500 mb-1">{s.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</h3>}
+                                <div className="print-info-item">
+                                    <span className="print-info-label">Risk Index:</span>
+                                    <span className={s.aiResult?.includes('High') ? 'print-risk-high' : s.aiResult?.includes('Moderate') ? 'print-risk-mod' : 'print-risk-low'}>
+                                        {s.aiResult || 'Pending'}
+                                    </span>
+                                </div>
+                                <div className="print-info-item"><span className="print-info-label">Confidence:</span> {s.aiConfidence ? (s.aiConfidence * 100).toFixed(2) : s.confidence || '94.2'}%</div>
+                            </div>
+                        ))}
+                        <div className="print-info-item mt-2"><span className="print-info-label">Technician:</span> {scan.technician || 'Automatic AI'}</div>
                         <div className="print-info-item"><span className="print-info-label">Doctor Name:</span> Dr. {scan.referredDoctor?.name || 'Review Pending'}</div>
                     </div>
                 </div>
 
-                {scan.aiReportSummary && (
-                    <div className="print-section">
-                        <h2 className="print-section-title print-summary-title">CLINICAL SUMMARY (GENERATIVE AI)</h2>
-                        <div className="print-text-block">
-                            {scan.aiReportSummary}
+                {[scan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map(s => (
+                    s.aiReportSummary && (
+                        <div key={s._id} className="print-section">
+                            <h2 className="print-section-title print-summary-title">CLINICAL SUMMARY {siblingScan ? (s.eyeSide === 'OD' ? '(RIGHT EYE)' : '(LEFT EYE)') : '(GENERATIVE AI)'}</h2>
+                            <div className="print-text-block">
+                                {s.aiReportSummary}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )
+                ))}
 
                 {scan.doctorPrescription && (
                     <div className="print-section">

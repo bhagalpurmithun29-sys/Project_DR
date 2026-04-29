@@ -111,7 +111,7 @@ exports.getDoctorAppointments = async (req, res) => {
                     user: req.user._id,
                     name: req.user.name,
                     email: req.user.email,
-                    specialization: 'Retina',
+                    specialization: 'Retina Specialist',
                     licenseNumber: `TEMP-${req.user._id.toString().substring(0, 8)}`,
                     country: 'Unknown',
                     experience: '0',

@@ -91,9 +91,7 @@ exports.analyzeScan = async (req, res) => {
         // Path to Python bridge - use the dedicated venv for stability
         const venvPaths = [
             path.resolve(__dirname, '../ai/venv/bin/python3'),
-            path.resolve(__dirname, '../ai/model/bin/python3'),
-            path.resolve(__dirname, '../../backend/ai/venv/bin/python3'), // Handle potential nesting
-            path.resolve(__dirname, '../../backend/ai/model/bin/python3')
+            path.resolve(__dirname, '../ai/model/bin/python3')
         ];
         
         const venvPath = venvPaths.find(p => fs.existsSync(p));

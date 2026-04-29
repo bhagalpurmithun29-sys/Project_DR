@@ -39,7 +39,7 @@ const STAFF = [
   {
     name: "Dr. Helena Hills",
     email: "h.hills@retinaai.health",
-    role: "Lead Ophthalmologist",
+    role: "Lead Retina Specialist",
     lastActive: "12 mins ago",
     status: "Online",
     statusStyle: "bg-primary/10 text-primary border-primary/20",

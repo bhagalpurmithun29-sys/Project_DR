@@ -513,7 +513,7 @@ export default function LandingPage() {
                   <span className="text-xl font-black tracking-tight text-slate-900">RetinaAI</span>
                 </Link>
                 <p className="text-lg leading-relaxed text-slate-500 font-medium max-w-sm">
-                  Redefining ophthalmic diagnostics through medical-grade artificial intelligence.
+                  Redefining retinal diagnostics through medical-grade artificial intelligence.
                 </p>
                 <div className="flex gap-4 mt-8">
                   {[Twitter, Github, Linkedin].map((Icon, i) => (

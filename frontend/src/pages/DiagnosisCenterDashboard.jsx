@@ -6,11 +6,12 @@ import {
     Award, Settings, ChevronRight, BarChart2, FileText,
     Edit3, CheckCircle2, Plus, Search, Filter, Eye, Trash2, X,
     Lock, User, Bell, Shield, Camera, Loader2, AlertCircle,
-    TrendingUp, Clock, RefreshCw, Save, ChevronDown, Hash,
+    TrendingUp, Clock, Save, ChevronDown, Hash, Share2,
     Download, Printer, CheckSquare, Upload, List
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import api, { normalizeUrl } from '../services/api';
+import Toast from '../components/Toast';
 import { SECURITY_QUESTIONS } from '../constants/securityQuestions';
 import DeleteAccountSection from '../components/DeleteAccountSection';
 
@@ -19,7 +20,7 @@ const Avatar = ({ name, photo, size = 10 }) => {
     const [imgError, setImgError] = useState(false);
     const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=059669&color=fff&bold=true`;
     const src = (!imgError && photo) ? normalizeUrl(photo) : fallback;
-    
+
     return (
         <div
             className={`size-${size} rounded-full bg-cover bg-center border-2 border-white shadow-sm flex-shrink-0`}
@@ -72,6 +73,32 @@ const Select = ({ label, children, ...props }) => (
     </div>
 );
 
+/* ═══════════════════════════════════════════════════
+   UTILITIES
+ ═══════════════════════════════════════════════════ */
+const getRiskLevel = (scan) => {
+    const text = [
+        scan.aiResult,
+        scan.prediction,
+        ...(scan.findings || [])
+    ].filter(Boolean).join(' ').toLowerCase();
+
+    // High Risk (Stage 3 & 4)
+    if (text.includes('high') || text.includes('proliferat') || text.includes('pdr') ||
+        text.includes('stage 4') || text.includes('stage 3') || text.includes('severe')) return 'High';
+
+    // Moderate Risk (Stage 2)
+    if (text.includes('moderate') || text.includes('stage 2')) return 'Moderate';
+
+    // No DR (Stage 0) - Comprehensive check
+    if (text.includes('healthy') || text.includes('no dr') || text.includes('no diabetic') ||
+        text.includes('stage 0') || text.includes('normal') || text.includes('negative') ||
+        text.includes('none') || text.includes('no lesions')) return 'No DR';
+
+    // Default to Low Risk (Stage 1 / Mild)
+    return 'Low';
+};
+
 const SectionHeader = ({ title, subtitle, action }) => (
     <div className="flex items-center justify-between mb-8">
         <div>
@@ -81,6 +108,7 @@ const SectionHeader = ({ title, subtitle, action }) => (
         {action}
     </div>
 );
+
 
 const EmptyState = ({ icon: Icon, title, subtitle }) => (
     <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -95,7 +123,7 @@ const EmptyState = ({ icon: Icon, title, subtitle }) => (
 /* ═══════════════════════════════════════════════════
    SECTION: DASHBOARD OVERVIEW
 ═══════════════════════════════════════════════════ */
-const DashboardSection = ({ center, patients, scans, onCenterUpdate }) => {
+const DashboardSection = ({ center, patients, scans, onCenterUpdate, showToast }) => {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef(null);
 
@@ -116,7 +144,7 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate }) => {
             }
         } catch (err) {
             console.error('Failed to upload photo', err);
-            alert('Failed to upload photo');
+            showToast('Failed to upload photo', 'error');
         } finally {
             setIsUploading(false);
         }
@@ -125,8 +153,8 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate }) => {
     const stats = [
         { label: 'Total Scans', value: scans.length || 0, color: 'text-primary', bg: 'bg-primary/10' },
         { label: 'Patients Served', value: patients.length || 0, color: 'text-primary', bg: 'bg-primary/10' },
-        { label: 'Scans This Month', value: scans.filter(s => new Date(s.date || s.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { label: 'Reports Generated', value: scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed').length, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { label: 'Reports Generated', value: scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed').length, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { label: 'Pending Analyse', value: scans.filter(s => s.status !== 'Analyzed' && s.status !== 'Reviewed').length, color: 'text-amber-600', bg: 'bg-amber-50' },
     ];
 
     const recentPatients = patients.slice(0, 5);
@@ -220,7 +248,7 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate }) => {
 /* ═══════════════════════════════════════════════════
    SECTION: PATIENTS
 ═══════════════════════════════════════════════════ */
-const PatientsSection = ({ patients, onRefresh }) => {
+const PatientsSection = ({ patients, onRefresh, showToast }) => {
     const [search, setSearch] = useState('');
     const [showAdd, setShowAdd] = useState(false);
     const [form, setForm] = useState({ name: '', age: '', gender: 'Male', email: '', phoneNumber: '', diabetesType: 'Type 2', password: '' });
@@ -359,34 +387,18 @@ const PatientsSection = ({ patients, onRefresh }) => {
 /* ═══════════════════════════════════════════════════
    SECTION: SCANS
 ═══════════════════════════════════════════════════ */
-const ScansSection = ({ scans, patients, onRefresh }) => {
+const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, setSiblingScan, setShowReport }) => {
+    const { user } = useContext(AuthContext);
     const [search, setSearch] = useState('');
     const [showNew, setShowNew] = useState(false);
-    const [form, setForm] = useState({ patientId: '', eye: 'Right', notes: '', technician: '' });
+    const [form, setForm] = useState({ patientId: '', eye: 'Right', notes: '', technician: user?.name || '' });
     const [fileOD, setFileOD] = useState(null);
     const [fileOS, setFileOS] = useState(null);
     const [previewOD, setPreviewOD] = useState(null);
     const [previewOS, setPreviewOS] = useState(null);
     const [saving, setSaving] = useState(false);
     const [analyzingIds, setAnalyzingIds] = useState([]);
-    const [showReport, setShowReport] = useState(false);
-    const [selectedScan, setSelectedScan] = useState(null);
-    const [siblingScan, setSiblingScan] = useState(null);
     const [msg, setMsg] = useState({ type: '', text: '' });
-    const [regenerating, setRegenerating] = useState(false);
-    const [allDoctors, setAllDoctors] = useState([]);
-    const [referring, setReferring] = useState(false);
-    const [referTargetDoc, setReferTargetDoc] = useState('');
-
-    useEffect(() => {
-        const fetchDoctors = async () => {
-            try {
-                const res = await api.get('/auth/doctors');
-                if (res.data.success) setAllDoctors(res.data.data);
-            } catch (err) { console.error('Failed to load doctors', err); }
-        };
-        fetchDoctors();
-    }, []);
 
     const handleFileChange = (e, side) => {
         const f = e.target.files[0];
@@ -430,7 +442,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                 formData.append('image', item.file);
 
                 const res = await api.post('/scans', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-                
+
                 // Automatically trigger analysis
                 if (res.data.data?._id) {
                     await api.post(`/scans/${res.data.data._id}/analyze`);
@@ -453,7 +465,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
             await api.post(`/scans/${id}/analyze`);
             onRefresh();
         } catch (err) {
-            alert(err.response?.data?.message || 'Analysis failed.');
+            showToast(err.response?.data?.message || 'Analysis failed.', 'error');
         } finally {
             setAnalyzingIds(prev => prev.filter(a => a !== id));
         }
@@ -465,7 +477,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
             await api.delete(`/scans/${id}`);
             onRefresh();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to delete scan.');
+            showToast(err.response?.data?.message || 'Failed to delete scan.', 'error');
         }
     };
 
@@ -477,7 +489,7 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                 title="Scans"
                 subtitle={`${scans.length} scan record${scans.length !== 1 ? 's' : ''}`}
                 action={
-                    <motion.button whileHover={{ y: -1 }} onClick={() => setShowNew(true)}
+                    <motion.button whileHover={{ y: -1 }} onClick={() => { setForm({ patientId: '', eye: 'Right', notes: '', technician: user?.name || '' }); setShowNew(true); }}
                         className="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
                         <Plus size={16} /> New Scan
                     </motion.button>
@@ -533,14 +545,14 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                             </span>
                                                         </div>
                                                         {/* Confidence */}
-                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{background: s.aiConfidence >= 0.7 ? '#fff1f2' : s.aiConfidence >= 0.4 ? '#fffbeb' : '#f0fdf4'}}>
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ background: s.aiConfidence >= 0.7 ? '#fff1f2' : s.aiConfidence >= 0.4 ? '#fffbeb' : '#f0fdf4' }}>
                                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Conf:</span>
                                                             <span className={`text-[9px] font-black ${s.aiConfidence >= 0.7 ? 'text-rose-600' : s.aiConfidence >= 0.4 ? 'text-amber-600' : 'text-emerald-600'}`}>
                                                                 {s.aiConfidence ? `${(s.aiConfidence * 100).toFixed(2)}%` : '—'}
                                                             </span>
                                                         </div>
                                                         {/* Lesions */}
-                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{background: (s.lesionCount || 0) > 2 ? '#fff1f2' : (s.lesionCount || 0) > 0 ? '#fffbeb' : '#f0fdf4'}}>
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ background: (s.lesionCount || 0) > 2 ? '#fff1f2' : (s.lesionCount || 0) > 0 ? '#fffbeb' : '#f0fdf4' }}>
                                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Les:</span>
                                                             <span className={`text-[9px] font-black ${(s.lesionCount || 0) > 2 ? 'text-rose-600' : (s.lesionCount || 0) > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
                                                                 {s.lesionCount ?? 0}
@@ -566,16 +578,16 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
                                                 )}
                                                 {s.status === 'Analyzed' && (
                                                     <button
-                                                        onClick={() => { 
+                                                        onClick={() => {
                                                             // Find sibling scan (same patient, opposite eye, within 5 minutes)
-                                                            const sibling = scans.find(sib => 
-                                                                sib.patient?._id === s.patient?._id && 
+                                                            const sibling = scans.find(sib =>
+                                                                sib.patient?._id === s.patient?._id &&
                                                                 sib.eyeSide !== s.eyeSide &&
-                                                                Math.abs(new Date(sib.date || sib.createdAt) - new Date(s.date || s.createdAt)) < 24 * 60 * 60 * 1000
+                                                                Math.abs(new Date(sib.date || sib.createdAt) - new Date(s.date || s.createdAt)) < 5 * 60 * 1000
                                                             );
                                                             setSelectedScan(s);
                                                             setSiblingScan(sibling);
-                                                            setShowReport(true); 
+                                                            setShowReport(true);
                                                         }}
                                                         className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all"
                                                         title="View AI Report"
@@ -684,213 +696,6 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
             </AnimatePresence>
 
             {/* AI Report Modal */}
-            <AnimatePresence>
-                {showReport && selectedScan && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowReport(false)} />
-                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className={`relative w-full ${siblingScan ? 'max-w-5xl' : 'max-w-2xl'} bg-white rounded-3xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[90vh]`}>
-
-                            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                <div className="flex items-center gap-3 no-print">
-                                    <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                        <Activity size={20} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-black text-slate-900">AI Bilateral Diagnostic Report</h3>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{selectedScan.patient?.name} · {selectedScan.patient?.patientId}</p>
-                                    </div>
-                                </div>
-                                {/* Print Header (only visible in print) */}
-                                <div className="hidden print:flex flex-col gap-1 text-center w-full">
-                                    <h2 className="text-3xl font-black text-slate-900 uppercase italic">RetinaAI Diagnostic Report</h2>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Comprehensive Bilateral Retinal Screening Results</p>
-                                    <div className="mt-4 flex justify-center gap-8 text-[10px] font-black uppercase text-slate-400">
-                                        <span>Patient: {selectedScan.patient?.name}</span>
-                                        <span>ID: {selectedScan.patient?.patientId}</span>
-                                        <span>Date: {new Date(selectedScan.date).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
-                                <button onClick={() => setShowReport(false)} className="no-print size-9 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all shadow-sm"><X size={18} /></button>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto p-8 space-y-8">
-                                <div className={`grid ${siblingScan ? 'grid-cols-2' : 'grid-cols-1'} gap-8`}>
-                                    {[selectedScan, siblingScan].filter(Boolean).sort((a,b) => a.eyeSide === 'OD' ? -1 : 1).map((scan, idx) => (
-                                        <div key={scan._id} className="space-y-6">
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                                    <div className="size-2 rounded-full bg-primary" />
-                                                    {scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}
-                                                </h4>
-                                                <Badge color={scan.aiResult === 'High Risk' ? 'red' : scan.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
-                                                    {scan.aiResult || 'Low Risk'}
-                                                </Badge>
-                                            </div>
-
-                                            <div className="aspect-[4/3] rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-900 shadow-inner group relative">
-                                                <img src={normalizeUrl(scan.imageUrl)} alt={`${scan.eyeSide} Retina`} className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                                                    <p className="text-white text-[10px] font-black uppercase tracking-widest">
-                                                        {scan.eyeSide === 'OD' ? 'Right Fundus Image' : 'Left Fundus Image'}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-4">
-
-                                                {/* ── AI Key Metrics ── */}
-                                                <div className="grid grid-cols-3 gap-3">
-                                                    <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Prediction</span>
-                                                        <span className="text-[11px] font-black text-slate-900 text-center leading-tight">
-                                                            {scan.prediction || scan.findings?.[0]?.replace('AI Analysis detects: ', '') || '—'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Confidence</span>
-                                                        <span className={`text-lg font-black ${scan.aiConfidence >= 0.7 ? 'text-rose-500' : scan.aiConfidence >= 0.4 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                                                            {scan.aiConfidence ? `${(scan.aiConfidence * 100).toFixed(2)}%` : '—'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Lesions</span>
-                                                        <span className={`text-lg font-black ${(scan.lesionCount || 0) > 2 ? 'text-rose-500' : (scan.lesionCount || 0) > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                                                            {scan.lesionCount ?? '—'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {scan.aiReportSummary && (
-                                                    <div className="space-y-3">
-                                                        <label className="text-[10px] font-black text-primary uppercase tracking-widest block">AI Clinical Analysis</label>
-                                                        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-inner max-h-[300px] overflow-y-auto custom-scrollbar">
-                                                            <div className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-wrap italic ai-summary-content">
-                                                                {scan.aiReportSummary}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                <div className="pt-4 border-t border-slate-200">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Detected Findings</label>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {scan.findings && scan.findings.length > 0 ? scan.findings.map((f, i) => (
-                                                            <div key={i} className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 uppercase tracking-tight">
-                                                                {f}
-                                                            </div>
-                                                        )) : (
-                                                            <p className="text-[10px] font-bold text-slate-400 italic">No significant lesions detected.</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Shared Referral Section (only if both are analyzed or at least one is) */}
-                                {(selectedScan.status === 'Analyzed' || siblingScan?.status === 'Analyzed') && (
-                                    <div className="pt-8 border-t-2 border-dashed border-slate-100 no-print">
-                                        <div className="max-w-md mx-auto">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block text-center">Refer Bilateral Report to Specialist</label>
-                                            
-                                            {selectedScan.referredDoctor ? (
-                                                <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 flex items-center justify-between">
-                                                    <div>
-                                                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Successfully Referred to</p>
-                                                        <p className="text-lg font-black text-indigo-900 mt-1">Dr. {selectedScan.referredDoctor.name || 'Practitioner'}</p>
-                                                    </div>
-                                                    <div className="size-12 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
-                                                        <CheckCircle2 size={24} />
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col gap-4">
-                                                    <select
-                                                        value={referTargetDoc}
-                                                        onChange={e => setReferTargetDoc(e.target.value)}
-                                                        className="w-full px-5 py-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-900 font-bold text-sm outline-none focus:border-primary/20 transition-all shadow-sm"
-                                                    >
-                                                        <option value="">Select a Specialist Doctor...</option>
-                                                        {allDoctors.map(d => <option key={d._id} value={d._id}>Dr. {d.name} ({d.specialization || 'Ophthalmologist'})</option>)}
-                                                    </select>
-                                                    <button
-                                                        onClick={async () => {
-                                                            if (!referTargetDoc) return;
-                                                            setReferring(true);
-                                                            try {
-                                                                // Refer both if sibling exists
-                                                                const scansToRefer = [selectedScan._id];
-                                                                if (siblingScan) scansToRefer.push(siblingScan._id);
-                                                                
-                                                                for (const id of scansToRefer) {
-                                                                    await api.post(`/scans/${id}/refer`, { doctorId: referTargetDoc });
-                                                                }
-                                                                
-                                                                // Refresh the main scan in view
-                                                                const res = await api.get(`/scans/${selectedScan._id}`);
-                                                                setSelectedScan(res.data.data);
-                                                                onRefresh();
-                                                                alert('Bilateral report has been securely referred to the specialist.');
-                                                            } catch (err) {
-                                                                alert(err.response?.data?.message || 'Referral failed.');
-                                                            } finally {
-                                                                setReferring(false);
-                                                            }
-                                                        }}
-                                                        disabled={!referTargetDoc || referring}
-                                                        className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2"
-                                                    >
-                                                        {referring ? <Loader2 size={16} className="animate-spin" /> : <Users size={18} />}
-                                                        Send Bilateral Report to Doctor
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 no-print">
-                                {(!selectedScan.aiReportSummary || selectedScan.aiReportSummary.includes('unavailable')) ? (
-                                    <button
-                                        onClick={async () => {
-                                            setRegenerating(true);
-                                            try {
-                                                const res = await api.post(`/scans/${selectedScan._id}/generate-report`);
-                                                setSelectedScan(res.data.data);
-                                                if (siblingScan) {
-                                                    const res2 = await api.post(`/scans/${siblingScan._id}/generate-report`);
-                                                    setSiblingScan(res2.data.data);
-                                                }
-                                                onRefresh();
-                                            } catch (err) {
-                                                alert('Regeneration failed. Please try again.');
-                                            } finally {
-                                                setRegenerating(false);
-                                            }
-                                        }}
-                                        disabled={regenerating}
-                                        className="px-6 py-3 bg-amber-500 text-white rounded-xl font-black text-sm hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 flex items-center gap-2"
-                                    >
-                                        {regenerating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                                        Generate Full Analysis
-                                    </button>
-                                ) : (
-                                    <button onClick={() => window.print()} className="px-6 py-3 bg-primary text-white rounded-xl font-black text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-                                        <Printer size={16} /> Print Full Report
-                                    </button>
-                                )}
-                                <button onClick={() => setShowReport(false)} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-black text-sm hover:bg-slate-100 transition-all shadow-sm">
-                                    Close
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
         </div>
     );
 };
@@ -898,55 +703,106 @@ const ScansSection = ({ scans, patients, onRefresh }) => {
 /* ═══════════════════════════════════════════════════
    SECTION: REPORTS
 ═══════════════════════════════════════════════════ */
-const ReportsSection = ({ scans }) => {
+const ReportsSection = ({ scans, showToast, setSelectedScan, setSiblingScan, setShowReport }) => {
     const analysed = scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed');
     const [search, setSearch] = useState('');
     const filtered = analysed.filter(s =>
         s.patient?.name?.toLowerCase().includes(search.toLowerCase())
     );
 
+    // Grouping Logic: Single vs Bilateral (Double)
+    const grouped = [];
+    const seen = new Set();
+    filtered.forEach(s => {
+        if (seen.has(s._id)) return;
+        const sibling = filtered.find(sib =>
+            sib._id !== s._id &&
+            sib.patient?._id === s.patient?._id &&
+            sib.eyeSide !== s.eyeSide &&
+            Math.abs(new Date(sib.date || sib.createdAt) - new Date(s.date || s.createdAt)) < 5 * 60 * 1000
+        );
+        if (sibling) {
+            grouped.push({ type: 'Bilateral', scans: [s, sibling], date: s.date || s.createdAt, patient: s.patient, _id: s._id });
+            seen.add(s._id);
+            seen.add(sibling._id);
+        } else {
+            grouped.push({ type: 'Single', scans: [s], date: s.date || s.createdAt, patient: s.patient, _id: s._id });
+            seen.add(s._id);
+        }
+    });
+
     return (
         <div>
-            <SectionHeader title="Reports" subtitle={`${analysed.length} analysed report${analysed.length !== 1 ? 's' : ''}`} />
+            <SectionHeader title="Reports" subtitle={`${grouped.length} session report${grouped.length !== 1 ? 's' : ''}`} />
             <div className="relative mb-6">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reports by patient…"
                     className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-white font-bold text-sm text-slate-900 outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all shadow-sm" />
             </div>
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                {filtered.length === 0
+                {grouped.length === 0
                     ? <EmptyState icon={FileText} title="No Reports Yet" subtitle="Analysed scans will appear here as printable reports." />
                     : (
                         <table className="w-full text-left">
                             <thead className="border-b border-slate-100 bg-slate-50/50">
                                 <tr>
-                                    {['Report', 'Patient', 'Eye', 'Date', 'Risk Level', 'DR Grade', 'Actions'].map(h => (
+                                    {['Report', 'Patient', 'Type', 'Date', 'Risk Level', 'Findings', 'Actions'].map(h => (
                                         <th key={h} className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {filtered.map(s => (
-                                    <tr key={s._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">RPT-{s._id?.slice(-6).toUpperCase()}</td>
-                                        <td className="px-5 py-4 text-sm font-black text-slate-900">{s.patient?.name || '—'}</td>
-                                        <td className="px-5 py-4 text-sm font-bold text-slate-700">{s.eyeSide === 'OD' ? 'Right (OD)' : s.eyeSide === 'OS' ? 'Left (OS)' : '—'}</td>
-                                        <td className="px-5 py-4 text-xs font-bold text-slate-500">{s.date ? new Date(s.date).toLocaleDateString() : '—'}</td>
-                                        <td className="px-5 py-4"><Badge color={s.aiResult === 'High Risk' ? 'red' : s.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>{s.aiResult || '—'}</Badge></td>
-                                        <td className="px-5 py-4">
-                                            <div className="flex flex-col gap-0.5">
-                                                <p className="text-[10px] font-black text-slate-900">{s.findings?.[0] || 'No lesions'}</p>
-                                                {s.findings?.length > 1 && <p className="text-[9px] font-bold text-slate-400">+{s.findings.length - 1} more</p>}
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            <Link to={`/report/${s._id}`}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-xl text-xs font-black hover:bg-primary hover:text-white transition-all">
-                                                <Eye size={12} /> View
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {grouped.map(g => {
+                                    const mainScan = g.scans[0];
+                                    const sibling = g.scans[1];
+                                    return (
+                                        <tr key={g._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">RPT-{g._id?.slice(-6).toUpperCase()}</td>
+                                            <td className="px-5 py-4 text-sm font-black text-slate-900">{g.patient?.name || '—'}</td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge color={g.type === 'Bilateral' ? 'indigo' : 'slate'}>{g.type}</Badge>
+                                                    <span className="text-[10px] font-bold text-slate-400">{g.type === 'Bilateral' ? 'OD/OS' : mainScan.eyeSide}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4 text-xs font-bold text-slate-500">{new Date(g.date).toLocaleDateString()}</td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col gap-1">
+                                                    {g.scans.map(s => {
+                                                        const level = getRiskLevel(s);
+                                                        const color = level === 'High' ? 'red' : level === 'Moderate' ? 'amber' : 'emerald';
+                                                        return (
+                                                            <div key={s._id} className="flex items-center gap-1.5">
+                                                                <span className="text-[8px] font-black text-slate-300 w-4">{s.eyeSide}:</span>
+                                                                <Badge color={color}>{s.aiResult || s.prediction || '—'}</Badge>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col gap-1">
+                                                    {g.scans.map(s => (
+                                                        <p key={s._id} className="text-[10px] font-bold text-slate-500 truncate max-w-[150px]">
+                                                            {s.eyeSide}: {s.findings?.[0] || 'No lesions detected'}
+                                                        </p>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedScan(mainScan);
+                                                        setSiblingScan(sibling);
+                                                        setShowReport(true);
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-xl text-xs font-black hover:bg-primary hover:text-white transition-all">
+                                                    <Eye size={12} /> View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     )}
@@ -958,19 +814,31 @@ const ReportsSection = ({ scans }) => {
 /* ═══════════════════════════════════════════════════
    SECTION: ANALYTICS
 ═══════════════════════════════════════════════════ */
-const AnalyticsSection = ({ scans, patients }) => {
+const AnalyticsSection = ({ scans, patients, showToast }) => {
     const analysed = scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed');
-    const high = analysed.filter(s => s.aiResult === 'High Risk' || (s.aiResult || '').toLowerCase().includes('high')).length;
-    const moderate = analysed.filter(s => s.aiResult === 'Moderate Risk' || (s.aiResult || '').toLowerCase().includes('moderate')).length;
-    const noDR = analysed.filter(s => (s.aiResult || '').toLowerCase().includes('healthy') || (s.aiResult || '').toLowerCase().includes('no dr')).length;
-    const low = analysed.length - high - moderate - noDR;
+
+    const high = analysed.filter(s => getRiskLevel(s) === 'High').length;
+    const moderate = analysed.filter(s => getRiskLevel(s) === 'Moderate').length;
+    const noDR = analysed.filter(s => getRiskLevel(s) === 'No DR').length;
+    const low = analysed.length - (high + moderate + noDR);
 
     const byMonth = {};
     scans.forEach(s => {
-        const m = new Date(s.date || s.createdAt).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        const d = new Date(s.date || s.createdAt);
+        const m = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }).toUpperCase();
         byMonth[m] = (byMonth[m] || 0) + 1;
     });
-    const monthlyData = Object.entries(byMonth).slice(-6);
+
+    // Get last 6 months for chart
+    const monthlyData = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(1); // Fix rollover issue on 31st
+        d.setMonth(d.getMonth() - i);
+        const m = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }).toUpperCase();
+        monthlyData.push([m, byMonth[m] || 0]);
+    }
+
     const maxVal = Math.max(...monthlyData.map(([, v]) => v), 1);
 
     const riskStats = [
@@ -983,11 +851,12 @@ const AnalyticsSection = ({ scans, patients }) => {
     return (
         <div>
             <SectionHeader title="Analytics" subtitle="Scan trends and risk distribution overview." />
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                 {[
                     { label: 'Total Patients', value: patients.length, color: 'text-primary' },
                     { label: 'Total Scans', value: scans.length, color: 'text-primary' },
                     { label: 'Analysed', value: analysed.length, color: 'text-purple-600' },
+                    { label: 'Pending Analyse', value: scans.length - analysed.length, color: 'text-amber-500' },
                     { label: 'High Risk', value: high, color: 'text-red-600' },
                 ].map(({ label, value, color }) => (
                     <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
@@ -1026,44 +895,37 @@ const AnalyticsSection = ({ scans, patients }) => {
                         ? <p className="text-slate-400 text-sm font-medium text-center py-12">No scan data yet.</p>
                         : <div className="space-y-8">
                             <div className="flex items-end justify-around gap-2 h-48 px-2 border-b border-slate-50">
-                                {(() => {
-                                    // Ensure we always show the last 4 months even if no data exists
-                                    const monthsToShow = [];
-                                    for (let i = 3; i >= 0; i--) {
-                                        const d = new Date();
-                                        d.setDate(1); // Set to 1st to prevent month skipping issues on 31st
-                                        d.setMonth(d.getMonth() - i);
-                                        monthsToShow.push(d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
-                                    }
-
-                                    const maxVal = Math.max(...monthsToShow.map(m => byMonth[m] || 0), 5); // Min scale of 5
-                                    const colors = ['bg-blue-400', 'bg-rose-500', 'bg-orange-400', 'bg-emerald-500'];
-
-                                    return monthsToShow.map((month, i) => {
-                                        const count = byMonth[month] || 0;
-                                        const hasData = count > 0;
-                                        return (
-                                            <div key={month} className="flex-1 flex flex-col items-center gap-3 h-full justify-end group max-w-[80px]">
-                                                {hasData && (
-                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-black px-2 py-1 rounded-md mb-1">
-                                                        {count}
-                                                    </div>
-                                                )}
+                                {monthlyData.map(([month, count], i) => {
+                                    const hasData = count > 0;
+                                    const colors = ['bg-blue-400', 'bg-rose-500', 'bg-orange-400', 'bg-emerald-500', 'bg-purple-500', 'bg-indigo-400'];
+                                    return (
+                                        <div key={month} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group max-w-[80px]">
+                                            {hasData ? (
                                                 <motion.div
-                                                    initial={{ height: 0 }}
-                                                    animate={{ height: `${(count / maxVal) * 100}%` }}
-                                                    transition={{ duration: 1, delay: i * 0.1, ease: "backOut" }}
-                                                    className={`w-full max-w-[40px] ${hasData ? colors[i % colors.length] : 'bg-slate-100'} rounded-t-xl shadow-lg relative`}
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.5 + i * 0.1 }}
+                                                    className="bg-slate-50 text-slate-900 border border-slate-100 text-[10px] font-black px-2 py-0.5 rounded-md mb-1 shadow-sm"
                                                 >
-                                                    {!hasData && <div className="absolute bottom-0 w-full h-[2px] bg-slate-200 rounded-full" />}
+                                                    {count}
                                                 </motion.div>
-                                                <span className={`text-[9px] font-black uppercase tracking-widest ${hasData ? 'text-slate-600' : 'text-slate-300'}`}>
-                                                    {month}
-                                                </span>
-                                            </div>
-                                        );
-                                    });
-                                })()}
+                                            ) : (
+                                                <div className="text-[10px] font-black text-slate-200 mb-1">0</div>
+                                            )}
+                                            <motion.div
+                                                initial={{ height: 0 }}
+                                                animate={{ height: `${(count / maxVal) * 100}%` }}
+                                                transition={{ duration: 1, delay: i * 0.1, ease: "backOut" }}
+                                                className={`w-full max-w-[40px] ${hasData ? colors[i % colors.length] : 'bg-slate-50'} rounded-t-xl shadow-sm relative`}
+                                            >
+                                                {!hasData && <div className="absolute bottom-0 w-full h-[2px] bg-slate-100 rounded-full" />}
+                                            </motion.div>
+                                            <span className={`text-[9px] font-black uppercase tracking-widest ${hasData ? 'text-slate-600' : 'text-slate-300'}`}>
+                                                {month}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>}
                 </div>
@@ -1075,7 +937,7 @@ const AnalyticsSection = ({ scans, patients }) => {
 /* ═══════════════════════════════════════════════════
    SECTION: SETTINGS
 ═══════════════════════════════════════════════════ */
-const SettingsSection = ({ center, user, onCenterUpdate }) => {
+const SettingsSection = ({ center, user, onCenterUpdate, showToast }) => {
     const [tab, setTab] = useState('profile');
     const [profile, setProfile] = useState({
         centerName: center?.centerName || '',
@@ -1310,6 +1172,36 @@ const DiagnosisCenterDashboard = () => {
     const [patients, setPatients] = useState([]);
     const [scans, setScans] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+    };
+
+    const [showReport, setShowReport] = useState(false);
+    const [selectedScan, setSelectedScan] = useState(null);
+    const [siblingScan, setSiblingScan] = useState(null);
+    const [allDoctors, setAllDoctors] = useState([]);
+    const [referring, setReferring] = useState(false);
+    const [referTargetDoc, setReferTargetDoc] = useState('');
+
+    useEffect(() => {
+        const fetchDoctors = async () => {
+            try {
+                const res = await api.get('/auth/doctors');
+                if (res.data.success) setAllDoctors(res.data.data);
+            } catch (err) { console.error('Failed to load doctors', err); }
+        };
+        fetchDoctors();
+    }, []);
+
+    useEffect(() => {
+        if (location.state?.loginSuccess) {
+            showToast(`Login Successful! Welcome to ${center?.centerName || 'your center'}.`, 'success');
+            // Clear state to prevent re-showing
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state, center?.centerName]);
 
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: Activity, path: 'overview' },
@@ -1411,12 +1303,12 @@ const DiagnosisCenterDashboard = () => {
                     <motion.div key={location.pathname} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
                         <Routes>
                             <Route path="/" element={<Navigate to="overview" replace />} />
-                            <Route path="overview" element={<DashboardSection center={center} patients={patients} scans={scans} onCenterUpdate={setCenter} />} />
-                            <Route path="patients" element={<PatientsSection patients={patients} onRefresh={fetchAll} />} />
-                            <Route path="scans" element={<ScansSection scans={scans} patients={patients} onRefresh={fetchAll} />} />
-                            <Route path="reports" element={<ReportsSection scans={scans} />} />
-                            <Route path="analytics" element={<AnalyticsSection scans={scans} patients={patients} />} />
-                            <Route path="settings" element={<SettingsSection center={center} user={user} onCenterUpdate={setCenter} />} />
+                            <Route path="overview" element={<DashboardSection center={center} patients={patients} scans={scans} onCenterUpdate={setCenter} showToast={showToast} />} />
+                            <Route path="patients" element={<PatientsSection patients={patients} onRefresh={fetchAll} showToast={showToast} />} />
+                            <Route path="scans" element={<ScansSection scans={scans} patients={patients} onRefresh={fetchAll} showToast={showToast} setSelectedScan={setSelectedScan} setSiblingScan={setSiblingScan} setShowReport={setShowReport} />} />
+                            <Route path="reports" element={<ReportsSection scans={scans} showToast={showToast} setSelectedScan={setSelectedScan} setSiblingScan={setSiblingScan} setShowReport={setShowReport} />} />
+                            <Route path="analytics" element={<AnalyticsSection scans={scans} patients={patients} showToast={showToast} />} />
+                            <Route path="settings" element={<SettingsSection center={center} user={user} onCenterUpdate={setCenter} showToast={showToast} />} />
                         </Routes>
                     </motion.div>
                 </AnimatePresence>
@@ -1426,6 +1318,191 @@ const DiagnosisCenterDashboard = () => {
                     </p>
                 </div>
             </main>
+
+            <AnimatePresence>
+                {toast.show && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* AI Report Modal (Shared) */}
+            <AnimatePresence>
+                {showReport && selectedScan && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowReport(false)} />
+                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                            className={`relative w-full ${siblingScan ? 'max-w-5xl' : 'max-w-2xl'} bg-white rounded-3xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[90vh]`}>
+
+                            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                <div className="flex items-center gap-3 no-print">
+                                    <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                        <Activity size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-black text-slate-900">{siblingScan ? 'AI Bilateral Diagnostic Report' : 'AI Diagnostic Report'}</h3>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{selectedScan.patient?.name} · {selectedScan.patient?.patientId}</p>
+                                    </div>
+                                </div>
+                                {/* Print Header (only visible in print) */}
+                                <div className="hidden print:flex flex-col gap-1 text-center w-full">
+                                    <h2 className="text-3xl font-black text-slate-900 uppercase italic">RetinaAI Diagnostic Report</h2>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Comprehensive Bilateral Retinal Screening Results</p>
+                                    <div className="mt-4 flex justify-center gap-8 text-[10px] font-black uppercase text-slate-400">
+                                        <span>Patient: {selectedScan.patient?.name}</span>
+                                        <span>ID: {selectedScan.patient?.patientId}</span>
+                                        <span>Date: {new Date(selectedScan.date).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowReport(false)} className="no-print size-9 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all shadow-sm"><X size={18} /></button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+                                <div className={`grid ${siblingScan ? 'grid-cols-2' : 'grid-cols-1'} gap-8`}>
+                                    {[selectedScan, siblingScan].filter(Boolean).sort((a, b) => a.eyeSide === 'OD' ? -1 : 1).map((scan, idx) => (
+                                        <div key={scan._id} className="space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                                    <div className="size-2 rounded-full bg-primary" />
+                                                    {scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}
+                                                </h4>
+                                                <Badge color={scan.aiResult === 'High Risk' ? 'red' : scan.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
+                                                    {scan.aiResult || 'Low Risk'}
+                                                </Badge>
+                                            </div>
+
+                                            <div className="aspect-[4/3] rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-900 shadow-inner group relative">
+                                                <img src={normalizeUrl(scan.imageUrl)} alt={`${scan.eyeSide} Retina`} className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                                    <p className="text-white text-[10px] font-black uppercase tracking-widest">
+                                                        {scan.eyeSide === 'OD' ? 'Right Fundus Image' : 'Left Fundus Image'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-4">
+
+                                                {/* ── AI Key Metrics ── */}
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Prediction</span>
+                                                        <span className="text-[11px] font-black text-slate-900 text-center leading-tight">
+                                                            {scan.prediction || scan.findings?.[0]?.replace('AI Analysis detects: ', '') || '—'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Confidence</span>
+                                                        <span className={`text-lg font-black ${scan.aiConfidence >= 0.7 ? 'text-rose-500' : scan.aiConfidence >= 0.4 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                                            {scan.aiConfidence ? `${(scan.aiConfidence * 100).toFixed(2)}%` : '—'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Lesions</span>
+                                                        <span className={`text-lg font-black ${(scan.lesionCount || 0) > 2 ? 'text-rose-500' : (scan.lesionCount || 0) > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                                            {scan.lesionCount ?? '—'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {scan.aiReportSummary && (
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-black text-primary uppercase tracking-widest block">AI Clinical Analysis</label>
+                                                        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-inner max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                            <div className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-wrap italic ai-summary-content">
+                                                                {scan.aiReportSummary}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="pt-4 border-t border-slate-200">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Detected Findings</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {scan.findings && scan.findings.length > 0 ? scan.findings.map((f, i) => (
+                                                            <div key={i} className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 uppercase tracking-tight">
+                                                                {f}
+                                                            </div>
+                                                        )) : (
+                                                            <p className="text-[10px] font-bold text-slate-400 italic">No significant lesions detected.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Shared Referral Section (only if both are analyzed or at least one is) */}
+                                {(selectedScan.status === 'Analyzed' || siblingScan?.status === 'Analyzed') && (
+                                    <div className="pt-8 border-t-2 border-dashed border-slate-100 no-print">
+                                        <div className="max-w-md mx-auto">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block text-center">Refer Bilateral Report to Specialist</label>
+
+                                            {selectedScan.referredDoctor ? (
+                                                <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Successfully Referred to</p>
+                                                        <p className="text-lg font-black text-indigo-900 mt-1">Dr. {selectedScan.referredDoctor.name || 'Practitioner'}</p>
+                                                    </div>
+                                                    <div className="size-12 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
+                                                        <CheckCircle2 size={24} />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col gap-4">
+                                                    <select
+                                                        value={referTargetDoc}
+                                                        onChange={e => setReferTargetDoc(e.target.value)}
+                                                        className="w-full px-5 py-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-900 font-bold text-sm outline-none focus:border-primary/20 transition-all shadow-sm"
+                                                    >
+                                                        <option value="">Select a Specialist Doctor...</option>
+                                                        {allDoctors.map(d => <option key={d._id} value={d.user?._id || d.user}>Dr. {d.name} ({d.specialization || 'Retina Specialist'})</option>)}
+                                                    </select>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (!referTargetDoc) return;
+                                                            setReferring(true);
+                                                            try {
+                                                                await api.post(`/scans/${selectedScan._id}/refer`, { doctorId: referTargetDoc });
+                                                                if (siblingScan) await api.post(`/scans/${siblingScan._id}/refer`, { doctorId: referTargetDoc });
+                                                                showToast('Report referred successfully!', 'success');
+                                                                fetchAll();
+                                                                setShowReport(false);
+                                                            } catch (err) {
+                                                                showToast('Failed to refer report.', 'error');
+                                                            } finally { setReferring(false); }
+                                                        }}
+                                                        disabled={referring || !referTargetDoc}
+                                                        className="w-full py-4 bg-indigo-500 text-white rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-600 flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
+                                                    >
+                                                        {referring ? <Loader2 size={16} className="animate-spin" /> : <><Share2 size={16} /> Send Report</>}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 no-print">
+                                <button
+                                    onClick={() => window.print()}
+                                    className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-black text-sm hover:bg-slate-100 transition-all shadow-sm flex items-center gap-2"
+                                >
+                                    <Printer size={16} /> Print Report
+                                </button>
+                                <button onClick={() => setShowReport(false)} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-black text-sm hover:bg-slate-100 transition-all shadow-sm">
+                                    Close
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

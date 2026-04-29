@@ -16,7 +16,7 @@ const generateClinicalSummary = async (scanData) => {
     const { riskLevel, findings, patientName, eyeSide } = scanData;
 
     const prompt = `
-        You are an expert Ophthalmologist specializing in Diabetic Retinopathy (DR).
+        You are an expert Retina Specialist specializing in Diabetic Retinopathy (DR).
         Patient Name: ${patientName || 'Anonymous Patient'}
         Scan Detail: ${eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}
         AI Detection Status: ${riskLevel}
