@@ -343,7 +343,7 @@ const AiAssistant = () => {
             <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${normalizeUrl(patient?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Patient')}&background=059669&color=fff&bold=true`})` }}></div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black truncate text-white">{user?.name || 'Patient'}</p>
-              <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{patient?.patientId || 'Medical ID: 88A-29C'}</p>
+              <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">Patient</p>
             </div>
           </div>
           <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-500/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
@@ -360,8 +360,7 @@ const AiAssistant = () => {
         {/* Header */}
         <header className="shrink-0 h-24 border-b border-slate-100 flex items-center justify-between px-10 bg-white/80 backdrop-blur-xl z-20">
           <div className="flex flex-col">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1">Knowledge Hub / <span className="text-primary italic">AI Assistant</span></h2>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Retina<span className="text-primary not-italic">Intelligence</span></h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight italic uppercase">AI <span className="text-primary not-italic">Assistant</span></h1>
           </div>
           
           <div className="flex items-center gap-4">

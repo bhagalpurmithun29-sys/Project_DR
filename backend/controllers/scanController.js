@@ -6,6 +6,7 @@ const Patient = require('../models/Patient');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const { generateClinicalSummary } = require('../services/aiService');
+const generatePatientId = require('../utils/generatePatientId');
 
 // @desc    Create a new scan
 // @route   POST /api/scans
@@ -257,7 +258,7 @@ exports.getScans = async (req, res) => {
             if (scan.patient) {
                 let updated = false;
                 if (!scan.patient.patientId) {
-                    scan.patient.patientId = `PAT-${Math.floor(100000 + Math.random() * 900000)}`;
+                    scan.patient.patientId = await generatePatientId(scan.patient.name);
                     updated = true;
                 }
                 if (!scan.patient.gender) {
@@ -305,7 +306,7 @@ exports.getScan = async (req, res) => {
         if (scan.patient) {
             let updated = false;
             if (!scan.patient.patientId) {
-                scan.patient.patientId = `PAT-${Math.floor(100000 + Math.random() * 900000)}`;
+                scan.patient.patientId = await generatePatientId(scan.patient.name);
                 updated = true;
             }
             if (!scan.patient.gender) {

@@ -20,7 +20,7 @@ import {
     Search,
     AlertCircle,
     CheckCircle,
-    ZoomIn,
+
     Brain,
     BookOpen,
     TrendingUp,
@@ -31,7 +31,8 @@ import {
     X,
     Check,
     Phone,
-    MessageCircle
+    MessageCircle,
+    FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from '../components/PatientPreferencesModal';
@@ -77,6 +78,27 @@ const PatientDashboard = () => {
         if (lowerResult.includes('moderate')) return 'Moderate';
         return 'Low';
     };
+
+    const calculateCompletion = () => {
+        if (!patient) return 0;
+        const fields = [
+            { key: 'name', val: patient.name, weight: 20 },
+            { key: 'age', val: patient.age, weight: 20, check: (v) => v > 0 },
+            { key: 'gender', val: patient.gender, weight: 15 },
+            { key: 'phoneNumber', val: patient.phoneNumber, weight: 15 },
+            { key: 'photo', val: patient.photo, weight: 15 },
+            { key: 'diabetesType', val: patient.diabetesType, weight: 15 }
+        ];
+
+        let total = 0;
+        fields.forEach(f => {
+            const isValid = f.check ? f.check(f.val) : (f.val && f.val !== '' && f.val !== 'N/A');
+            if (isValid) total += f.weight;
+        });
+        return total;
+    };
+
+    const completionPercentage = calculateCompletion();
 
     const fetchData = async () => {
         try {
@@ -227,9 +249,9 @@ const PatientDashboard = () => {
                 <div className="p-4 border-t border-white/5">
                     <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 mb-4 border border-white/5">
                         <div className="size-10 rounded-xl border-2 border-white/10 shadow-sm bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${normalizeUrl(patient?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "Patient")}&background=059669&color=fff&bold=true`})` }}></div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 text-left">
                             <p className="text-xs font-black truncate text-white" title={patient?.name || user?.name || 'Patient'}>{patient?.name || user?.name || 'Patient'}</p>
-                            <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">{patient?.patientId || 'Patient'}</p>
+                            <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">Patient</p>
                         </div>
                     </div>
                     <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-500/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
@@ -243,10 +265,8 @@ const PatientDashboard = () => {
             <main className="flex-1 min-w-0 flex flex-col lg:ml-72">
                 {/* Topbar */}
                 <header className="sticky top-0 z-40 h-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-between px-10">
-                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
-                        <span>Patient</span>
-                        <ChevronRight size={14} className="text-slate-300" />
-                        <span className="text-primary italic font-black">Dashboard</span>
+                    <div>
+                        <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight italic uppercase">Patient <span className="text-primary not-italic">Dashboard</span></h1>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="relative">
@@ -329,19 +349,59 @@ const PatientDashboard = () => {
                     animate="visible"
                     className="p-10 space-y-10 max-w-[1400px] mx-auto w-full"
                 >
-                    {/* Welcome Section */}
-                    <motion.section variants={itemVariants} className="flex flex-col md:flex-row justify-between items-end gap-6">
-                        <div>
-                            <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">Welcome back, <span className="text-primary italic">{patient?.name?.split(' ')[0] || "Friend"}</span></h2>
-                            <p className="text-lg font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-black text-primary uppercase tracking-widest">
-                                    {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
-                                </span>
-                                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                            </p>
-                        </div>
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+                        <motion.div variants={itemVariants}>
+                            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                                Welcome back, <span className="text-primary italic">{user?.name?.split(' ')[0].toLowerCase() || 'patient'}</span>
+                            </h2>
+                            <div className="flex items-center gap-4 mt-3">
+                                <div className="flex items-center gap-2 px-3 py-1 bg-white/50 dark:bg-white/5 rounded-full border border-slate-200 dark:border-white/5 shadow-sm">
+                                    <div className="size-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600 dark:text-emerald-400">
+                                        {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+                                    </span>
+                                </div>
+                                <p className="text-sm font-bold text-slate-400 dark:text-slate-500">
+                                    {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                </p>
+                            </div>
+                        </motion.div>
 
-                    </motion.section>
+                        {/* Profile Completion Card - Original Simple Style */}
+                        {completionPercentage < 100 && (
+                            <motion.div 
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xl shadow-slate-200/50 dark:shadow-black/20 flex items-center gap-6 min-w-[320px] relative overflow-hidden group hover:border-primary/30 transition-all cursor-pointer"
+                                onClick={() => setIsPreferencesOpen(true)}
+                            >
+                                <div className="relative size-16 flex-shrink-0">
+                                    <svg className="size-full -rotate-90" viewBox="0 0 36 36">
+                                        <circle cx="18" cy="18" r="16" fill="none" className="stroke-slate-100 dark:stroke-slate-800" strokeWidth="3" />
+                                        <circle 
+                                            cx="18" cy="18" r="16" fill="none" 
+                                            className="stroke-primary transition-all duration-1000 ease-out" 
+                                            strokeWidth="3" 
+                                            strokeDasharray="100" 
+                                            strokeDashoffset={100 - completionPercentage}
+                                            strokeLinecap="round" 
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-xs font-black text-primary">{completionPercentage}%</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Complete your profile</h4>
+                                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-1">Unlock all features by finishing setup</p>
+                                    <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-primary uppercase tracking-widest group-hover:gap-2 transition-all">
+                                        Finish Now <ChevronRight size={12} />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </div>
 
                     {/* Patient Card */}
                     <motion.section variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-slate-100 dark:border-slate-800 relative overflow-hidden group">
@@ -389,7 +449,7 @@ const PatientDashboard = () => {
                                         <span className="flex items-center gap-2"><Phone size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.phoneNumber || "N/A"}</span>
                                     </div>
                                     <div className="pt-4 flex gap-3">
-                                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border border-slate-100 dark:border-slate-800 rounded-lg px-3 py-1 bg-slate-50 dark:bg-slate-800/50">Patient ID: {patient?._id?.substring(0, 12).toUpperCase()}</span>
+                                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border border-slate-100 dark:border-slate-800 rounded-lg px-3 py-1 bg-slate-50 dark:bg-slate-800/50">Patient ID: {patient?.patientId || 'N/A'}</span>
 
                                     </div>
                                 </div>
@@ -521,11 +581,7 @@ const PatientDashboard = () => {
                                 </h4>
                                 <div className="aspect-[4/5] w-full rounded-[2rem] bg-slate-100 dark:bg-slate-800 relative overflow-hidden group/img cursor-zoom-in">
                                     <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url('${normalizeUrl(scans[0]?.imageUrl) || "/stage1.jpeg"}')` }}></div>
-                                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                        <div className="bg-white dark:bg-slate-900 text-primary p-4 rounded-2xl shadow-2xl scale-50 group-hover/img:scale-100 transition-transform duration-500">
-                                            <ZoomIn size={24} strokeWidth={2.5} />
-                                        </div>
-                                    </div>
+
                                     {/* Scan Info Overlay */}
                                     <div className="absolute bottom-5 left-5 right-5 flex justify-between items-center text-[9px] font-black text-white/80 uppercase tracking-widest backdrop-blur-md bg-black/40 px-4 py-3 rounded-xl border border-white/10 opacity-0 group-hover/img:opacity-100 transition-opacity">
                                         <span>Left Eye (OS)</span>
@@ -567,16 +623,7 @@ const PatientDashboard = () => {
 
 
 
-                            {/* Security Badge */}
-                            <div className="p-6 rounded-3xl bg-slate-100 dark:bg-slate-900 flex items-center gap-4 border border-slate-200/50 dark:border-slate-800">
-                                <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                    <Shield size={20} strokeWidth={2.5} />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-[10px] font-black text-slate-800 dark:text-white uppercase tracking-widest mb-0.5">Privacy Lock Active</p>
-                                    <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 leading-none">AES-256 Retinal Data Encryption</p>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                 </motion.div>

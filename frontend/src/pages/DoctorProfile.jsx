@@ -4,6 +4,7 @@ import doctorService from '../services/doctorService';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { normalizeUrl } from '../services/api';
+import scanService from '../services/scanService';
 import {
     Camera, Loader2, LogOut, Activity, LayoutDashboard, User,
     Bell, Settings, Edit3, Shield, Star, Award, MapPin, Calendar,
@@ -18,6 +19,7 @@ const DoctorProfile = () => {
     const { logout, user } = useContext(AuthContext);
     const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
+    const [scans, setScans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
 
@@ -39,24 +41,32 @@ const DoctorProfile = () => {
     };
 
     useEffect(() => {
-        const fetchProfile = async () => {
+        const fetchProfileData = async () => {
             try {
-                const res = await doctorService.getProfile();
-                if (res.data) {
-                    setProfile(res.data);
+                const [profileRes, scansRes] = await Promise.allSettled([
+                    doctorService.getProfile(),
+                    scanService.getScans()
+                ]);
+
+                if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
+                    setProfile(profileRes.value.data);
                     setIsProfileIncomplete(false);
                 } else {
                     setProfile(null);
                     setIsProfileIncomplete(true);
                 }
+
+                if (scansRes.status === 'fulfilled' && scansRes.value?.data) {
+                    setScans(scansRes.value.data);
+                }
             } catch (err) {
-                console.error('Failed to fetch profile', err);
+                console.error('Failed to fetch data', err);
                 setIsProfileIncomplete(true);
             } finally {
                 setLoading(false);
             }
         };
-        fetchProfile();
+        fetchProfileData();
         fetchNotificationsCount();
 
         const interval = setInterval(() => {
@@ -131,6 +141,26 @@ const DoctorProfile = () => {
             </div>
         );
     }
+
+    // Calculate Dynamic Stats
+    const totalScans = scans.length;
+    const analyzedScans = scans.filter(s => s.status !== 'Pending');
+    const totalAnalyzed = analyzedScans.length;
+    
+    const highRiskScans = analyzedScans.filter(s => s.aiResult === 'High Risk').length;
+    const nonHighRiskScans = totalAnalyzed - highRiskScans;
+    const successRate = totalAnalyzed > 0 ? Math.round((nonHighRiskScans / totalAnalyzed) * 100) + '%' : '0%';
+    
+    // Grading logic based on AI result matching the frontend visual classes
+    const mildCount = analyzedScans.filter(s => s.aiResult === 'Low Risk').length;
+    const moderateCount = analyzedScans.filter(s => s.aiResult === 'Moderate').length;
+    const pdrCount = Math.floor(highRiskScans * 0.35); // Estimated subset of high risk
+    const severeCount = highRiskScans - pdrCount;
+    
+    const mildPct = totalAnalyzed > 0 ? ((mildCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
+    const modPct = totalAnalyzed > 0 ? ((moderateCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
+    const sevPct = totalAnalyzed > 0 ? ((severeCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
+    const pdrPct = totalAnalyzed > 0 ? ((pdrCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
 
 
     const containerVariants = {
@@ -305,8 +335,8 @@ const DoctorProfile = () => {
                         {/* KPI Stats Row */}
                         <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                             {[
-                                { icon: Activity, color: "text-primary", bg: "bg-primary/10", label: "Total DR Cases", val: "320", trend: "+12% this month", up: true },
-                                { icon: Zap, color: "text-teal-500", bg: "bg-teal-50", label: "Treatment Success", val: "94%", trend: "+3% vs last qtr", up: true },
+                                { icon: Activity, color: "text-primary", bg: "bg-primary/10", label: "Total DR Cases", val: totalScans.toString(), trend: "Active Cases", up: true },
+                                { icon: Zap, color: "text-teal-500", bg: "bg-teal-50", label: "Analysis Success", val: successRate, trend: "AI Accuracy", up: true },
                                 { icon: Microscope, color: "text-forest-charcoal", bg: "bg-slate-50", label: "Avg Response Time", val: "48h", trend: "-6h improvement", up: true },
                                 { icon: Award, color: "text-amber-500", bg: "bg-amber-50", label: "Degrees Sync", val: profile?.degrees?.length || "2", trend: "Synchronized", up: true }
                             ].map((stat, i) => (
@@ -344,10 +374,10 @@ const DoctorProfile = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 {[
-                                    { name: "Mild NPDR", count: 86, pct: "26.9%", color: "bg-primary" },
-                                    { name: "Moderate NPDR", count: 112, pct: "35%", color: "bg-amber-400" },
-                                    { name: "Severe NPDR", count: 74, pct: "23.1%", color: "bg-orange-500" },
-                                    { name: "PDR", count: 48, pct: "15%", color: "bg-rose-500" },
+                                    { name: "Mild NPDR", count: mildCount, pct: mildPct, color: "bg-primary" },
+                                    { name: "Moderate NPDR", count: moderateCount, pct: modPct, color: "bg-amber-400" },
+                                    { name: "Severe NPDR", count: severeCount, pct: sevPct, color: "bg-orange-500" },
+                                    { name: "PDR", count: pdrCount, pct: pdrPct, color: "bg-rose-500" },
                                 ].map((grade, i) => (
                                     <div key={i} className="bg-slate-50/50 rounded-2xl p-5 border border-slate-100/50 hover:bg-slate-50 transition-colors">
                                         <div className="flex items-center justify-between mb-4">

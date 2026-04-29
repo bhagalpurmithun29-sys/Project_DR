@@ -8,6 +8,7 @@ const Scan = require('../models/Scan');
 const Notification = require('../models/Notification');
 const { OAuth2Client } = require('google-auth-library');
 const axios = require('axios');
+const generatePatientId = require('../utils/generatePatientId');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -65,7 +66,7 @@ exports.registerUser = async (req, res) => {
         if (user) {
             // If patient → create Patient profile
             if (user.role === 'patient') {
-                const patientId = `PAT-${Math.floor(100000 + Math.random() * 900000)}`;
+                const patientId = await generatePatientId(user.name);
                 await Patient.create({
                     user: user._id,
                     name: user.name,
@@ -493,7 +494,7 @@ exports.googleLogin = async (req, res) => {
 
             // Handle Profile Creation (Copied logic from registerUser)
             if (user.role === 'patient') {
-                const patientId = `PAT-${Math.floor(100000 + Math.random() * 900000)}`;
+                const patientId = await generatePatientId(user.name);
                 await Patient.create({
                     user: user._id,
                     name: user.name,

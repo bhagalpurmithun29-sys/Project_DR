@@ -1,6 +1,7 @@
 const Patient = require('../models/Patient');
 const Scan = require('../models/Scan');
 const User = require('../models/User');
+const generatePatientId = require('../utils/generatePatientId');
 
 // @desc    Get all patients
 // @route   GET /api/patients
@@ -91,7 +92,7 @@ exports.createPatient = async (req, res) => {
                 // UPDATE existing patient if fields are missing
                 let updated = false;
                 if (!existingPatient.patientId) {
-                    existingPatient.patientId = `PAT-${Math.floor(100000 + Math.random() * 900000)}`;
+                    existingPatient.patientId = await generatePatientId(existingPatient.name);
                     updated = true;
                 }
                 if (age && (existingPatient.age === 0 || !existingPatient.age)) {
@@ -134,7 +135,7 @@ exports.createPatient = async (req, res) => {
             });
         }
 
-        const patientId = `PAT-${Math.floor(100000 + Math.random() * 900000)}`;
+        const patientId = await generatePatientId(name);
 
         const patient = await Patient.create({
             user: user._id,

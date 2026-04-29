@@ -186,7 +186,7 @@ const DetailedScanHistory = () => {
             <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${normalizeUrl(patient?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Patient')}&background=059669&color=fff&bold=true`})` }}></div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black truncate text-white">{user?.name || 'Patient'}</p>
-              <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{patient?.patientId || 'Medical ID: 88A-29C'}</p>
+              <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">Patient</p>
             </div>
           </div>
           <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-500/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
@@ -207,10 +207,7 @@ const DetailedScanHistory = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center px-4 py-2 bg-slate-100 rounded-xl border border-slate-200/50">
-              <ShieldCheck size={16} className="text-primary mr-2" />
-              <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">Instance-{patient?._id?.substring(0, 8).toUpperCase() || "AUTH"}</span>
-            </div>
+
 
           </div>
         </header>

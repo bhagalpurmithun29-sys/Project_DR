@@ -308,7 +308,7 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                 { label: 'Full Name', key: 'name', type: 'text', Icon: User, placeholder: 'Your full name' },
                                                 { label: 'Email Address', key: 'email', type: 'email', Icon: Mail, placeholder: 'your@email.com' },
                                                 { label: 'Age', key: 'age', type: 'number', Icon: Calendar, placeholder: 'Your age' },
-                                                { label: 'Phone Number', key: 'phone', type: 'tel', Icon: Phone, placeholder: '+1 (555) 000-0000' },
+                                                { label: 'Phone Number', key: 'phone', type: 'tel', Icon: Phone, placeholder: '+91 00000-00000' },
                                             ].map(({ label, key, type, Icon: Ic, placeholder }) => (
                                                 <div key={key} className="space-y-1.5">
                                                     <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</label>

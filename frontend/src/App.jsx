@@ -16,7 +16,7 @@ import RoleRoute from './components/RoleRoute';
 import './index.css';
 import PatientAnalytics from './components/PatientAnalytics';
 import PatientScanHistory from './components/PatientScanHistory';
-import AiAssistant from './components/Ai Assistant';
+import AiAssistant from './components/AiAssistant';
 import DoctorDashboard from './pages/DoctorDashboard';
 import PatientReport from './pages/PatientReport';
 import DiagnosisCenterDashboard from './pages/DiagnosisCenterDashboard';
