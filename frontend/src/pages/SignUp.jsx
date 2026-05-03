@@ -123,8 +123,8 @@ const Register = () => {
     };
 
     return (
-        <div className="font-display bg-main text-slate-900 antialiased min-h-screen overflow-hidden">
-            <div className="flex min-h-screen w-full">
+        <div className="font-display bg-main text-slate-900 antialiased h-screen overflow-hidden">
+            <div className="flex h-screen w-full">
                 {/* Left Side Branding */}
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -177,7 +177,7 @@ const Register = () => {
                 </motion.div>
 
                 {/* Right Side Form */}
-                <div className="w-full lg:w-7/12 flex flex-col items-center justify-center p-6 sm:p-12 lg:p-16 bg-main overflow-y-auto">
+                <div className="w-full lg:w-7/12 flex flex-col items-center p-6 sm:p-12 lg:p-16 bg-main overflow-y-auto custom-scrollbar">
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
@@ -270,10 +270,13 @@ const Register = () => {
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                                        <label htmlFor="signup-full-name" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
                                         <div className="relative group">
                                             <User size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />
                                             <input
+                                                id="signup-full-name"
+                                                name="name"
+                                                autoComplete="name"
                                                 required
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
@@ -284,10 +287,13 @@ const Register = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px]  text-slate-700 uppercase tracking-widest ml-1">DOB</label>
+                                        <label htmlFor="signup-dob" className="text-[10px]  text-slate-700 uppercase tracking-widest ml-1">DOB</label>
                                         <div className="relative group">
                                             <Calendar size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
                                             <input
+                                                id="signup-dob"
+                                                name="dob"
+                                                autoComplete="bday"
                                                 required
                                                 value={dob}
                                                 onChange={(e) => setDob(e.target.value)}
@@ -299,10 +305,13 @@ const Register = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Connection</label>
+                                    <label htmlFor="signup-email" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Connection</label>
                                     <div className="relative group">
                                         <Mail size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />
                                         <input
+                                            id="signup-email"
+                                            name="email"
+                                            autoComplete="email"
                                             required
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
@@ -316,10 +325,13 @@ const Register = () => {
 
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Secure Password</label>
+                                    <label htmlFor="signup-password" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Secure Password</label>
                                     <div className="relative group">
                                         <Lock size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />
                                         <input
+                                            id="signup-password"
+                                            name="password"
+                                            autoComplete="new-password"
                                             required
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}

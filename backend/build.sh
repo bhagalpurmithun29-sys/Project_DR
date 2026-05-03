@@ -9,14 +9,19 @@ echo "🚀 Starting Production Build (Node + Python)..."
 echo "📦 Installing Node.js dependencies..."
 npm install
 
-# 2. Upgrade pip and install Python dependencies
-# Use python3 -m pip to ensure we use the correct environment's pip
-echo "🐍 Setting up Python environment..."
-python3 -m pip install --upgrade pip
+# 2. Ensure Python dependencies are available for AI features
+echo "🐍 Verifying Python environment..."
 
 if [ -f requirements.txt ]; then
-    echo "📜 Installing dependencies from requirements.txt..."
-    python3 -m pip install -r requirements.txt
+    if python3 -c "import ultralytics, cv2, numpy" >/dev/null 2>&1; then
+        echo "✅ Python AI dependencies already available."
+    else
+        echo "📜 Installing dependencies from requirements.txt..."
+        if ! python3 -m pip install --disable-pip-version-check -r requirements.txt; then
+            echo "⚠️ Could not install Python dependencies automatically."
+            echo "⚠️ Backend can still start, but AI scan analysis will fail until dependencies are installed."
+        fi
+    fi
 else
     echo "⚠️ requirements.txt not found. Skipping python package installation."
 fi

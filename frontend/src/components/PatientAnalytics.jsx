@@ -27,7 +27,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from './PatientPreferencesModal';
 import patientService from "../services/patientService";
-import api, { normalizeUrl } from "../services/api";
+import { normalizeUrl } from "../services/api";
 
 const X_AXIS_LABELS = ["Jan 2024", "Mar 2024", "May 2024", "Jul 2024", "Sep 2024", "Nov 2024"];
 
@@ -351,7 +351,6 @@ export default function PatientAnalytics() {
                     <polygon
                       key={i}
                       points={PENTAGON_ANGLES.map(a => {
-                        const r = (PENTAGON_ANGLES[0], RADAR_MAX_R) * ratio;
                         const rad = (a * Math.PI) / 180;
                         return `${(RADAR_CX + RADAR_MAX_R * ratio * Math.cos(rad)).toFixed(1)},${(RADAR_CY + RADAR_MAX_R * ratio * Math.sin(rad)).toFixed(1)}`;
                       }).join(' ')}

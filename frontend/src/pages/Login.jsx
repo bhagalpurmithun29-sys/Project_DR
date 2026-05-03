@@ -114,8 +114,8 @@ export default function Login() {
   };
 
   return (
-    <div className="font-display bg-main text-slate-900 antialiased min-h-screen overflow-hidden">
-      <div className="flex min-h-screen w-full">
+    <div className="font-display bg-main text-slate-900 antialiased h-screen overflow-hidden">
+      <div className="flex h-screen w-full">
         {/* ── LEFT PANEL ── */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -175,7 +175,7 @@ export default function Login() {
         </motion.div>
 
         {/* ── RIGHT PANEL ── */}
-        <div className="flex w-full items-center justify-center bg-main p-6 lg:w-1/2 lg:p-12 overflow-hidden">
+        <div className="flex w-full items-center justify-center bg-main p-6 lg:w-1/2 lg:p-12 overflow-y-auto custom-scrollbar">
           <div className="w-full max-w-[460px]">
             {/* Back Button */}
             <Link to="/" className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-primary transition-colors mb-6 group">
@@ -239,7 +239,7 @@ export default function Login() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">
+                    <label htmlFor="login-email" className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">
                       {role === "doctor" ? "Work Email" : "Email Address"}
                     </label>
                     <div className="relative group">
@@ -248,6 +248,9 @@ export default function Login() {
                         size={20}
                       />
                       <input
+                        id="login-email"
+                        name="email"
+                        autoComplete="email"
                         required
                         type="email"
                         placeholder="clinician@retinaai.health"
@@ -260,7 +263,7 @@ export default function Login() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between px-1">
-                      <label className="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
+                      <label htmlFor="login-password" className="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
                       <Link
                         to="/forgot-password"
                         className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline hover:underline-offset-4"
@@ -274,6 +277,9 @@ export default function Login() {
                         size={20}
                       />
                       <input
+                        id="login-password"
+                        name="password"
+                        autoComplete="current-password"
                         required
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"

@@ -92,7 +92,11 @@ exports.registerUser = async (req, res) => {
                     user: user._id,
                     name: user.name,
                     email: user.email,
-                    specialization: 'Retina Specialist' // Default
+                    specialization: 'Retina Specialist',
+                    licenseNumber: `TEMP-${user._id.toString().substring(0, 8)}`,
+                    country: 'Unknown',
+                    experience: '0',
+                    phoneNumber: '0000000000'
                 });
             }
 
@@ -482,45 +486,10 @@ exports.googleLogin = async (req, res) => {
         let isNewUser = false;
 
         if (!user) {
-            isNewUser = true;
-            // New user via Google
-            user = await User.create({
-                name,
-                email,
-                googleId: sub,
-                avatar: picture,
-                role: role || 'patient',
+            return res.status(404).json({
+                success: false,
+                message: 'Account not found. Please create your account first.'
             });
-
-            // Handle Profile Creation (Copied logic from registerUser)
-            if (user.role === 'patient') {
-                const patientId = await generatePatientId(user.name);
-                await Patient.create({
-                    user: user._id,
-                    name: user.name,
-                    patientId,
-                    email: user.email,
-                    age: 0,
-                    diabetesType: 'Type 2'
-                });
-            }
-            if (user.role === 'diagnosis_center') {
-                const centerId = `DC-${Math.floor(100000 + Math.random() * 900000)}`;
-                await DiagnosisCenter.create({
-                    user: user._id,
-                    centerName: user.name,
-                    centerId,
-                    email: user.email,
-                });
-            }
-            if (user.role === 'doctor') {
-                await Doctor.create({
-                    user: user._id,
-                    name: user.name,
-                    email: user.email,
-                    specialization: 'Retina Specialist'
-                });
-            }
         } else {
             // --- Role Validation Check for existing Google users ---
             if (role) {

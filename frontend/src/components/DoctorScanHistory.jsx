@@ -418,6 +418,8 @@ const DoctorScanHistory = () => {
                         <div className="relative w-full md:w-[500px] group">
                             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
                             <input
+                                id="doctor-scan-history-search"
+                                name="doctor_scan_history_search"
                                 className="w-full pl-16 pr-6 py-4 bg-slate-50/50 border-none rounded-[1.8rem] text-[11px] font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all shadow-inner"
                                 placeholder="Locate patient entry by name..."
                                 value={searchTerm}
@@ -427,6 +429,8 @@ const DoctorScanHistory = () => {
                         <div className="flex items-center gap-4 w-full md:w-auto px-2">
                             <div className="relative flex-1 md:flex-initial group">
                                 <select
+                                    id="doctor-scan-history-risk-filter"
+                                    name="doctor_scan_history_risk_filter"
                                     className="w-full appearance-none bg-slate-50/50 border-none rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 pr-12 outline-none focus:ring-4 focus:ring-primary/5 transition-all shadow-inner cursor-pointer"
                                     value={filterRisk}
                                     onChange={(e) => setFilterRisk(e.target.value)}
@@ -683,8 +687,14 @@ const DoctorScanHistory = () => {
                             >
                                 {/* Image Section */}
                                 <div className="md:w-1/2 bg-slate-950 p-8 flex flex-col gap-6 overflow-y-auto custom-scrollbar relative border-r border-slate-800">
-                                    {[selectedScan, siblingScan].filter(Boolean).sort((a,b) => a.type === 'Right Eye' ? -1 : 1).map((scan, idx) => (
-                                        <div key={idx} className="w-full flex flex-col gap-3">
+                                    {[selectedScan, siblingScan]
+                                        .filter(Boolean)
+                                        .sort((left, right) => {
+                                            if (left.type === right.type) return 0;
+                                            return left.type === 'Right Eye' ? -1 : 1;
+                                        })
+                                        .map((scan) => (
+                                        <div key={scan.id || `${scan.type}-${scan.createdAt || scan.date}`} className="w-full flex flex-col gap-3">
                                             <div className="flex items-center">
                                                 <span className="px-3 py-1.5 bg-white/10 rounded-xl border border-white/20 text-[9px] font-black text-white uppercase tracking-widest backdrop-blur-md">
                                                     {scan.type}
@@ -835,6 +845,8 @@ const DoctorScanHistory = () => {
                                                 )}
                                             </div>
                                             <textarea
+                                                id="doctor-prescription"
+                                                name="doctor_prescription"
                                                 value={doctorPrescription}
                                                 onChange={(e) => setDoctorPrescription(e.target.value)}
                                                 placeholder="Write medications, lifestyle advice, or follow-up instructions here..."

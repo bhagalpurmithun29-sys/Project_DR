@@ -409,6 +409,8 @@ const DoctorDashboard = () => {
                         <div className="relative group hidden sm:block">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={16} />
                             <input
+                                id="doctor-dashboard-search"
+                                name="doctor_dashboard_search"
                                 className="w-80 pl-12 pr-10 py-3 bg-slate-100/60 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all shadow-inner"
                                 placeholder="Search clinical data..."
                                 value={search}

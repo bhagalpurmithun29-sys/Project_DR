@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
+const { buildCorsOptions } = require('./utils/corsConfig');
 
 // Load env vars
 dotenv.config();
@@ -33,12 +34,8 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-// Enable CORS - Optimized for cross-platform deployment (Vercel <-> Render)
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Enable CORS with an explicit allowlist instead of wildcard auth access
+app.use(cors(buildCorsOptions(process.env)));
 
 // ── Self-Healing: Image Not Found Fallback ──────────────────────────────────
 // If a requested upload is missing, serve the placeholder instead of a 404
@@ -112,6 +109,10 @@ const connectDB = async () => {
     const tryConnect = async () => {
         try {
             const uri = process.env.MONGO_URI;
+            if (!uri) {
+                console.warn('⚠️ Skipping MongoDB connection because MONGO_URI is not configured.');
+                return;
+            }
             const host = uri.split('@')[1]?.split('/')[0] || 'Unknown Host';
             console.log(`📡 Attempting to connect to: ${host}...`);
             const conn = await mongoose.connect(uri);

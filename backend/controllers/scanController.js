@@ -8,6 +8,15 @@ const Notification = require('../models/Notification');
 const { generateClinicalSummary } = require('../services/aiService');
 const generatePatientId = require('../utils/generatePatientId');
 
+const backfillPatientIdIfMissing = async (patient) => {
+    if (!patient || patient.patientId) return patient;
+
+    const generatedPatientId = await generatePatientId(patient.name);
+    patient.patientId = generatedPatientId;
+    await Patient.findByIdAndUpdate(patient._id, { patientId: generatedPatientId });
+    return patient;
+};
+
 // @desc    Create a new scan
 // @route   POST /api/scans
 // @access  Private/Doctor/Technician
@@ -255,28 +264,7 @@ exports.getScans = async (req, res) => {
 
         // LAZY REPAIR: Fix missing demographics in the list view
         for (const scan of scans) {
-            if (scan.patient) {
-                let updated = false;
-                if (!scan.patient.patientId) {
-                    scan.patient.patientId = await generatePatientId(scan.patient.name);
-                    updated = true;
-                }
-                if (!scan.patient.gender) {
-                    scan.patient.gender = 'Male';
-                    updated = true;
-                }
-                if (scan.patient.age === 0 || !scan.patient.age) {
-                    scan.patient.age = 45;
-                    updated = true;
-                }
-                if (updated) {
-                    await Patient.findByIdAndUpdate(scan.patient._id, {
-                        patientId: scan.patient.patientId,
-                        gender: scan.patient.gender,
-                        age: scan.patient.age
-                    });
-                }
-            }
+            await backfillPatientIdIfMissing(scan.patient);
         }
 
         res.json({
@@ -302,31 +290,7 @@ exports.getScan = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Scan not found' });
         }
 
-        // LAZY REPAIR: If patient data is missing demographics (legacy records), patch it on-the-fly
-        if (scan.patient) {
-            let updated = false;
-            if (!scan.patient.patientId) {
-                scan.patient.patientId = await generatePatientId(scan.patient.name);
-                updated = true;
-            }
-            if (!scan.patient.gender) {
-                scan.patient.gender = 'Male'; // Default fallback
-                updated = true;
-            }
-            if (scan.patient.age === 0 || !scan.patient.age) {
-                scan.patient.age = 45; // Test fallback
-                updated = true;
-            }
-
-            if (updated) {
-                await Patient.findByIdAndUpdate(scan.patient._id, {
-                    patientId: scan.patient.patientId,
-                    gender: scan.patient.gender,
-                    age: scan.patient.age
-                });
-                console.log(`Lazy Repaired Patient: ${scan.patient.name}`);
-            }
-        }
+        await backfillPatientIdIfMissing(scan.patient);
 
         res.json({
             success: true,

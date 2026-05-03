@@ -141,6 +141,8 @@ const Header = ({ notificationEnabled = true }) => {
         <div className="relative group">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary" />
           <input
+            id="model-setting-search"
+            name="model_setting_search"
             type="text"
             placeholder="Search params..."
             className="w-72 rounded-xl border-none bg-slate-100 py-2.5 pl-11 pr-4 text-sm font-medium outline-none ring-2 ring-transparent transition-all focus:bg-white focus:ring-primary/20"

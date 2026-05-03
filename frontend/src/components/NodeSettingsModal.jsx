@@ -338,6 +338,9 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                                                             <Lock size={14} />
                                                         </div>
                                                         <input
+                                                            id={`node-password-${id}`}
+                                                            name={`node_password_${id}`}
+                                                            autoComplete={id === 'current' ? 'current-password' : 'new-password'}
                                                             type={showPw[id] ? 'text' : 'password'}
                                                             placeholder={label}
                                                             value={pwForm[id]}
@@ -409,6 +412,9 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                                                     <div className="relative group">
                                                         <Settings className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 pointer-events-none" size={14} />
                                                         <select
+                                                            id={`node-security-question-${i + 1}`}
+                                                            name={`node_security_question_${i + 1}`}
+                                                            autoComplete="off"
                                                             value={sq.question}
                                                             onChange={e => {
                                                                 const newSq = [...sqForm];
@@ -433,6 +439,9 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                                                     <div className="relative group">
                                                         <CheckCircle2 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" size={14} />
                                                         <input
+                                                            id={`node-security-answer-${i + 1}`}
+                                                            name={`node_security_answer_${i + 1}`}
+                                                            autoComplete="off"
                                                             type="text"
                                                             placeholder="Enter answer"
                                                             value={sq.answer}
@@ -451,6 +460,9 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                                                 <div className="relative group">
                                                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
                                                     <input
+                                                        id="node-security-confirm-password"
+                                                        name="node_security_confirm_password"
+                                                        autoComplete="current-password"
                                                         type="password"
                                                         placeholder="Confirm account password"
                                                         value={sqConfirmPw}
@@ -498,6 +510,9 @@ const NodeSettingsModal = ({ isOpen, onClose }) => {
                                                                 <Lock size={14} />
                                                             </div>
                                                             <input
+                                                                id={`node-set-password-${id}`}
+                                                                name={`node_set_password_${id}`}
+                                                                autoComplete="new-password"
                                                                 type={showSp[id] ? 'text' : 'password'}
                                                                 placeholder={label}
                                                                 value={spForm[id]}

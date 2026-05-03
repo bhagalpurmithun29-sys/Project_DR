@@ -148,19 +148,6 @@ const AiAssistant = () => {
     void loadProfile();
   }, []);
 
-  // Initial welcome message
-  useEffect(() => {
-    if (messages.length === 0) {
-      const welcome = {
-        role: 'model',
-        text: `👋 Hello ${user?.name || 'Patient'}! I'm your RetinaAI Diabetes Assistant.\n\nI can help you understand your diagnostic reports, explain the different stages of Diabetic Retinopathy, and provide evidence-based guidance on blood sugar management and eye health.\n\nWhat would you like to know today?`,
-        time: formatTime(new Date()),
-        id: 'welcome',
-      };
-      setMessages([welcome]);
-    }
-  }, [user]);
-
   const formatTime = (date) =>
     date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -168,9 +155,20 @@ const AiAssistant = () => {
     messagesEndRef.current?.scrollIntoView({ behavior });
   }, []);
 
+  // Initial welcome message
+  useEffect(() => {
+    const welcome = {
+      role: 'model',
+      text: `👋 Hello ${user?.name || 'Patient'}! I'm your RetinaAI Diabetes Assistant.\n\nI can help you understand your diagnostic reports, explain the different stages of Diabetic Retinopathy, and provide evidence-based guidance on blood sugar management and eye health.\n\nWhat would you like to know today?`,
+      time: formatTime(new Date()),
+      id: 'welcome',
+    };
+    setMessages((prev) => (prev.length === 0 ? [welcome] : prev));
+  }, [user?.name]);
+
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages, isLoading, scrollToBottom]);
 
   const handleScroll = () => {
     const el = messagesContainerRef.current;
@@ -449,6 +447,8 @@ const AiAssistant = () => {
             >
               <textarea
                 ref={inputRef}
+                id="ai-assistant-input"
+                name="ai_assistant_message"
                 rows={1}
                 value={inputValue}
                 onChange={(e) => {

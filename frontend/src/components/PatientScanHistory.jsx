@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import patientService from "../services/patientService";
-import api, { normalizeUrl } from "../services/api";
+import { normalizeUrl } from "../services/api";
 import {
   Eye,
   LayoutDashboard,
@@ -223,6 +223,8 @@ const DetailedScanHistory = () => {
             <div className="relative w-full md:w-[400px] group">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
               <input
+                id="patient-scan-history-search"
+                name="patient_scan_history_search"
                 type="text"
                 placeholder="Search archive entries..."
                 value={search}

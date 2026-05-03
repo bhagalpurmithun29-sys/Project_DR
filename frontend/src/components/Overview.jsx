@@ -239,6 +239,8 @@ function Header({ search, onSearch }) {
             className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary"
           />
           <input
+            id="overview-search"
+            name="overview_search"
             type="text"
             value={search}
             onChange={(e) => onSearch(e.target.value)}

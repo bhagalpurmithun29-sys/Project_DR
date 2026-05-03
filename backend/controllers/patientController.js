@@ -2,6 +2,7 @@ const Patient = require('../models/Patient');
 const Scan = require('../models/Scan');
 const User = require('../models/User');
 const generatePatientId = require('../utils/generatePatientId');
+const { resolvePatientPassword } = require('../utils/patientAccount');
 
 // @desc    Get all patients
 // @route   GET /api/patients
@@ -18,7 +19,7 @@ exports.getPatients = async (req, res) => {
             data: patients,
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(error.statusCode || 500).json({ success: false, message: error.message });
     }
 };
 
@@ -83,11 +84,22 @@ exports.getMyProfile = async (req, res) => {
 // @access  Private/Doctor
 exports.createPatient = async (req, res) => {
     try {
-        const { name, email, age, phoneNumber, gender, password } = req.body;
+        const { name, email, age, phoneNumber, gender, password, diabetesType } = req.body;
+        const normalizedName = name?.trim();
+        const normalizedEmail = email?.trim().toLowerCase();
+        const parsedAge = Number(age);
+
+        if (!normalizedName) {
+            return res.status(400).json({ success: false, message: 'Patient name is required.' });
+        }
+
+        if (!Number.isInteger(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+            return res.status(400).json({ success: false, message: 'Please provide a valid patient age between 1 and 120.' });
+        }
 
         // Check if patient with this email already exists (if email provided)
-        if (email) {
-            let existingPatient = await Patient.findOne({ email });
+        if (normalizedEmail) {
+            let existingPatient = await Patient.findOne({ email: normalizedEmail });
             if (existingPatient) {
                 // UPDATE existing patient if fields are missing
                 let updated = false;
@@ -95,8 +107,8 @@ exports.createPatient = async (req, res) => {
                     existingPatient.patientId = await generatePatientId(existingPatient.name);
                     updated = true;
                 }
-                if (age && (existingPatient.age === 0 || !existingPatient.age)) {
-                    existingPatient.age = age;
+                if (parsedAge && (existingPatient.age === 0 || !existingPatient.age)) {
+                    existingPatient.age = parsedAge;
                     updated = true;
                 }
                 if (gender && !existingPatient.gender) {
@@ -115,43 +127,59 @@ exports.createPatient = async (req, res) => {
             }
         }
 
-        // Create a temporary user for the patient so they can login later
-        // Use provided password or fallback to phoneNumber / default
-        const tempPassword = password || phoneNumber || 'RetinaAI@2024';
+        const credentialResult = resolvePatientPassword(password);
 
         // We check if a user with this email already exists but possibly not a patient
         let user;
-        if (email) {
-            user = await User.findOne({ email });
+        if (normalizedEmail) {
+            user = await User.findOne({ email: normalizedEmail });
+            if (user && user.role !== 'patient') {
+                return res.status(409).json({
+                    success: false,
+                    message: 'This email address is already linked to another account type.'
+                });
+            }
+        }
+
+        if (user) {
+            const existingLinkedPatient = await Patient.findOne({ user: user._id });
+            if (existingLinkedPatient) {
+                return res.status(200).json({ success: true, data: existingLinkedPatient });
+            }
         }
 
         if (!user) {
             user = await User.create({
-                name,
-                email: email || `${name.replace(/\s+/g, '').toLowerCase()}${Math.floor(Math.random() * 1000)}@retina-ai.com`,
-                password: tempPassword,
+                name: normalizedName,
+                email: normalizedEmail || `${normalizedName.replace(/\s+/g, '').toLowerCase()}${Math.floor(Math.random() * 1000)}@retina-ai.com`,
+                password: credentialResult.password,
                 role: 'patient',
-                age: age || 0
+                age: parsedAge
             });
         }
 
-        const patientId = await generatePatientId(name);
+        const patientId = await generatePatientId(normalizedName);
 
         const patient = await Patient.create({
             user: user._id,
             diagnosisCenter: req.user.role === 'diagnosis_center' ? req.user._id : undefined,
-            name,
+            name: normalizedName,
             patientId,
-            age,
+            age: parsedAge,
             gender,
             email: user.email,
             phoneNumber,
-            diabetesType: 'Type 2' // Default
+            diabetesType: diabetesType || 'Type 2'
         });
 
         res.status(201).json({
             success: true,
-            data: patient
+            data: patient,
+            credentials: credentialResult.generated ? {
+                generated: true,
+                temporaryPassword: credentialResult.password,
+                message: 'Share this temporary password securely with the patient and ask them to change it after first login.'
+            } : undefined
         });
 
     } catch (error) {

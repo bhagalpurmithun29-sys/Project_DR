@@ -103,30 +103,27 @@ const DiabetesChatbot = () => {
 
     const formatTime = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    const scrollToBottom = useCallback((behavior = 'smooth') => {
+        messagesEndRef.current?.scrollIntoView({ behavior });
+    }, []);
+
     // Welcome message on first open
     useEffect(() => {
-        if (isOpen && messages.length === 0) {
-            setMessages([{
+        if (isOpen) {
+            setMessages((prev) => (prev.length === 0 ? [{
                 role: 'model',
                 text: `👋 Hello! I'm your RetinaAI Diabetes Assistant.\n\nI can help you understand your diagnostic reports, explain the different stages of Diabetic Retinopathy, and provide evidence-based guidance on blood sugar management and eye health.\n\nWhat would you like to know today?`,
                 time: formatTime(new Date()),
                 id: 'welcome',
-            }]);
-        }
-        if (isOpen) {
+            }] : prev));
             setHasUnread(false);
             setTimeout(() => inputRef.current?.focus(), 300);
         }
     }, [isOpen]);
 
-    // Auto-scroll
-    const scrollToBottom = useCallback((behavior = 'smooth') => {
-        messagesEndRef.current?.scrollIntoView({ behavior });
-    }, []);
-
     useEffect(() => {
         if (isOpen) scrollToBottom();
-    }, [messages, isOpen, isLoading]);
+    }, [messages, isOpen, isLoading, scrollToBottom]);
 
     const handleScroll = () => {
         const el = messagesContainerRef.current;
@@ -379,6 +376,7 @@ const DiabetesChatbot = () => {
                                 <textarea
                                     ref={inputRef}
                                     id="diabetes-chatbot-input"
+                                    name="diabetes_chatbot_message"
                                     rows={1}
                                     value={inputValue}
                                     onChange={(e) => {

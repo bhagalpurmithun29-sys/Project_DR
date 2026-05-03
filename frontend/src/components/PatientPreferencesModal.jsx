@@ -267,7 +267,7 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                             ? <Loader2 size={22} className="text-white animate-spin" />
                                                             : <Camera size={22} className="text-white" strokeWidth={2.5} />
                                                         }
-                                                        <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={photoUploading} />
+                                                        <input id="patient-preferences-photo-overlay" name="patient_preferences_photo_overlay" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={photoUploading} />
                                                     </label>
                                                 </div>
 
@@ -278,7 +278,7 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                         <label className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-primary/90 transition-all shadow-md shadow-primary/20">
                                                             {photoUploading ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
                                                             Upload Photo
-                                                            <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={photoUploading} />
+                                                            <input id="patient-preferences-photo-upload" name="patient_preferences_photo_upload" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={photoUploading} />
                                                         </label>
                                                         {photoPreview && (
                                                             <button
@@ -311,10 +311,18 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                 { label: 'Phone Number', key: 'phone', type: 'tel', Icon: Phone, placeholder: '+91 00000-00000' },
                                             ].map(({ label, key, type, Icon: Ic, placeholder }) => (
                                                 <div key={key} className="space-y-1.5">
-                                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</label>
+                                                    <label htmlFor={`patient-profile-${key}`} className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</label>
                                                     <div className="relative group">
                                                         <Ic className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors" size={16} />
                                                         <input
+                                                            id={`patient-profile-${key}`}
+                                                            name={`patient_profile_${key}`}
+                                                            autoComplete={
+                                                                key === 'name' ? 'name' :
+                                                                key === 'email' ? 'email' :
+                                                                key === 'phone' ? 'tel' :
+                                                                'off'
+                                                            }
                                                             type={type}
                                                             placeholder={placeholder}
                                                             value={profileForm[key]}
@@ -381,6 +389,9 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                 <div className="relative group">
                                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" size={15} />
                                                     <input
+                                                        id="patient-password-current"
+                                                        name="patient_password_current"
+                                                        autoComplete="current-password"
                                                         type={showCurrent ? 'text' : 'password'}
                                                         placeholder="Current password"
                                                         value={pwForm.current}
@@ -396,6 +407,9 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                 <div className="relative group">
                                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" size={15} />
                                                     <input
+                                                        id="patient-password-new"
+                                                        name="patient_password_new"
+                                                        autoComplete="new-password"
                                                         type={showNew ? 'text' : 'password'}
                                                         placeholder="New password (min 8 chars)"
                                                         value={pwForm.newPw}
@@ -423,6 +437,9 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                 <div className="relative group">
                                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" size={15} />
                                                     <input
+                                                        id="patient-password-confirm"
+                                                        name="patient_password_confirm"
+                                                        autoComplete="new-password"
                                                         type="password"
                                                         placeholder="Confirm new password"
                                                         value={pwForm.confirm}
@@ -457,6 +474,9 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                         <div className="relative group">
                                                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 pointer-events-none" size={14} />
                                                             <select
+                                                                id={`patient-security-question-${i + 1}`}
+                                                                name={`patient_security_question_${i + 1}`}
+                                                                autoComplete="off"
                                                                 value={sq.question}
                                                                 onChange={e => {
                                                                     const newSq = [...sqForm];
@@ -477,6 +497,9 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                         <div className="relative group">
                                                             <CheckCircle2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" size={14} />
                                                             <input
+                                                                id={`patient-security-answer-${i + 1}`}
+                                                                name={`patient_security_answer_${i + 1}`}
+                                                                autoComplete="off"
                                                                 type="text"
                                                                 placeholder={`Your Answer ${i + 1}`}
                                                                 value={sq.answer}
@@ -492,10 +515,13 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                 ))}
 
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Confirm with Password</label>
+                                                    <label htmlFor="patient-security-confirm-password" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Confirm with Password</label>
                                                     <div className="relative group">
                                                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" size={15} />
                                                         <input
+                                                            id="patient-security-confirm-password"
+                                                            name="patient_security_confirm_password"
+                                                            autoComplete="current-password"
                                                             type="password"
                                                             placeholder="Your account password"
                                                             value={sqConfirmPw}

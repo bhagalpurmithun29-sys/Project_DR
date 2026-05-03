@@ -105,8 +105,11 @@ const ProfileSetup = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Security Question 1</label>
+                        <label htmlFor="profile-setup-question-1" className="text-xs font-black uppercase tracking-widest text-slate-400">Security Question 1</label>
                         <select
+                            id="profile-setup-question-1"
+                            name="security_question_1"
+                            autoComplete="off"
                             required
                             value={q1}
                             onChange={(e) => setQ1(e.target.value)}
@@ -118,6 +121,9 @@ const ProfileSetup = () => {
                             ))}
                         </select>
                         <input
+                            id="profile-setup-answer-1"
+                            name="security_answer_1"
+                            autoComplete="off"
                             required
                             value={a1}
                             onChange={(e) => setA1(e.target.value)}
@@ -128,8 +134,11 @@ const ProfileSetup = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Security Question 2</label>
+                        <label htmlFor="profile-setup-question-2" className="text-xs font-black uppercase tracking-widest text-slate-400">Security Question 2</label>
                         <select
+                            id="profile-setup-question-2"
+                            name="security_question_2"
+                            autoComplete="off"
                             required
                             value={q2}
                             onChange={(e) => setQ2(e.target.value)}
@@ -141,6 +150,9 @@ const ProfileSetup = () => {
                             ))}
                         </select>
                         <input
+                            id="profile-setup-answer-2"
+                            name="security_answer_2"
+                            autoComplete="off"
                             required
                             value={a2}
                             onChange={(e) => setA2(e.target.value)}

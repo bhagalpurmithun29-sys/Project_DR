@@ -63,10 +63,13 @@ const DeleteAccountSection = () => {
                 <div className="space-y-5 max-w-md">
                     {/* Confirmation Case-Sensitive Type-in */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Type <span className="text-rose-500 italic">DELETE</span> to confirm</label>
+                        <label htmlFor="delete-account-confirm-text" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Type <span className="text-rose-500 italic">DELETE</span> to confirm</label>
                         <div className="relative group">
                             <Trash2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-rose-500 transition-colors" size={16} />
                             <input
+                                id="delete-account-confirm-text"
+                                name="delete_account_confirm_text"
+                                autoComplete="off"
                                 type="text"
                                 value={confirmText}
                                 onChange={(e) => setConfirmText(e.target.value)}
@@ -78,10 +81,13 @@ const DeleteAccountSection = () => {
 
                     {/* Password Verification */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Verify Password</label>
+                        <label htmlFor="delete-account-password" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Verify Password</label>
                         <div className="relative group">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={16} />
                             <input
+                                id="delete-account-password"
+                                name="delete_account_password"
+                                autoComplete="current-password"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}

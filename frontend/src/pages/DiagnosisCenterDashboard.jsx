@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef } from 'react';
+import { useState, useEffect, useContext, useRef, useId } from 'react';
 import { Link, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -51,27 +51,62 @@ const PrintStyles = () => (
     `}} />
 );
 
-const Input = ({ label, icon: Icon, ...props }) => (
+const slugifyFieldName = (value = '') => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+const inferAutocomplete = ({ label = '', name = '', type = '' }) => {
+    const text = `${label} ${name}`.toLowerCase();
+
+    if (type === 'email' || text.includes('email')) return 'email';
+    if (text.includes('phone')) return 'tel';
+    if (text.includes('full name') || text === 'name' || text.includes('center name')) return 'name';
+    if (type === 'password') {
+        if (text.includes('current')) return 'current-password';
+        return 'new-password';
+    }
+    if (type === 'date' || text.includes('dob') || text.includes('birth')) return 'bday';
+    if (text.includes('address')) return 'street-address';
+    if (text.includes('city')) return 'address-level2';
+    return 'off';
+};
+
+const Input = ({ label, icon: Icon, id, name, ...props }) => {
+    const generatedId = useId();
+    const inputId = id || `dc-input-${generatedId}`;
+    const inputName = name || slugifyFieldName(label || inputId) || inputId;
+    const autoComplete = props.autoComplete || inferAutocomplete({
+        label,
+        name: inputName,
+        type: props.type,
+    });
+
+    return (
     <div className="space-y-1.5">
-        {label && <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
+        {label && <label htmlFor={inputId} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
         <div className="relative group">
             {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />}
-            <input className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all`} {...props} />
+            <input id={inputId} name={inputName} autoComplete={autoComplete} className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all`} {...props} />
         </div>
     </div>
-);
+    );
+};
 
-const Select = ({ label, children, ...props }) => (
+const Select = ({ label, children, id, name, ...props }) => {
+    const generatedId = useId();
+    const selectId = id || `dc-select-${generatedId}`;
+    const selectName = name || slugifyFieldName(label || selectId) || selectId;
+
+    return (
     <div className="space-y-1.5">
-        {label && <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
+        {label && <label htmlFor={selectId} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
         <div className="relative">
-            <select className="w-full pl-4 pr-8 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all appearance-none" {...props}>
+            <select id={selectId} name={selectName} className="w-full pl-4 pr-8 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all appearance-none" {...props}>
                 {children}
             </select>
             <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         </div>
     </div>
-);
+    );
+};
 
 /* ═══════════════════════════════════════════════════
    UTILITIES
@@ -185,7 +220,7 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate, showToast }
                             {isUploading ? <Loader2 className="animate-spin text-white" size={24} /> : <Camera className="text-white" size={24} />}
                         </div>
                     </div>
-                    <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" accept="image/*" />
+                    <input id="diagnosis-center-photo-upload" name="diagnosis_center_photo_upload" type="file" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" accept="image/*" />
                     <div className="absolute -bottom-1.5 -right-1.5 bg-primary size-4 rounded-full border-2 border-white z-10" />
                 </div>
                 <div className="flex-1 space-y-2">
@@ -248,7 +283,7 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate, showToast }
 /* ═══════════════════════════════════════════════════
    SECTION: PATIENTS
 ═══════════════════════════════════════════════════ */
-const PatientsSection = ({ patients, onRefresh, showToast }) => {
+const PatientsSection = ({ patients, onRefresh }) => {
     const [search, setSearch] = useState('');
     const [showAdd, setShowAdd] = useState(false);
     const [form, setForm] = useState({ name: '', age: '', gender: 'Male', email: '', phoneNumber: '', diabetesType: 'Type 2', password: '' });
@@ -265,8 +300,14 @@ const PatientsSection = ({ patients, onRefresh, showToast }) => {
         e.preventDefault();
         setSaving(true); setMsg({ type: '', text: '' });
         try {
-            await api.post('/patients', form);
-            setMsg({ type: 'success', text: 'Patient registered successfully.' });
+            const res = await api.post('/patients', form);
+            const generatedPassword = res.data.credentials?.temporaryPassword;
+            setMsg({
+                type: 'success',
+                text: generatedPassword
+                    ? `Patient registered successfully. Temporary password: ${generatedPassword}`
+                    : 'Patient registered successfully.'
+            });
             setForm({ name: '', age: '', gender: 'Male', email: '', phoneNumber: '', diabetesType: 'Type 2', password: '' });
             onRefresh();
             setTimeout(() => setShowAdd(false), 1200);
@@ -291,7 +332,7 @@ const PatientsSection = ({ patients, onRefresh, showToast }) => {
             {/* Search */}
             <div className="relative mb-6">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                <input value={search} onChange={e => setSearch(e.target.value)}
+                <input id="diagnosis-center-patient-search" name="diagnosis_center_patient_search" value={search} onChange={e => setSearch(e.target.value)}
                     placeholder="Search by name, ID or email…"
                     className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-white font-bold text-sm text-slate-900 outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all shadow-sm" />
             </div>
@@ -499,7 +540,7 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
             />
             <div className="relative mb-6">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search scans…"
+                <input id="diagnosis-center-scan-search" name="diagnosis_center_scan_search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search scans…"
                     className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-white font-bold text-sm text-slate-900 outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all shadow-sm" />
             </div>
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -640,9 +681,9 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                                 <div className="grid grid-cols-2 gap-4">
                                     {/* Right Eye Upload */}
                                     <div className={`space-y-1.5 text-center transition-opacity ${form.eye === 'Left' ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-left ml-1 italic">Right Retinal Image (OD)</label>
+                                        <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest text-left ml-1 italic">Right Retinal Image (OD)</span>
                                         <label className={`flex flex-col items-center justify-center h-[100px] w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer ${previewOD ? 'border-primary/40 bg-primary/5' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}>
-                                            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'OD')} className="hidden" disabled={form.eye === 'Left'} />
+                                            <input id="scan-right-retinal-image" name="scan_right_retinal_image" type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'OD')} className="hidden" disabled={form.eye === 'Left'} />
                                             {previewOD ? (
                                                 <img src={previewOD} className="h-full object-contain rounded-xl p-1" alt="Right Eye Preview" />
                                             ) : (
@@ -656,9 +697,9 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
 
                                     {/* Left Eye Upload */}
                                     <div className={`space-y-1.5 text-center transition-opacity ${form.eye === 'Right' ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-left ml-1 italic">Left Retinal Image (OS)</label>
+                                        <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest text-left ml-1 italic">Left Retinal Image (OS)</span>
                                         <label className={`flex flex-col items-center justify-center h-[100px] w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer ${previewOS ? 'border-primary/40 bg-primary/5' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}>
-                                            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'OS')} className="hidden" disabled={form.eye === 'Right'} />
+                                            <input id="scan-left-retinal-image" name="scan_left_retinal_image" type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'OS')} className="hidden" disabled={form.eye === 'Right'} />
                                             {previewOS ? (
                                                 <img src={previewOS} className="h-full object-contain rounded-xl p-1" alt="Left Eye Preview" />
                                             ) : (
@@ -671,14 +712,14 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Technician Name (optional)</label>
-                                    <input type="text" value={form.technician} onChange={e => setForm(f => ({ ...f, technician: e.target.value }))}
+                                    <label htmlFor="scan-technician-name" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Technician Name (optional)</label>
+                                    <input id="scan-technician-name" name="scan_technician_name" type="text" value={form.technician} onChange={e => setForm(f => ({ ...f, technician: e.target.value }))}
                                         className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all"
                                         placeholder="Name of the person performing scan…" />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notes (optional)</label>
-                                    <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2}
+                                    <label htmlFor="scan-notes" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notes (optional)</label>
+                                    <textarea id="scan-notes" name="scan_notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2}
                                         className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all resize-none"
                                         placeholder="Any relevant clinical notes…" />
                                 </div>
@@ -705,7 +746,7 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
 /* ═══════════════════════════════════════════════════
    SECTION: REPORTS
 ═══════════════════════════════════════════════════ */
-const ReportsSection = ({ scans, showToast, setSelectedScan, setSiblingScan, setShowReport }) => {
+const ReportsSection = ({ scans, setSelectedScan, setSiblingScan, setShowReport }) => {
     const analysed = scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed');
     const [search, setSearch] = useState('');
     const filtered = analysed.filter(s =>
@@ -738,7 +779,7 @@ const ReportsSection = ({ scans, showToast, setSelectedScan, setSiblingScan, set
             <SectionHeader title="Reports" subtitle={`${grouped.length} session report${grouped.length !== 1 ? 's' : ''}`} />
             <div className="relative mb-6">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reports by patient…"
+                <input id="diagnosis-center-report-search" name="diagnosis_center_report_search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reports by patient…"
                     className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-white font-bold text-sm text-slate-900 outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all shadow-sm" />
             </div>
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -816,7 +857,7 @@ const ReportsSection = ({ scans, showToast, setSelectedScan, setSiblingScan, set
 /* ═══════════════════════════════════════════════════
    SECTION: ANALYTICS
 ═══════════════════════════════════════════════════ */
-const AnalyticsSection = ({ scans, patients, showToast }) => {
+const AnalyticsSection = ({ scans, patients }) => {
     const analysed = scans.filter(s => s.status === 'Analyzed' || s.status === 'Reviewed');
 
     const high = analysed.filter(s => getRiskLevel(s) === 'High').length;
@@ -939,7 +980,7 @@ const AnalyticsSection = ({ scans, patients, showToast }) => {
 /* ═══════════════════════════════════════════════════
    SECTION: SETTINGS
 ═══════════════════════════════════════════════════ */
-const SettingsSection = ({ center, user, onCenterUpdate, showToast }) => {
+const SettingsSection = ({ center, user, onCenterUpdate }) => {
     const [tab, setTab] = useState('profile');
     const [profile, setProfile] = useState({
         centerName: center?.centerName || '',
@@ -1248,10 +1289,6 @@ const DiagnosisCenterDashboard = () => {
         </div>
     );
 
-    const avatarUrl = center?.photo && center.photo !== 'default-center.jpg'
-        ? center.photo
-        : `https://ui-avatars.com/api/?name=${encodeURIComponent(center?.centerName || user?.name || 'DC')}&background=137fec&color=fff&bold=true`;
-
     return (
         <div className="font-display min-h-screen bg-main flex">
             <PrintStyles />
@@ -1306,11 +1343,11 @@ const DiagnosisCenterDashboard = () => {
                         <Routes>
                             <Route path="/" element={<Navigate to="overview" replace />} />
                             <Route path="overview" element={<DashboardSection center={center} patients={patients} scans={scans} onCenterUpdate={setCenter} showToast={showToast} />} />
-                            <Route path="patients" element={<PatientsSection patients={patients} onRefresh={fetchAll} showToast={showToast} />} />
+                            <Route path="patients" element={<PatientsSection patients={patients} onRefresh={fetchAll} />} />
                             <Route path="scans" element={<ScansSection scans={scans} patients={patients} onRefresh={fetchAll} showToast={showToast} setSelectedScan={setSelectedScan} setSiblingScan={setSiblingScan} setShowReport={setShowReport} />} />
-                            <Route path="reports" element={<ReportsSection scans={scans} showToast={showToast} setSelectedScan={setSelectedScan} setSiblingScan={setSiblingScan} setShowReport={setShowReport} />} />
-                            <Route path="analytics" element={<AnalyticsSection scans={scans} patients={patients} showToast={showToast} />} />
-                            <Route path="settings" element={<SettingsSection center={center} user={user} onCenterUpdate={setCenter} showToast={showToast} />} />
+                            <Route path="reports" element={<ReportsSection scans={scans} setSelectedScan={setSelectedScan} setSiblingScan={setSiblingScan} setShowReport={setShowReport} />} />
+                            <Route path="analytics" element={<AnalyticsSection scans={scans} patients={patients} />} />
+                            <Route path="settings" element={<SettingsSection center={center} user={user} onCenterUpdate={setCenter} />} />
                         </Routes>
                     </motion.div>
                 </AnimatePresence>
@@ -1365,7 +1402,7 @@ const DiagnosisCenterDashboard = () => {
 
                             <div className="flex-1 overflow-y-auto p-8 space-y-8">
                                 <div className={`grid ${siblingScan ? 'grid-cols-2' : 'grid-cols-1'} gap-8`}>
-                                    {[selectedScan, siblingScan].filter(Boolean).sort((a, b) => a.eyeSide === 'OD' ? -1 : 1).map((scan, idx) => (
+                                    {[selectedScan, siblingScan].filter(Boolean).sort((a, _B) => a.eyeSide === 'OD' ? -1 : 1).map((scan) => (
                                         <div key={scan._id} className="space-y-6">
                                             <div className="flex items-center justify-between">
                                                 <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
@@ -1412,7 +1449,7 @@ const DiagnosisCenterDashboard = () => {
 
                                                 {scan.aiReportSummary && (
                                                     <div className="space-y-3">
-                                                        <label className="text-[10px] font-black text-primary uppercase tracking-widest block">AI Clinical Analysis</label>
+                                                        <span className="block text-[10px] font-black text-primary uppercase tracking-widest">AI Clinical Analysis</span>
                                                         <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-inner max-h-[300px] overflow-y-auto custom-scrollbar">
                                                             <div className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-wrap italic ai-summary-content">
                                                                 {scan.aiReportSummary}
@@ -1422,7 +1459,7 @@ const DiagnosisCenterDashboard = () => {
                                                 )}
 
                                                 <div className="pt-4 border-t border-slate-200">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Detected Findings</label>
+                                                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Detected Findings</span>
                                                     <div className="flex flex-wrap gap-2">
                                                         {scan.findings && scan.findings.length > 0 ? scan.findings.map((f, i) => (
                                                             <div key={i} className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 uppercase tracking-tight">
@@ -1442,7 +1479,7 @@ const DiagnosisCenterDashboard = () => {
                                 {(selectedScan.status === 'Analyzed' || siblingScan?.status === 'Analyzed') && (
                                     <div className="pt-8 border-t-2 border-dashed border-slate-100 no-print">
                                         <div className="max-w-md mx-auto">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block text-center">Refer Bilateral Report to Specialist</label>
+                                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Refer Bilateral Report to Specialist</span>
 
                                             {selectedScan.referredDoctor ? (
                                                 <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 flex items-center justify-between">
@@ -1457,6 +1494,8 @@ const DiagnosisCenterDashboard = () => {
                                             ) : (
                                                 <div className="flex flex-col gap-4">
                                                     <select
+                                                        id="refer-bilateral-report-to-specialist"
+                                                        name="refer_bilateral_report_to_specialist"
                                                         value={referTargetDoc}
                                                         onChange={e => setReferTargetDoc(e.target.value)}
                                                         className="w-full px-5 py-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-900 font-bold text-sm outline-none focus:border-primary/20 transition-all shadow-sm"
@@ -1475,7 +1514,7 @@ const DiagnosisCenterDashboard = () => {
                                                                 fetchAll();
                                                                 setShowReport(false);
                                                             } catch (err) {
-                                                                showToast('Failed to refer report.', 'error');
+                                                                showToast(err.response?.data?.message || 'Failed to refer report.', 'error');
                                                             } finally { setReferring(false); }
                                                         }}
                                                         disabled={referring || !referTargetDoc}

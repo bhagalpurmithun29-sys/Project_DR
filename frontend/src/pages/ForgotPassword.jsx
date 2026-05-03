@@ -161,10 +161,10 @@ export default function ForgotPassword() {
                         Enter the email address associated with your account to verify your identity.
                       </p>
                       <div className="space-y-2">
-                        <label className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">Email Address</label>
+                        <label htmlFor="forgot-email" className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">Email Address</label>
                         <div className="relative group">
                           <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-                          <input required type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
+                          <input id="forgot-email" name="email" autoComplete="email" required type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
                             className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50/50 py-4 pl-14 pr-6 text-slate-900 font-bold outline-none transition-all focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 shadow-sm" />
                         </div>
                       </div>
@@ -182,16 +182,16 @@ export default function ForgotPassword() {
 
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">Question 1</label>
+                          <label htmlFor="forgot-answer-1" className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">Question 1</label>
                           <p className="text-sm font-bold text-slate-700 bg-slate-100/50 px-4 py-3 rounded-xl border border-slate-100 flex items-center gap-2"><HelpCircle size={16} className="text-primary" /> {questions[0]}</p>
-                          <input required type="text" placeholder="Your Answer" value={a1} onChange={(e) => setA1(e.target.value)}
+                          <input id="forgot-answer-1" name="security_answer_1" autoComplete="off" required type="text" placeholder="Your Answer" value={a1} onChange={(e) => setA1(e.target.value)}
                             className="w-full mt-2 rounded-xl border-2 border-slate-100 bg-white py-3 px-4 text-slate-900 font-bold outline-none transition-all focus:border-primary/20 focus:ring-4 focus:ring-primary/5 shadow-sm" />
                         </div>
 
                         <div className="space-y-2">
-                          <label className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">Question 2</label>
+                          <label htmlFor="forgot-answer-2" className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">Question 2</label>
                           <p className="text-sm font-bold text-slate-700 bg-slate-100/50 px-4 py-3 rounded-xl border border-slate-100 flex items-center gap-2"><HelpCircle size={16} className="text-primary" /> {questions[1]}</p>
-                          <input required type="text" placeholder="Your Answer" value={a2} onChange={(e) => setA2(e.target.value)}
+                          <input id="forgot-answer-2" name="security_answer_2" autoComplete="off" required type="text" placeholder="Your Answer" value={a2} onChange={(e) => setA2(e.target.value)}
                             className="w-full mt-2 rounded-xl border-2 border-slate-100 bg-white py-3 px-4 text-slate-900 font-bold outline-none transition-all focus:border-primary/20 focus:ring-4 focus:ring-primary/5 shadow-sm" />
                         </div>
                       </div>
@@ -213,18 +213,18 @@ export default function ForgotPassword() {
 
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">New Password</label>
+                          <label htmlFor="forgot-new-password" className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">New Password</label>
                           <div className="relative group">
                             <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-                            <input required type="password" placeholder="••••••••" value={newPw} onChange={(e) => setNewPw(e.target.value)}
+                            <input id="forgot-new-password" name="new_password" autoComplete="new-password" required type="password" placeholder="••••••••" value={newPw} onChange={(e) => setNewPw(e.target.value)}
                               className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50/50 py-4 pl-14 pr-6 text-slate-900 font-bold outline-none transition-all focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 shadow-sm" />
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <label className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">Confirm Password</label>
+                          <label htmlFor="forgot-confirm-password" className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">Confirm Password</label>
                           <div className="relative group">
                             <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-                            <input required type="password" placeholder="••••••••" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
+                            <input id="forgot-confirm-password" name="confirm_password" autoComplete="new-password" required type="password" placeholder="••••••••" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
                               className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50/50 py-4 pl-14 pr-6 text-slate-900 font-bold outline-none transition-all focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 shadow-sm" />
                           </div>
                         </div>

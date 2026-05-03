@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Search, Check, X } from 'lucide-react';
 
@@ -14,6 +14,7 @@ const CustomSelect = ({
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const containerRef = useRef(null);
+    const searchInputId = useId();
 
     // Close on click outside
     useEffect(() => {
@@ -37,9 +38,9 @@ const CustomSelect = ({
     return (
         <div className="space-y-2 relative" ref={containerRef}>
             {label && (
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
+                <span className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
                     {label}
-                </label>
+                </span>
             )}
             
             <div 
@@ -79,6 +80,8 @@ const CustomSelect = ({
                                 <div className="relative group">
                                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary" />
                                     <input
+                                        id={searchInputId}
+                                        name="custom-select-search"
                                         autoFocus
                                         type="text"
                                         placeholder="Search..."
@@ -101,7 +104,7 @@ const CustomSelect = ({
 
                         <div className="max-h-64 overflow-y-auto custom-scrollbar p-2 py-3">
                             {filteredOptions.length > 0 ? (
-                                filteredOptions.map((opt, i) => (
+                                filteredOptions.map((opt) => (
                                     <div
                                         key={opt.value}
                                         onClick={(e) => {

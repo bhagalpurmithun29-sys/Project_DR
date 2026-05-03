@@ -3,7 +3,6 @@ import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import patientService from "../services/patientService";
 import appointmentService from "../services/appointmentService";
-import doctorService from "../services/doctorService";
 import api, { normalizeUrl } from "../services/api";
 import {
   Eye,
@@ -313,8 +312,11 @@ const PatientAppointments = () => {
               </div>
               <form onSubmit={handleBookAppointment} className="p-8 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Select Doctor</label>
+                  <label htmlFor="appointment-doctor" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Select Doctor</label>
                   <select 
+                    id="appointment-doctor"
+                    name="doctor_id"
+                    autoComplete="off"
                     required 
                     value={bookingForm.doctorId}
                     onChange={e => setBookingForm(f => ({ ...f, doctorId: e.target.value }))}
@@ -326,8 +328,11 @@ const PatientAppointments = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
+                    <label htmlFor="appointment-date" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
                     <input 
+                      id="appointment-date"
+                      name="appointment_date"
+                      autoComplete="off"
                       type="date" 
                       required
                       min={new Date().toISOString().split('T')[0]}
@@ -337,8 +342,11 @@ const PatientAppointments = () => {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Time</label>
+                    <label htmlFor="appointment-time" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Time</label>
                     <select 
+                      id="appointment-time"
+                      name="appointment_time"
+                      autoComplete="off"
                       required
                       value={bookingForm.time}
                       onChange={e => setBookingForm(f => ({ ...f, time: e.target.value }))}
@@ -350,8 +358,11 @@ const PatientAppointments = () => {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reason for Visit</label>
+                  <label htmlFor="appointment-reason" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reason for Visit</label>
                   <textarea 
+                    id="appointment-reason"
+                    name="appointment_reason"
+                    autoComplete="off"
                     value={bookingForm.reason}
                     onChange={e => setBookingForm(f => ({ ...f, reason: e.target.value }))}
                     className="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all resize-none"

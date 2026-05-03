@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import Toast from '../components/Toast';
 import patientService from '../services/patientService';
-import api, { normalizeUrl } from '../services/api';
+import { normalizeUrl } from '../services/api';
 import notificationService from '../services/notificationService';
 import {
     Eye,
@@ -422,7 +422,7 @@ const PatientDashboard = () => {
                                                 </>
                                             )}
                                         </div>
-                                        <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
+                                        <input id="patient-dashboard-photo-upload" name="patient_dashboard_photo_upload" type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
                                     </label>
                                 </div>
                                 <div className="space-y-3">

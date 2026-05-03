@@ -26,7 +26,6 @@ const DoctorProfile = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [isAlertsOpen, setIsAlertsOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [copyStatus, setCopyStatus] = useState(null);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const fileInputRef = useRef(null);
 
@@ -106,29 +105,6 @@ const DoctorProfile = () => {
         } finally {
             setIsUploading(false);
         }
-    };
-
-    const handleCall = () => {
-        if (profile?.phoneNumber) {
-            window.location.href = `tel:${profile.phoneNumber}`;
-        } else {
-            alert('Phone number not available');
-        }
-    };
-
-    const handleMail = () => {
-        if (profile?.email) {
-            window.location.href = `mailto:${profile.email}`;
-        } else {
-            alert('Email address not available');
-        }
-    };
-
-    const handleCopy = () => {
-        const textToCopy = `${profile?.email || user?.email} | ${profile?.phoneNumber || 'N/A'}`;
-        navigator.clipboard.writeText(textToCopy);
-        setCopyStatus('Copied!');
-        setTimeout(() => setCopyStatus(null), 2000);
     };
 
     if (loading) {
@@ -288,7 +264,7 @@ const DoctorProfile = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" accept="image/*" />
+                                    <input id="doctor-profile-photo-upload" name="doctor_profile_photo_upload" type="file" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" accept="image/*" />
                                     <div className="absolute -bottom-3 -right-3 size-10 rounded-xl bg-primary text-white flex items-center justify-center border-4 border-white shadow-sm">
                                         <Shield size={18} className="fill-current" />
                                     </div>
