@@ -71,6 +71,7 @@ const Register = () => {
 
     const googleSignupHandler = useGoogleLogin({
         onSuccess: handleGoogleSignupSuccess,
+        redirect_uri: window.location.origin,
         onError: () => setError('Google Sign-Up was unsuccessful. Please try again.'),
     });
 

@@ -86,6 +86,7 @@ export default function Login() {
 
   const googleLoginHandler = useGoogleLogin({
     onSuccess: handleGoogleLoginSuccess,
+    redirect_uri: window.location.origin,
     onError: () => {
       const msg = "Google Login was unsuccessful";
       setError(msg);
