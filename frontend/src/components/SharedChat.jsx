@@ -22,7 +22,7 @@ const SUGGESTED_QUESTIONS = [
 const MessageBubble = ({ message, isCompact, index, isHistory }) => {
   const isUser = message.role === 'user';
   const { patient } = useChat();
-  
+
   return (
     <motion.div
       initial={isHistory ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 15, scale: 0.98 }}
@@ -30,12 +30,11 @@ const MessageBubble = ({ message, isCompact, index, isHistory }) => {
       transition={{ duration: isHistory ? 0 : 0.4, ease: "easeOut" }}
       className={`flex items-start ${isCompact ? 'gap-3' : 'gap-4'} ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
     >
-      <div className={`shrink-0 ${isCompact ? 'size-8 rounded-xl' : 'size-10 rounded-xl'} flex items-center justify-center shadow-sm overflow-hidden ${
-          isUser ? 'bg-primary text-white' : 'bg-white dark:bg-slate-800 text-primary border border-slate-100 dark:border-slate-700'
+      <div className={`shrink-0 ${isCompact ? 'size-8 rounded-xl' : 'size-10 rounded-xl'} flex items-center justify-center shadow-sm overflow-hidden ${isUser ? 'bg-primary text-white' : 'bg-white dark:bg-slate-800 text-primary border border-slate-100 dark:border-slate-700'
         }`}>
         {isUser ? (
           patient?.photo ? (
-            <div 
+            <div
               className="size-full bg-cover bg-center"
               style={{ backgroundImage: `url(${normalizeUrl(patient.photo)})` }}
             />
@@ -48,8 +47,7 @@ const MessageBubble = ({ message, isCompact, index, isHistory }) => {
       </div>
 
       <div className={`${isCompact ? 'max-w-[82%]' : 'max-w-[85%] sm:max-w-[80%]'} flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-        <div className={`relative ${isCompact ? 'rounded-2xl px-4 py-3' : 'rounded-3xl px-6 py-4'} shadow-[0_2px_15px_rgba(0,0,0,0.03)] transition-all ${
-            isUser ? 'bg-primary text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-50 dark:border-slate-700 rounded-tl-none'
+        <div className={`relative ${isCompact ? 'rounded-2xl px-4 py-3' : 'rounded-3xl px-6 py-4'} shadow-[0_2px_15px_rgba(0,0,0,0.03)] transition-all ${isUser ? 'bg-primary text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-50 dark:border-slate-700 rounded-tl-none'
           }`}>
           <p className={`${isCompact ? 'text-[13px]' : 'text-[15px]'} leading-relaxed whitespace-pre-wrap break-words font-medium`}>
             {message.text}
@@ -85,10 +83,10 @@ const TypingIndicator = ({ isCompact }) => (
 // --- Main Shared Component ---
 const SharedChat = ({ variant = 'full', onClose }) => {
   const isCompact = variant === 'floating';
-  const { 
-    messages, setMessages, isLoading, setIsLoading, 
+  const {
+    messages, setMessages, isLoading, setIsLoading,
     isListening, setIsListening, inputValue, setInputValue,
-    clearChat 
+    clearChat
   } = useChat();
 
   const messagesEndRef = useRef(null);
@@ -188,13 +186,45 @@ const SharedChat = ({ variant = 'full', onClose }) => {
     } else {
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
-      recognition.onstart = () => setIsListening(true);
-      recognition.onresult = (e) => setInputValue(prev => (prev ? prev + " " + e.results[0][0].transcript : e.results[0][0].transcript));
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onstart = () => {
+        setIsListening(true);
+        recognition.hasSent = false;
+      };
+
+      recognition.onresult = (e) => {
+        if (recognition.hasSent) return;
+
+        let transcript = '';
+        for (let i = e.resultIndex; i < e.results.length; ++i) {
+          if (e.results[i].isFinal) {
+            transcript += e.results[i][0].transcript;
+          }
+        }
+
+        if (transcript) {
+          setInputValue(prev => (prev ? prev + " " + transcript : transcript));
+        }
+
+        // Reset 3s silence timer on every chunk of speech
+        if (autoSendTimeoutRef.current) clearTimeout(autoSendTimeoutRef.current);
+        autoSendTimeoutRef.current = setTimeout(() => {
+          if (!recognition.hasSent) {
+            console.log('Voice: Silence detected, stopping mic...');
+            recognition.hasSent = true;
+            recognition.stop();
+          }
+        }, 3000);
+      };
+
       recognition.onerror = () => setIsListening(false);
       recognition.onend = () => {
         setIsListening(false);
-        if (inputValRef.current.trim()) {
-          autoSendTimeoutRef.current = setTimeout(() => sendMessage(inputValRef.current), 3000);
+        const finalText = inputValRef.current.trim();
+        if (finalText && recognition.hasSent) {
+          console.log('Voice: Auto-sending message...');
+          sendMessage(finalText);
         }
       };
       recognitionRef.current = recognition;
@@ -214,13 +244,13 @@ const SharedChat = ({ variant = 'full', onClose }) => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <button 
+        <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             clearChat();
-          }} 
-          title="Clear Chat History" 
+          }}
+          title="Clear Chat History"
           className={`${isCompact ? 'size-9' : 'size-11'} rounded-xl bg-white text-slate-400 hover:text-rose-500 hover:border-rose-200 border border-slate-100 shadow-sm transition-all flex items-center justify-center group z-50`}
         >
           <RefreshCw size={isCompact ? 14 : 20} className="group-hover:rotate-180 transition-transform duration-700" />
@@ -237,23 +267,23 @@ const SharedChat = ({ variant = 'full', onClose }) => {
   return (
     <div className={`grid grid-rows-[auto_1fr_auto] bg-white relative h-full w-full min-h-0 overflow-hidden ${isCompact ? 'h-[580px] w-[400px] max-w-[calc(100vw-2rem)] rounded-[2rem] shadow-2xl border border-slate-100' : ''}`}>
       {!isCompact && <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(5,150,105,0.05),transparent)] pointer-events-none" />}
-      
+
       <div className="shrink-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-50">
         {renderHeader()}
       </div>
 
-      <div 
-        ref={messagesContainerRef} 
-        onScroll={handleScroll} 
+      <div
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
         className={`w-full min-h-0 overflow-y-auto overflow-x-hidden ${isCompact ? 'px-5 py-5 space-y-6' : 'px-6 md:px-10 py-8 space-y-8'} bg-slate-50/10`}
       >
         <div className={`max-w-4xl mx-auto w-full ${isCompact ? 'space-y-4' : 'space-y-8'}`}>
           {messages.map((msg, idx) => (
-            <MessageBubble 
-              key={msg.id || msg._id || idx} 
-              message={msg} 
-              isCompact={isCompact} 
-              isHistory={idx < messages.length - 1 || messages.length > 5} 
+            <MessageBubble
+              key={msg.id || msg._id || idx}
+              message={msg}
+              isCompact={isCompact}
+              isHistory={idx < messages.length - 1 || messages.length > 5}
             />
           ))}
 
@@ -262,27 +292,27 @@ const SharedChat = ({ variant = 'full', onClose }) => {
             const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
             return lastUserMsg && ['hi', 'hello', 'hii', 'hey', 'namaste', 'aslam', 'salam'].includes(lastUserMsg.text.toLowerCase().trim());
           })()) && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`grid ${isCompact ? 'grid-cols-1 xs:grid-cols-3 gap-2 mb-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4'}`}
-            >
-              {SUGGESTED_QUESTIONS.map((q, i) => (
-                <button key={i} onClick={() => sendMessage(q.text)} className={`group relative bg-white border border-slate-50 rounded-xl text-left hover:border-primary/20 hover:shadow-lg transition-all overflow-hidden flex flex-col justify-between h-full ${isCompact ? 'p-2.5 h-[95px]' : 'p-3 min-h-[90px]'}`}>
-                  <div className="absolute -bottom-2 -right-2 p-1 opacity-[0.03] group-hover:opacity-[0.08] transition-all duration-700">
-                    <q.icon size={isCompact ? 50 : 70} />
-                  </div>
-                  <div className="relative z-10">
-                    <div className={`${isCompact ? 'size-6 rounded-lg mb-1.5' : 'size-7 rounded-lg mb-2'} ${q.bg} ${q.color} flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm`}>
-                      <q.icon size={isCompact ? 12 : 14} strokeWidth={2.5} />
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`grid ${isCompact ? 'grid-cols-1 xs:grid-cols-3 gap-2 mb-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4'}`}
+              >
+                {SUGGESTED_QUESTIONS.map((q, i) => (
+                  <button key={i} onClick={() => sendMessage(q.text)} className={`group relative bg-white border border-slate-50 rounded-xl text-left hover:border-primary/20 hover:shadow-lg transition-all overflow-hidden flex flex-col justify-between h-full ${isCompact ? 'p-2.5 h-[95px]' : 'p-3 min-h-[90px]'}`}>
+                    <div className="absolute -bottom-2 -right-2 p-1 opacity-[0.03] group-hover:opacity-[0.08] transition-all duration-700">
+                      <q.icon size={isCompact ? 50 : 70} />
                     </div>
-                    <p className={`${isCompact ? 'text-[7px]' : 'text-[8px]'} font-black text-slate-400 uppercase tracking-widest mb-0.5 group-hover:text-primary transition-colors`}>{q.category}</p>
-                    <p className={`${isCompact ? 'text-[10px]' : 'text-[11px]'} font-bold text-slate-800 group-hover:text-slate-900 transition-colors leading-tight line-clamp-2`}>{q.text}</p>
-                  </div>
-                </button>
-              ))}
-            </motion.div>
-          )}
+                    <div className="relative z-10">
+                      <div className={`${isCompact ? 'size-6 rounded-lg mb-1.5' : 'size-7 rounded-lg mb-2'} ${q.bg} ${q.color} flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm`}>
+                        <q.icon size={isCompact ? 12 : 14} strokeWidth={2.5} />
+                      </div>
+                      <p className={`${isCompact ? 'text-[7px]' : 'text-[8px]'} font-black text-slate-400 uppercase tracking-widest mb-0.5 group-hover:text-primary transition-colors`}>{q.category}</p>
+                      <p className={`${isCompact ? 'text-[10px]' : 'text-[11px]'} font-bold text-slate-800 group-hover:text-slate-900 transition-colors leading-tight line-clamp-2`}>{q.text}</p>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
+            )}
 
           {isLoading && <TypingIndicator isCompact={isCompact} />}
           <div ref={messagesEndRef} className={isCompact ? "h-2" : "h-4"} />
@@ -296,16 +326,16 @@ const SharedChat = ({ variant = 'full', onClose }) => {
             <p className={`${isCompact ? 'text-[8px]' : 'text-[10px]'} font-bold text-amber-700 uppercase tracking-widest text-center`}>Informational only • Consult your doctor</p>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); sendMessage(inputValue); }} className={`bg-white border border-slate-50 shadow-[0_10px_50px_rgba(0,0,0,0.03)] rounded-[2.5rem] p-1.5 flex items-center gap-2 transition-all focus-within:border-primary/10`}>
-            <textarea 
+            <textarea
               ref={inputRef}
               id="chat-input"
               name="chat_message"
-              value={inputValue} 
-              onChange={(e) => { setInputValue(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px'; }} 
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(inputValue); } }} 
-              placeholder={isCompact ? "Ask about reports..." : "Ask about reports, stages, or health tips..."} 
-              className="flex-1 bg-transparent border-none px-5 py-3 text-sm font-medium placeholder-slate-400 outline-none focus:ring-0 transition-all resize-none overflow-hidden" 
-              style={{ maxHeight: isCompact ? '96px' : '150px', minHeight: isCompact ? '40px' : '56px' }} 
+              value={inputValue}
+              onChange={(e) => { setInputValue(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px'; }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(inputValue); } }}
+              placeholder={isCompact ? "Ask about reports..." : "Ask about reports, stages, or health tips..."}
+              className="flex-1 bg-transparent border-none px-5 py-3 text-sm font-medium placeholder-slate-400 outline-none focus:ring-0 transition-all resize-none overflow-hidden"
+              style={{ maxHeight: isCompact ? '96px' : '150px', minHeight: isCompact ? '40px' : '56px' }}
             />
             <div className="flex items-center gap-1.5 pr-1">
               <button type="button" onClick={toggleListening} className={`${isCompact ? 'size-9' : 'size-12'} rounded-xl flex items-center justify-center transition-all ${isListening ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
