@@ -91,6 +91,9 @@ const scanSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    reviewedAt: {
+        type: Date,
+    },
     createdAt: {
         type: Date,
         default: Date.now,

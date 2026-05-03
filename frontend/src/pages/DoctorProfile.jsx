@@ -13,6 +13,7 @@ import {
 import CentralAlertsModal from '../components/CentralAlertsModal';
 import NodeSettingsModal from '../components/NodeSettingsModal';
 import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
+import { calculateProfileCompletion } from '../utils/profileUtils';
 
 
 const DoctorProfile = () => {
@@ -22,6 +23,7 @@ const DoctorProfile = () => {
     const [scans, setScans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+    const [completionPercentage, setCompletionPercentage] = useState(0);
 
     const [isUploading, setIsUploading] = useState(false);
     const [isAlertsOpen, setIsAlertsOpen] = useState(false);
@@ -48,10 +50,14 @@ const DoctorProfile = () => {
                 ]);
 
                 if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
-                    setProfile(profileRes.value.data);
-                    setIsProfileIncomplete(false);
+                    const profileData = profileRes.value.data;
+                    setProfile(profileData);
+                    const percentage = calculateProfileCompletion(profileData);
+                    setCompletionPercentage(percentage);
+                    setIsProfileIncomplete(percentage < 100);
                 } else {
                     setProfile(null);
+                    setCompletionPercentage(0);
                     setIsProfileIncomplete(true);
                 }
 
@@ -98,6 +104,9 @@ const DoctorProfile = () => {
             const res = await doctorService.uploadProfilePhoto(formData);
             if (res.success) {
                 setProfile(res.data);
+                const percentage = calculateProfileCompletion(res.data);
+                setCompletionPercentage(percentage);
+                setIsProfileIncomplete(percentage < 100);
             }
         } catch (err) {
             console.error('Failed to upload photo', err);
@@ -137,6 +146,25 @@ const DoctorProfile = () => {
     const modPct = totalAnalyzed > 0 ? ((moderateCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
     const sevPct = totalAnalyzed > 0 ? ((severeCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
     const pdrPct = totalAnalyzed > 0 ? ((pdrCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
+
+    // Dynamic Patient Count
+    const totalPatientsCount = new Set(scans.map(s => s.patient?._id).filter(id => id)).size;
+
+    // Dynamic Response Time Calculation
+    const reviewedScans = scans.filter(s => s.status === 'Reviewed' && s.reviewedAt);
+    let avgResponseTimeStr = "N/A";
+    let responseTrend = "Pending Review";
+    if (reviewedScans.length > 0) {
+        const totalResponseTimeMs = reviewedScans.reduce((acc, s) => {
+            const start = new Date(s.referredAt || s.createdAt).getTime();
+            const end = new Date(s.reviewedAt).getTime();
+            return acc + (end - start);
+        }, 0);
+        const avgMs = totalResponseTimeMs / reviewedScans.length;
+        const avgHours = Math.round(avgMs / (1000 * 60 * 60));
+        avgResponseTimeStr = avgHours < 1 ? "<1h" : `${avgHours}h`;
+        responseTrend = avgHours < 24 ? "Excellent" : "Standard";
+    }
 
 
     const containerVariants = {
@@ -233,7 +261,7 @@ const DoctorProfile = () => {
                     </div>
                 </header>
 
-                {isProfileIncomplete && <ProfileIncompleteBanner />}
+                {isProfileIncomplete && <ProfileIncompleteBanner percentage={completionPercentage} />}
 
                 <motion.div
                     variants={containerVariants}
@@ -284,15 +312,19 @@ const DoctorProfile = () => {
                                         {user?.name || "Dr. Identity Unknown"}
                                     </h2>
                                     <p className="text-slate-500 text-sm font-medium mb-8 max-w-xl">
-                                        Board-certified Retina Specialist specializing in advanced diabetic retinopathy grading, macular degeneration intervention, and AI-assisted clinical diagnoses.
+                                        {profile?.bio || 'Professional clinical biography pending synchronization. Please update your profile to include your expertise and clinical focus.'}
                                     </p>
 
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         {[
-                                            { icon: Shield, label: "Medical License", value: profile?.licenseNumber || "Pending" },
+                                            { 
+                                                icon: Shield, 
+                                                label: "Medical License", 
+                                                value: (!profile?.licenseNumber || profile?.licenseNumber.startsWith('TEMP-')) ? "Pending" : profile.licenseNumber 
+                                            },
                                             { icon: MapPin, label: "Jurisdiction", value: profile?.country || "N/A" },
                                             { icon: Calendar, label: "Experience", value: profile?.experience || "0-5 yrs" },
-                                            { icon: Users, label: "Total Patients", value: "320+" }
+                                            { icon: Users, label: "Total Patients", value: totalPatientsCount > 0 ? `${totalPatientsCount}` : "0" }
                                         ].map((item, i) => (
                                             <div key={i} className="flex flex-col">
                                                 <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-center md:justify-start gap-1.5 mb-1">
@@ -313,8 +345,8 @@ const DoctorProfile = () => {
                             {[
                                 { icon: Activity, color: "text-primary", bg: "bg-primary/10", label: "Total DR Cases", val: totalScans.toString(), trend: "Active Cases", up: true },
                                 { icon: Zap, color: "text-teal-500", bg: "bg-teal-50", label: "Analysis Success", val: successRate, trend: "AI Accuracy", up: true },
-                                { icon: Microscope, color: "text-forest-charcoal", bg: "bg-slate-50", label: "Avg Response Time", val: "48h", trend: "-6h improvement", up: true },
-                                { icon: Award, color: "text-amber-500", bg: "bg-amber-50", label: "Degrees Sync", val: profile?.degrees?.length || "2", trend: "Synchronized", up: true }
+                                { icon: Microscope, color: "text-forest-charcoal", bg: "bg-slate-50", label: "Avg Response Time", val: avgResponseTimeStr, trend: responseTrend, up: true },
+                                { icon: Award, color: "text-amber-500", bg: "bg-amber-50", label: "Degrees Sync", val: (profile?.degrees?.length || 0).toString(), trend: "Synchronized", up: true }
                             ].map((stat, i) => (
                                 <div key={i} className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl shadow-slate-200/20 hover:-translate-y-1 transition-transform group">
                                     <div className="flex justify-between items-start mb-4">
@@ -384,7 +416,7 @@ const DoctorProfile = () => {
                                 <div className="size-8 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100">
                                     <Shield size={16} className="text-primary" />
                                 </div>
-                                Identity Meta
+                                Doctor details
                             </h4>
 
                             <div className="space-y-6">
@@ -406,20 +438,6 @@ const DoctorProfile = () => {
                                         <p className="text-sm font-bold text-slate-900">{new Date(profile?.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4">
-                                    <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 mt-1">
-                                        <MapPin size={14} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Local Node</p>
-                                        <p className="text-sm font-bold text-slate-900 uppercase tracking-wider">Facility Cluster: {profile?._id?.substring(0, 6).toUpperCase() || "69AD4D"}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
-                                <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">EZEE Active</span>
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">v2.4.1-STABLE</span>
                             </div>
                         </div>
 
@@ -429,7 +447,7 @@ const DoctorProfile = () => {
                                 <div className="size-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
                                     <Award size={24} />
                                 </div>
-                                <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight">Academic Foundations</h3>
+                                <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight">Academic Details</h3>
                             </div>
                             <div className="space-y-4">
                                 {profile?.degrees?.length > 0 ? profile.degrees.map((deg, i) => (
@@ -453,18 +471,6 @@ const DoctorProfile = () => {
 
 
 
-                        <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl shadow-slate-200/20 flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors group">
-                            <div className="size-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center flex-shrink-0">
-                                <Phone size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="text-sm font-black text-slate-900">Clinical Support</h4>
-                                <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">24/7 Priority Emergency</p>
-                            </div>
-                            <div className="size-8 rounded-xl bg-slate-50 group-hover:bg-primary group-hover:text-white text-slate-300 flex items-center justify-center transition-all">
-                                <LinkIcon size={14} />
-                            </div>
-                        </div>
 
                        
                     </motion.div>

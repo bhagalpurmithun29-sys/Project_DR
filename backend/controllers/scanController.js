@@ -326,6 +326,7 @@ exports.updateScan = async (req, res) => {
         // Auto-assign doctor if finalized by a doctor and none assigned
         if (status === 'Reviewed' && req.user.role === 'doctor') {
             scan.referredDoctor = req.user._id;
+            scan.reviewedAt = Date.now();
         }
 
         await scan.save();

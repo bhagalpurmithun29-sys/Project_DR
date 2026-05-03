@@ -92,11 +92,6 @@ exports.registerUser = async (req, res) => {
                     user: user._id,
                     name: user.name,
                     email: user.email,
-                    specialization: 'Retina Specialist',
-                    licenseNumber: `TEMP-${user._id.toString().substring(0, 8)}`,
-                    country: 'Unknown',
-                    experience: '0',
-                    phoneNumber: '0000000000'
                 });
             }
 
@@ -522,11 +517,6 @@ exports.googleLogin = async (req, res) => {
                     user: user._id,
                     name: user.name,
                     email: user.email,
-                    specialization: 'Retina Specialist',
-                    licenseNumber: `TEMP-${user._id.toString().substring(0, 8)}`,
-                    country: 'Unknown',
-                    experience: '0',
-                    phoneNumber: '0000000000'
                 });
             }
         } else {
@@ -766,11 +756,6 @@ exports.getDoctorsList = async (req, res) => {
                     user: user._id,
                     name: user.name,
                     email: user.email,
-                    specialization: 'Retina Specialist',
-                    licenseNumber: `TEMP-${user._id.toString().substring(0, 8)}`,
-                    country: 'Unknown',
-                    experience: '0',
-                    phoneNumber: '0000000000'
                 });
             }
             doctors.push(profile);

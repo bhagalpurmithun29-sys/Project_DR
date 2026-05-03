@@ -39,7 +39,8 @@ const DoctorRegistration = () => {
     specialization: '',
     email: '',
     phoneNumber: '',
-    photo: null
+    photo: null,
+    bio: ''
   });
 
   const [degrees, setDegrees] = useState([
@@ -60,6 +61,7 @@ const DoctorRegistration = () => {
             specialization: p.specialization || '',
             email: p.email || (user?.email || ''),
             phoneNumber: p.phoneNumber || '',
+            bio: p.bio || '',
             photo: null // We don't pre-populate the file input
           });
 
@@ -227,7 +229,7 @@ const DoctorRegistration = () => {
         >
           <div className="p-10 border-b border-slate-50 bg-main/50 flex items-center justify-between">
             <div>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">Doctor Dashboard</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">complete profile</h4>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Medical Identity Verification</p>
             </div>
             <Award className="text-primary/20" size={40} />
@@ -370,6 +372,23 @@ const DoctorRegistration = () => {
                     />
                   </div>
                 </div>
+
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Professional Bio</label>
+                  <div className="relative group">
+                    <div className="absolute left-5 top-5 text-slate-300 group-focus-within:text-primary transition-colors">
+                      <FileText size={18} />
+                    </div>
+                    <textarea
+                      name="bio"
+                      value={formData.bio}
+                      onChange={handleInputChange}
+                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white min-h-[120px] resize-none"
+                      placeholder="Share your expertise, research interests, and clinical focus..."
+                    />
+                  </div>
+                  <p className="text-[9px] font-bold text-slate-400 italic ml-2">This summary will be displayed on your public profile to patients and clinical nodes.</p>
+                </div>
               </div>
             </div>
 
@@ -380,7 +399,7 @@ const DoctorRegistration = () => {
                   <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                     <GraduationCap size={20} />
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Academic Foundations</h3>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Academic Details</h3>
                 </div>
                 <button type="button" onClick={addDegree} className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline hover:underline-offset-4 flex items-center gap-2 group">
                   <Plus size={16} className="group-hover:rotate-90 transition-transform" />
@@ -462,7 +481,7 @@ const DoctorRegistration = () => {
                 disabled={loading}
                 className={`order-1 sm:order-2 w-full sm:w-auto px-12 py-4 bg-primary text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-2xl shadow-primary/20 transition-all flex items-center justify-center gap-4 ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary/90 hover:-translate-y-1'}`}
               >
-                <span>{loading ? 'Encrypting Data...' : 'Finalize Profile'}</span>
+                <span>{loading ? 'Encrypting Data...' : 'complete profile'}</span>
                 <ArrowRight size={18} />
               </button>
             </div>

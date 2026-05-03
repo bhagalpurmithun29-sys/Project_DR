@@ -32,6 +32,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { normalizeUrl } from '../services/api';
 import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
+import { calculateProfileCompletion } from '../utils/profileUtils';
 import Toast from '../components/Toast';
 
 
@@ -47,6 +48,7 @@ const DoctorDashboard = () => {
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [search, setSearch] = useState('');
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+    const [completionPercentage, setCompletionPercentage] = useState(0);
     const location = useLocation();
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
@@ -72,13 +74,17 @@ const DoctorDashboard = () => {
             ]);
 
             if (profileRes.status === 'fulfilled' && profileRes.value.data) {
-                setProfile(profileRes.value.data);
-                setIsProfileIncomplete(false);
+                const profileData = profileRes.value.data;
+                setProfile(profileData);
+                const percentage = calculateProfileCompletion(profileData);
+                setCompletionPercentage(percentage);
+                setIsProfileIncomplete(percentage < 100);
             } else {
                 if (profileRes.status === 'rejected') {
                     console.error('Profile fetch failed', profileRes.reason);
                 }
                 setIsProfileIncomplete(true);
+                setCompletionPercentage(0);
                 setProfile(null);
             }
 
@@ -443,7 +449,7 @@ const DoctorDashboard = () => {
                     </div>
                 </header>
 
-                {isProfileIncomplete && <ProfileIncompleteBanner />}
+                {isProfileIncomplete && <ProfileIncompleteBanner percentage={completionPercentage} />}
 
                 <motion.div
                     variants={containerVariants}

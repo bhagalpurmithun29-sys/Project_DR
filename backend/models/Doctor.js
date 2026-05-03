@@ -12,28 +12,23 @@ const doctorSchema = new mongoose.Schema({
     },
     licenseNumber: {
         type: String,
-        required: [true, 'Please add a medical license number'],
         unique: true,
+        sparse: true, // Allow multiple nulls/empty if unique
     },
     country: {
         type: String,
-        required: [true, 'Please add a country of registration'],
     },
     experience: {
         type: String,
-        required: [true, 'Please add years of clinical experience'],
     },
     specialization: {
         type: String,
-        required: [true, 'Please add a primary specialization'],
     },
     email: {
         type: String,
-        required: [true, 'Please add a Doctor email'],
     },
     phoneNumber: {
         type: String,
-        required: [true, 'Please add a mobile number'],
     },
     degrees: [
         {
@@ -44,6 +39,9 @@ const doctorSchema = new mongoose.Schema({
     photo: {
         type: String,
         default: 'default-doctor.jpg',
+    },
+    bio: {
+        type: String,
     },
     createdAt: {
         type: Date,
