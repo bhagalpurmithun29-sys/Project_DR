@@ -84,9 +84,9 @@ export default function Login() {
     }
   };
 
-  const googleLoginHandler = useGoogleLogin({
+    const googleLoginHandler = useGoogleLogin({
     onSuccess: handleGoogleLoginSuccess,
-    redirect_uri: window.location.origin,
+    redirect_uri: `${window.location.origin}/auth/google/callback`,
     onError: () => {
       const msg = "Google Login was unsuccessful";
       setError(msg);

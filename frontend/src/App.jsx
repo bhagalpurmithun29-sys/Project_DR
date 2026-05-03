@@ -61,6 +61,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<SignUp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/google/callback" element={<div className="min-h-screen bg-main flex items-center justify-center font-bold">Verifying...</div>} />
               <Route
                 path="/profile-setup"
                 element={
