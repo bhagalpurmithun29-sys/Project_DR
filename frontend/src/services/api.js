@@ -32,11 +32,15 @@ export const getApiErrorMessage = (error, fallbackMessage = 'Something went wron
     }
 
     if (error.code === 'ERR_NETWORK') {
-        return 'Cannot reach the backend API. Start the backend server on port 5001 and try again.';
+        return import.meta.env.DEV
+            ? 'Cannot reach the backend API. Start the backend server on port 5001 and try again.'
+            : 'Cannot reach the backend API. Please check your backend service status on Render.';
     }
 
     if (error.response?.status === 404) {
-        return 'The requested API route was not found. Make sure the backend server is running on port 5001.';
+        return import.meta.env.DEV
+            ? 'The requested API route was not found. Make sure the backend server is running on port 5001.'
+            : 'The backend API route was not found. Please verify your VITE_API_BASE_URL configuration.';
     }
 
     if (error.response?.status === 503) {
