@@ -30,7 +30,7 @@ const MessageBubble = ({ message, isCompact, index, isHistory }) => {
       transition={{ duration: isHistory ? 0 : 0.4, ease: "easeOut" }}
       className={`flex items-start ${isCompact ? 'gap-3' : 'gap-4'} ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
     >
-      <div className={`shrink-0 ${isCompact ? 'size-6 rounded-md' : 'size-7 rounded-md'} flex items-center justify-center shadow-sm overflow-hidden ${
+      <div className={`shrink-0 ${isCompact ? 'size-8 rounded-xl' : 'size-10 rounded-xl'} flex items-center justify-center shadow-sm overflow-hidden ${
           isUser ? 'bg-primary text-white' : 'bg-white dark:bg-slate-800 text-primary border border-slate-100 dark:border-slate-700'
         }`}>
         {isUser ? (
@@ -48,10 +48,10 @@ const MessageBubble = ({ message, isCompact, index, isHistory }) => {
       </div>
 
       <div className={`${isCompact ? 'max-w-[82%]' : 'max-w-[85%] sm:max-w-[80%]'} flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-        <div className={`relative ${isCompact ? 'rounded-md px-2 py-0.5' : 'rounded-lg px-3 py-1'} shadow-sm transition-all ${
+        <div className={`relative ${isCompact ? 'rounded-2xl px-4 py-3' : 'rounded-3xl px-6 py-4'} shadow-[0_2px_15px_rgba(0,0,0,0.03)] transition-all ${
             isUser ? 'bg-primary text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-50 dark:border-slate-700 rounded-tl-none'
           }`}>
-          <p className={`${isCompact ? 'text-[10px]' : 'text-[12px]'} leading-tight whitespace-pre-wrap break-words font-medium`}>
+          <p className={`${isCompact ? 'text-[13px]' : 'text-[15px]'} leading-relaxed whitespace-pre-wrap break-words font-medium`}>
             {message.text}
           </p>
         </div>
@@ -214,8 +214,16 @@ const SharedChat = ({ variant = 'full', onClose }) => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <button onClick={clearChat} title="Reset Chat" className={`${isCompact ? 'size-9' : 'size-10'} rounded-xl bg-white text-slate-400 hover:text-primary hover:border-primary/30 border border-slate-100 shadow-sm transition-all flex items-center justify-center group`}>
-          <RefreshCw size={isCompact ? 14 : 18} className="group-hover:rotate-180 transition-transform duration-500" />
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            clearChat();
+          }} 
+          title="Clear Chat History" 
+          className={`${isCompact ? 'size-9' : 'size-11'} rounded-xl bg-white text-slate-400 hover:text-rose-500 hover:border-rose-200 border border-slate-100 shadow-sm transition-all flex items-center justify-center group z-50`}
+        >
+          <RefreshCw size={isCompact ? 14 : 20} className="group-hover:rotate-180 transition-transform duration-700" />
         </button>
         {isCompact && (
           <button onClick={onClose} className="size-9 rounded-xl bg-white text-slate-400 hover:text-rose-500 border border-slate-100 shadow-sm transition-all flex items-center justify-center">
@@ -237,10 +245,9 @@ const SharedChat = ({ variant = 'full', onClose }) => {
       <div 
         ref={messagesContainerRef} 
         onScroll={handleScroll} 
-        className={`w-full overflow-y-auto overflow-x-hidden ${isCompact ? 'px-2 py-2 space-y-2' : 'px-3 md:px-6 py-3 space-y-3'} bg-slate-50/10`}
-        style={{ height: isCompact ? '400px' : 'calc(100vh - 140px)', minHeight: '0' }}
+        className={`w-full min-h-0 overflow-y-auto overflow-x-hidden ${isCompact ? 'px-5 py-5 space-y-6' : 'px-6 md:px-10 py-8 space-y-8'} bg-slate-50/10`}
       >
-        <div className={`max-w-md mx-auto w-full ${isCompact ? 'space-y-1' : 'space-y-2'}`}>
+        <div className={`max-w-4xl mx-auto w-full ${isCompact ? 'space-y-4' : 'space-y-8'}`}>
           {messages.map((msg, idx) => (
             <MessageBubble 
               key={msg.id || msg._id || idx} 
@@ -250,8 +257,11 @@ const SharedChat = ({ variant = 'full', onClose }) => {
             />
           ))}
 
-          {/* Suggested Questions Grid - Only show if only 1 message exists */}
-          {messages.length === 1 && (
+          {/* Suggested Questions Grid - Show if start OR if most recent user message was a greeting */}
+          {(messages.length === 1 || (() => {
+            const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+            return lastUserMsg && ['hi', 'hello', 'hii', 'hey', 'namaste', 'aslam', 'salam'].includes(lastUserMsg.text.toLowerCase().trim());
+          })()) && (
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -279,8 +289,8 @@ const SharedChat = ({ variant = 'full', onClose }) => {
         </div>
       </div>
 
-      <div className={`shrink-0 ${isCompact ? 'px-2 py-1 border-t border-slate-50' : 'px-3 py-1.5 md:px-6 md:pb-3 pt-0'} bg-white relative z-20`}>
-        <div className="max-w-md mx-auto space-y-2">
+      <div className={`shrink-0 ${isCompact ? 'px-4 py-3 border-t border-slate-50' : 'px-6 md:px-10 pb-6 md:pb-10 pt-2'} bg-white relative z-20`}>
+        <div className="max-w-4xl mx-auto space-y-4">
           <div className={`flex items-center justify-center gap-2 ${isCompact ? 'py-1.5 px-4 bg-amber-50/50 border-amber-100/30' : 'py-2.5 px-6 bg-[#FFF9E7] border-amber-100/50'} rounded-full border mx-auto w-fit`}>
             <AlertCircle size={isCompact ? 11 : 14} className="text-amber-500" />
             <p className={`${isCompact ? 'text-[8px]' : 'text-[10px]'} font-bold text-amber-700 uppercase tracking-widest text-center`}>Informational only • Consult your doctor</p>

@@ -57,15 +57,29 @@ export const ChatProvider = ({ children }) => {
 
     const clearChat = useCallback(async () => {
         try {
+            console.log('ChatContext: Clearing chat history...');
             await api.delete('/chat/history');
+            
+            // Immediately update local state
             setMessages([{
                 role: 'model',
-                text: "Chat history cleared from database! How can I help you now?",
+                text: "Chat history cleared! I'm ready for new questions. How can I help you?",
                 time: formatTime(new Date()),
-                id: 'clear-' + Date.now(),
+                id: 'welcome-' + Date.now(),
             }]);
+            
+            // Clear unread status
+            setHasUnread(false);
+            console.log('ChatContext: Chat cleared successfully.');
         } catch (err) {
-            console.error('Failed to clear history', err);
+            console.error('ChatContext: Failed to clear history', err);
+            // Optionally show an error message in chat
+            setMessages(prev => [...prev, {
+                role: 'model',
+                text: "⚠️ Failed to clear chat history from database. Please try again.",
+                time: formatTime(new Date()),
+                id: 'error-' + Date.now(),
+            }]);
         }
     }, []);
 
