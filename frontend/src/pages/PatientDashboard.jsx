@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Toast from '../components/Toast';
 import patientService from '../services/patientService';
 import { normalizeUrl } from '../services/api';
@@ -16,26 +16,24 @@ import {
     PlusCircle,
     Calendar,
     Mail,
-    ChevronDown,
     Search,
     AlertCircle,
     CheckCircle,
 
     Brain,
-    BookOpen,
-    TrendingUp,
-    Shield,
     Bell,
-    User,
     ArrowUpRight,
-    X,
     Check,
     Phone,
     MessageCircle,
-    FileText
+    FileText,
+    ArrowRight,
+    UserPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from '../components/PatientPreferencesModal';
+import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
+import { calculatePatientProfileCompletion } from '../utils/profileUtils';
 
 const PatientDashboard = () => {
     const { user, logout } = useContext(AuthContext);
@@ -47,7 +45,13 @@ const PatientDashboard = () => {
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
     const navigate = useNavigate();
-    const location = useLocation();
+    const [completionPercentage, setCompletionPercentage] = useState(0);
+
+    useEffect(() => {
+        if (patient) {
+            setCompletionPercentage(calculatePatientProfileCompletion(patient));
+        }
+    }, [patient]);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     const showToast = (message, type = 'success') => {
@@ -64,12 +68,16 @@ const PatientDashboard = () => {
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
-    const latestResult = scans[0]?.aiResult?.toLowerCase() || '';
-    const diabeticStage = latestResult.includes('proliferative') || latestResult.includes('pdr') || latestResult.includes('high') ? 'Stage 4' :
-                         latestResult.includes('severe') ? 'Stage 3' :
-                         latestResult.includes('moderate') ? 'Stage 2' :
-                         latestResult.includes('mild') ? 'Stage 1' : 
-                         latestResult.includes('no dr') || latestResult.includes('healthy') || latestResult.includes('low') ? 'Healthy' : 'Healthy';
+    const latestScan = scans[0];
+    const reviewedScans = scans.filter(s => s.status === 'Reviewed');
+    const latestReviewedScan = reviewedScans[0];
+
+    const latestResult = latestReviewedScan?.aiResult?.toLowerCase() || '';
+    const diabeticStage = latestResult.includes('proliferative') || latestResult.includes('pdr') || latestResult.includes('high') ? 'Stage 4: PDR' :
+        latestResult.includes('severe') ? 'Stage 3: Severe NPDR' :
+            latestResult.includes('moderate') ? 'Stage 2: Moderate NPDR' :
+                latestResult.includes('mild') ? 'Stage 1: Mild NPDR' :
+                    latestResult.includes('no dr') || latestResult.includes('healthy') || latestResult.includes('low') ? 'Healthy (No DR)' : 'N/A';
 
     const getRiskLevel = (result) => {
         if (!result) return 'None';
@@ -98,13 +106,15 @@ const PatientDashboard = () => {
         return total;
     };
 
-    const completionPercentage = calculateCompletion();
-
     const fetchData = async () => {
         try {
             const patientRes = await patientService.getMyProfile();
             if (patientRes.success) {
-                setPatient(patientRes.data);
+                if (patientRes.data) {
+                    setPatient(patientRes.data);
+                    const points = calculatePatientProfileCompletion(patientRes.data);
+                    setCompletionPercentage(points);
+                }
                 const [scansRes, notificationsRes] = await Promise.all([
                     patientService.getPatientScans(patientRes.data._id),
                     notificationService.getNotifications()
@@ -122,7 +132,7 @@ const PatientDashboard = () => {
 
     useEffect(() => {
         fetchData();
-        
+
         // Polling for real-time updates from database (every 30s)
         const interval = setInterval(fetchData, 30000);
         return () => clearInterval(interval);
@@ -266,7 +276,7 @@ const PatientDashboard = () => {
                 {/* Topbar */}
                 <header className="sticky top-0 z-40 h-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-between px-10">
                     <div>
-                        <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight italic uppercase">Patient <span className="text-primary not-italic">Dashboard</span></h1>
+                        <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Patient Dashboard</h1>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="relative">
@@ -347,12 +357,12 @@ const PatientDashboard = () => {
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="p-10 space-y-10 max-w-[1400px] mx-auto w-full"
+                    className="p-6 lg:p-8 space-y-4 max-w-[1440px] mx-auto w-full"
                 >
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-4 lg:mb-6">
                         <motion.div variants={itemVariants}>
-                            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                                Welcome back, <span className="text-primary italic">{user?.name?.split(' ')[0].toLowerCase() || 'patient'}</span>
+                            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                                Welcome back, <span className="text-primary">{user?.name?.split(' ')[0] || 'Patient'}</span>
                             </h2>
                             <div className="flex items-center gap-4 mt-3">
                                 <div className="flex items-center gap-2 px-3 py-1 bg-white/50 dark:bg-white/5 rounded-full border border-slate-200 dark:border-white/5 shadow-sm">
@@ -366,48 +376,19 @@ const PatientDashboard = () => {
                                 </p>
                             </div>
                         </motion.div>
-
-                        {/* Profile Completion Card - Original Simple Style */}
-                        {completionPercentage < 100 && (
-                            <motion.div 
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xl shadow-slate-200/50 dark:shadow-black/20 flex items-center gap-6 min-w-[320px] relative overflow-hidden group hover:border-primary/30 transition-all cursor-pointer"
-                                onClick={() => setIsPreferencesOpen(true)}
-                            >
-                                <div className="relative size-16 flex-shrink-0">
-                                    <svg className="size-full -rotate-90" viewBox="0 0 36 36">
-                                        <circle cx="18" cy="18" r="16" fill="none" className="stroke-slate-100 dark:stroke-slate-800" strokeWidth="3" />
-                                        <circle 
-                                            cx="18" cy="18" r="16" fill="none" 
-                                            className="stroke-primary transition-all duration-1000 ease-out" 
-                                            strokeWidth="3" 
-                                            strokeDasharray="100" 
-                                            strokeDashoffset={100 - completionPercentage}
-                                            strokeLinecap="round" 
-                                        />
-                                    </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className="text-xs font-black text-primary">{completionPercentage}%</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex-1">
-                                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Complete your profile</h4>
-                                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-1">Unlock all features by finishing setup</p>
-                                    <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-primary uppercase tracking-widest group-hover:gap-2 transition-all">
-                                        Finish Now <ChevronRight size={12} />
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
                     </div>
 
+                    {completionPercentage < 100 && (
+                        <div className="-mx-6 lg:-mx-10 mb-6">
+                            <ProfileIncompleteBanner percentage={completionPercentage} role="patient" />
+                        </div>
+                    )}
+
                     {/* Patient Card */}
-                    <motion.section variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-slate-100 dark:border-slate-800 relative overflow-hidden group">
+                    <motion.section variants={itemVariants} className="relative bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white dark:border-slate-800 p-5 lg:p-6 shadow-2xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors" />
 
-                        <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-center relative z-10">
+                        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 items-start lg:items-center justify-between relative z-10 w-full">
                             <div className="flex gap-8 items-center flex-1">
                                 <div className="relative group/avatar cursor-pointer">
                                     <div className="size-32 rounded-[2rem] border-8 border-white dark:border-slate-800 shadow-2xl bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${normalizeUrl(patient?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.name || user?.name || "Patient")}&background=137fec&color=fff&bold=true`})` }}></div>
@@ -425,7 +406,7 @@ const PatientDashboard = () => {
                                         <input id="patient-dashboard-photo-upload" name="patient_dashboard_photo_upload" type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
                                     </label>
                                 </div>
-                                <div className="space-y-3">
+                                <div className="flex-1 space-y-4">
                                     <div className="flex items-center gap-4">
                                         <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{patient?.name || user?.name}</h3>
                                         <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 bg-primary/10 text-primary border border-primary/20">
@@ -435,45 +416,40 @@ const PatientDashboard = () => {
                                     </div>
                                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold text-slate-500 dark:text-slate-400">
                                         <span className="flex items-center gap-2"><Calendar size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.age || "N/A"} Years</span>
-                                        <span className={`flex items-center gap-2 ${
-                                            diabeticStage === 'Stage 4' || diabeticStage === 'Stage 3' ? 'text-rose-500' : 
-                                            diabeticStage === 'Stage 2' ? 'text-amber-500' : 'text-slate-500'
-                                        }`} title="Latest Retinopathy Stage">
-                                            <Activity size={16} className={`${
-                                                diabeticStage === 'Stage 4' || diabeticStage === 'Stage 3' ? 'text-rose-400' : 
-                                                diabeticStage === 'Stage 2' ? 'text-amber-400' : 'text-slate-300'
-                                            }`} /> 
-                                            {scans[0]?.aiResult || patient?.diabetesType || "No Scan Data"}
+                                        <span className={`flex items-center gap-2 ${diabeticStage.includes('Stage 4') || diabeticStage.includes('Stage 3') ? 'text-rose-500' :
+                                                diabeticStage.includes('Stage 2') ? 'text-amber-500' : 'text-slate-500'
+                                            }`}>
+                                            <Eye size={16} className="text-slate-300" />
+                                            Diabetic Stage: {scans.length > 0 ? (diabeticStage.includes(':') ? diabeticStage.split(': ')[0] : diabeticStage) : 'N/A'}
                                         </span>
                                         <span className="flex items-center gap-2"><Mail size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.email || user?.email}</span>
                                         <span className="flex items-center gap-2"><Phone size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.phoneNumber || "N/A"}</span>
                                     </div>
                                     <div className="pt-4 flex gap-3">
-                                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border border-slate-100 dark:border-slate-800 rounded-lg px-3 py-1 bg-slate-50 dark:bg-slate-800/50">Patient ID: {patient?.patientId || 'N/A'}</span>
-
+                                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border border-slate-100 dark:border-slate-800 rounded-lg px-3 py-1 bg-slate-50 dark:bg-slate-800/50">PATIENT ID: {patient?.patientId || 'N/A'}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full lg:w-auto min-w-[300px] lg:min-w-[450px]">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 w-full lg:w-auto lg:min-w-[550px]">
                                 {[
                                     { label: "Total Scans", val: scans.length, trend: "History", color: "text-slate-900 dark:text-white" },
-                                    { 
-                                        label: "Current Risk", 
-                                        val: getRiskLevel(scans[0]?.aiResult), 
-                                        trend: scans[0]?.aiResult || "Severity", 
-                                        color: getRiskLevel(scans[0]?.aiResult) === 'High' ? "text-rose-500" : getRiskLevel(scans[0]?.aiResult) === 'Moderate' ? "text-amber-500" : "text-emerald-500" 
+                                    {
+                                        label: "Current Risk",
+                                        val: reviewedScans.length > 0 ? getRiskLevel(latestReviewedScan?.aiResult) : "N/A",
+                                        trend: reviewedScans.length > 0 ? (latestReviewedScan?.aiResult || "Severity") : "Awaiting Review",
+                                        color: reviewedScans.length > 0 ? (getRiskLevel(latestReviewedScan?.aiResult) === 'High' ? "text-rose-500" : getRiskLevel(latestReviewedScan?.aiResult) === 'Moderate' ? "text-amber-500" : "text-emerald-500") : "text-slate-400"
                                     },
                                     {
-                                        label: "Diabetic Stage",
-                                        val: diabeticStage,
-                                        trend: scans[0]?.aiResult || "Status",
-                                        color: diabeticStage === 'Stage 4' || diabeticStage === 'Stage 3' ? 'text-rose-500' :
-                                               diabeticStage === 'Stage 2' ? 'text-amber-500' :
-                                               diabeticStage === 'Healthy' ? 'text-emerald-500' : 'text-primary'
+                                        label: "Retinopathy Stage",
+                                        val: reviewedScans.length > 0 ? (diabeticStage.includes(':') ? diabeticStage.split(': ')[0] : diabeticStage) : 'N/A',
+                                        trend: reviewedScans.length > 0 ? (latestReviewedScan?.aiResult || "Clinical Status") : "Awaiting Review",
+                                        color: reviewedScans.length > 0 ? (diabeticStage.includes('Stage 4') || diabeticStage.includes('Stage 3') ? 'text-rose-500' :
+                                            diabeticStage.includes('Stage 2') ? 'text-amber-500' :
+                                                diabeticStage.includes('Healthy') ? 'text-emerald-500' : 'text-primary') : 'text-slate-400'
                                     }
                                 ].map((stat) => (
-                                    <div key={stat.label} className="bg-slate-50 dark:bg-slate-950/50 rounded-3xl p-5 border border-white dark:border-slate-800 text-center shadow-inner hover:bg-white dark:hover:bg-slate-800 hover:border-slate-100 dark:hover:border-slate-700 transition-all group/stat">
+                                    <div key={stat.label} className="bg-slate-50 dark:bg-slate-950/50 rounded-3xl p-4 border border-white dark:border-slate-800 text-center shadow-inner hover:bg-white dark:hover:bg-slate-800 hover:border-slate-100 dark:hover:border-slate-700 transition-all group/stat">
                                         <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-extrabold mb-2">{stat.label}</p>
                                         <p className={`text-2xl font-black ${stat.color}`}>{stat.val}</p>
                                         <div className="mt-2 h-0.5 w-6 bg-slate-200 dark:bg-slate-700 mx-auto group-hover/stat:w-12 transition-all group-hover/stat:bg-primary" />
@@ -483,14 +459,14 @@ const PatientDashboard = () => {
                         </div>
                     </motion.section>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                         {/* Main Interaction Area */}
-                        <div className="lg:col-span-2 space-y-10">
+                        <div className="lg:col-span-2 space-y-4">
 
                             {/* Scan History Table */}
-                            <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl shadow-slate-200/30 dark:shadow-black/20 border border-slate-100 dark:border-slate-800 overflow-hidden">
+                            <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/20 overflow-hidden">
                                 <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                    <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Access Recent Reports</h4>
+                                    <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Recent Reports</h4>
                                     <div className="relative group">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors" size={14} />
                                         <input
@@ -521,26 +497,20 @@ const PatientDashboard = () => {
                                                         </p>
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors ${
-                                                            getRiskLevel(scan.aiResult) === 'High' ? 'bg-rose-50 text-rose-600 border-rose-100' : 
-                                                            getRiskLevel(scan.aiResult) === 'Moderate' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
-                                                            'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                        }`}>
-                                                            {scan.aiResult || 'Pending'}
-                                                        </span>
+                                                        {scan.aiResult || (scan.status === 'Analyzed' || scan.status === 'Reviewed' ? 'None' : 'Processing')}
                                                     </td>
-                                                    <td className="px-8 py-6 text-sm font-bold text-slate-600 dark:text-slate-400">{scan.lesionCount} lesions</td>
+                                                    <td className="px-8 py-6 text-sm font-bold text-slate-600 dark:text-slate-400">
+                                                        {scan.lesionCount !== undefined ? `${scan.lesionCount} lesions` : 'N/A'}
+                                                    </td>
                                                     <td className="px-8 py-6">
-                                                        <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${
-                                                            scan.status === 'Reviewed' || scan.status === 'Analyzed' 
-                                                                ? 'text-primary' 
-                                                                : 'text-amber-600'
-                                                        }`}>
-                                                            <span className={`size-1.5 rounded-full ${
-                                                                scan.status === 'Reviewed' || scan.status === 'Analyzed' 
-                                                                    ? 'bg-primary' 
-                                                                    : 'bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.5)] animate-pulse'
-                                                            }`}></span>
+                                                        <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${scan.status === 'Reviewed' || scan.status === 'Analyzed'
+                                                            ? 'text-primary'
+                                                            : 'text-amber-600'
+                                                            }`}>
+                                                            <span className={`size-1.5 rounded-full ${scan.status === 'Reviewed' || scan.status === 'Analyzed'
+                                                                ? 'bg-primary'
+                                                                : 'bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.5)] animate-pulse'
+                                                                }`}></span>
                                                             {scan.status}
                                                         </div>
                                                     </td>
@@ -555,10 +525,15 @@ const PatientDashboard = () => {
                                                 </tr>
                                             )) : (
                                                 <tr>
-                                                    <td colSpan="5" className="px-8 py-16 text-center">
-                                                        <div className="flex flex-col items-center gap-3">
-                                                            <FileText className="text-slate-200" size={48} />
-                                                            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">No scanned history available</p>
+                                                    <td colSpan="5" className="px-8 py-32 text-center">
+                                                        <div className="flex flex-col items-center gap-6">
+                                                            <div className="size-24 rounded-[2rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-200 shadow-inner">
+                                                                <FileText size={48} />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-[0.3em]">No scanned history</p>
+                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Awaiting clinical data from database</p>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -579,14 +554,26 @@ const PatientDashboard = () => {
                                     </div>
                                     Latest Fundus Scan
                                 </h4>
-                                <div className="aspect-[4/5] w-full rounded-[2rem] bg-slate-100 dark:bg-slate-800 relative overflow-hidden group/img cursor-zoom-in">
-                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url('${normalizeUrl(scans[0]?.imageUrl) || "/stage1.jpeg"}')` }}></div>
-
-                                    {/* Scan Info Overlay */}
-                                    <div className="absolute bottom-5 left-5 right-5 flex justify-between items-center text-[9px] font-black text-white/80 uppercase tracking-widest backdrop-blur-md bg-black/40 px-4 py-3 rounded-xl border border-white/10 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                                        <span>Left Eye (OS)</span>
-                                        <span>#DR-8829</span>
-                                    </div>
+                                <div className="aspect-square lg:aspect-[4/5] w-full rounded-[2.5rem] bg-slate-100 dark:bg-slate-800 relative overflow-hidden group/img cursor-zoom-in">
+                                    {latestReviewedScan ? (
+                                        <>
+                                            <div className="absolute inset-0 bg-cover bg-center transition-all duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url(${normalizeUrl(latestReviewedScan.imageUrl)})` }}></div>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                                            {/* Scan Info Overlay */}
+                                            <div className="absolute bottom-5 left-5 right-5 flex justify-between items-center text-[9px] font-black text-white/80 uppercase tracking-widest backdrop-blur-md bg-black/40 px-4 py-3 rounded-xl border border-white/10 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                                <span>{latestReviewedScan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}</span>
+                                                <span>#{latestReviewedScan.scanId || latestReviewedScan._id.substring(0, 8).toUpperCase()}</span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-400 gap-2 text-center p-6">
+                                            <div className="relative">
+                                                <Eye size={24} className="opacity-20" />
+                                                <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-ping"></div>
+                                            </div>
+                                            <p className="text-[9px] font-black uppercase tracking-widest">Awaiting First Scan</p>
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
 
@@ -600,7 +587,7 @@ const PatientDashboard = () => {
                                     AI Core Insights
                                 </h4>
                                 <ul className="space-y-6">
-                                    {scans[0]?.insights && scans[0].insights.length > 0 ? scans[0].insights.map((insight, idx) => (
+                                    {latestReviewedScan?.insights && latestReviewedScan.insights.length > 0 ? latestReviewedScan.insights.map((insight, idx) => (
                                         <li key={idx} className="flex gap-4">
                                             <div className="size-8 rounded-xl bg-slate-50 flex-shrink-0 flex items-center justify-center text-primary border border-slate-100">
                                                 {insight.type === 'high_risk' ? <AlertCircle size={14} /> : <CheckCircle size={14} />}
@@ -612,7 +599,7 @@ const PatientDashboard = () => {
                                             }} />
                                         </li>
                                     )) : (
-                                        <div className="text-center py-6 text-slate-300 italic text-xs font-bold uppercase tracking-widest">Awaiting engine sync...</div>
+                                        <div className="text-center py-6 text-slate-300 italic text-xs font-black uppercase tracking-widest">Awaiting Scan Analysis...</div>
                                     )}
                                 </ul>
                                 <button className="w-full mt-10 py-4 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all">

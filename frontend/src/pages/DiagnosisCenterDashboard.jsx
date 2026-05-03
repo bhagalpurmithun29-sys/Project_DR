@@ -14,6 +14,8 @@ import api, { normalizeUrl } from '../services/api';
 import Toast from '../components/Toast';
 import { SECURITY_QUESTIONS } from '../constants/securityQuestions';
 import DeleteAccountSection from '../components/DeleteAccountSection';
+import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
+import { calculateCenterProfileCompletion } from '../utils/profileUtils';
 
 /* ─── tiny helpers ─────────────────────────────────── */
 const Avatar = ({ name, photo, size = 10 }) => {
@@ -80,13 +82,13 @@ const Input = ({ label, icon: Icon, id, name, ...props }) => {
     });
 
     return (
-    <div className="space-y-1.5">
-        {label && <label htmlFor={inputId} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
-        <div className="relative group">
-            {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />}
-            <input id={inputId} name={inputName} autoComplete={autoComplete} className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all`} {...props} />
+        <div className="space-y-1.5">
+            {label && <label htmlFor={inputId} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
+            <div className="relative group">
+                {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />}
+                <input id={inputId} name={inputName} autoComplete={autoComplete} className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all`} {...props} />
+            </div>
         </div>
-    </div>
     );
 };
 
@@ -96,15 +98,15 @@ const Select = ({ label, children, id, name, ...props }) => {
     const selectName = name || slugifyFieldName(label || selectId) || selectId;
 
     return (
-    <div className="space-y-1.5">
-        {label && <label htmlFor={selectId} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
-        <div className="relative">
-            <select id={selectId} name={selectName} className="w-full pl-4 pr-8 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all appearance-none" {...props}>
-                {children}
-            </select>
-            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <div className="space-y-1.5">
+            {label && <label htmlFor={selectId} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
+            <div className="relative">
+                <select id={selectId} name={selectName} className="w-full pl-4 pr-8 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all appearance-none" {...props}>
+                    {children}
+                </select>
+                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
         </div>
-    </div>
     );
 };
 
@@ -160,7 +162,14 @@ const EmptyState = ({ icon: Icon, title, subtitle }) => (
 ═══════════════════════════════════════════════════ */
 const DashboardSection = ({ center, patients, scans, onCenterUpdate, showToast }) => {
     const [isUploading, setIsUploading] = useState(false);
+    const [completionPercentage, setCompletionPercentage] = useState(0);
     const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        if (center) {
+            setCompletionPercentage(calculateCenterProfileCompletion(center));
+        }
+    }, [center]);
 
     const handlePhotoUpload = async (e) => {
         const file = e.target.files[0];
@@ -209,6 +218,12 @@ const DashboardSection = ({ center, patients, scans, onCenterUpdate, showToast }
                     </div>
                 </div>
             </motion.div>
+
+            {completionPercentage < 100 && (
+                <div className="-mx-6">
+                    <ProfileIncompleteBanner percentage={completionPercentage} role="center" />
+                </div>
+            )}
 
             {/* Profile Card */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}

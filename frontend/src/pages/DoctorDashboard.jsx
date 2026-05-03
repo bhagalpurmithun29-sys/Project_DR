@@ -28,7 +28,7 @@ import { AuthContext } from '../context/AuthContext';
 import doctorService from '../services/doctorService';
 import scanService from '../services/scanService';
 import patientService from '../services/patientService';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { normalizeUrl } from '../services/api';
 import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
@@ -49,7 +49,12 @@ const DoctorDashboard = () => {
     const [search, setSearch] = useState('');
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
     const [completionPercentage, setCompletionPercentage] = useState(0);
-    const location = useLocation();
+
+    useEffect(() => {
+        if (profile) {
+            setCompletionPercentage(calculateProfileCompletion(profile));
+        }
+    }, [profile]);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     const showToast = (message, type = 'success') => {
@@ -449,7 +454,11 @@ const DoctorDashboard = () => {
                     </div>
                 </header>
 
-                {isProfileIncomplete && <ProfileIncompleteBanner percentage={completionPercentage} />}
+                {isProfileIncomplete && (
+                    <div className="-mx-6 lg:-mx-10 mb-2">
+                        <ProfileIncompleteBanner percentage={completionPercentage} role="doctor" />
+                    </div>
+                )}
 
                 <motion.div
                     variants={containerVariants}
@@ -460,14 +469,14 @@ const DoctorDashboard = () => {
                     {/* Welcome banner */}
                     <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between items-end gap-6">
                         <div className="space-y-2">
-                            <h3 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none italic">Active <span className="text-primary not-italic">Clinical Environment</span></h3>
+                            <h3 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Active <span className="text-primary">Clinical Environment</span></h3>
                             <p className="text-lg font-medium text-slate-500 dark:text-slate-400 max-w-xl">
                                 Diagnostic metrics sync completed.
                                 {highRiskCount > 0
                                     ? ` You have ${highRiskCount} high-risk case${highRiskCount !== 1 ? 's' : ''} requiring urgent review.`
                                     : scans.filter(s => s.status === 'Pending').length > 0
-                                    ? ` You have ${scans.filter(s => s.status === 'Pending').length} scan${scans.filter(s => s.status === 'Pending').length !== 1 ? 's' : ''} pending analysis.`
-                                    : ' All cases are up to date.'}
+                                        ? ` You have ${scans.filter(s => s.status === 'Pending').length} scan${scans.filter(s => s.status === 'Pending').length !== 1 ? 's' : ''} pending analysis.`
+                                        : ' All cases are up to date.'}
                             </p>
                         </div>
 
@@ -547,15 +556,14 @@ const DoctorDashboard = () => {
                                                 </td>
                                                 <td className="px-8 py-8 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{row.time}</td>
                                                 <td className="px-8 py-8">
-                                                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                                                        row.risk === 'High Risk' 
-                                                            ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20' 
-                                                            : row.risk === 'Moderate' 
-                                                            ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20' 
-                                                            : row.risk 
-                                                            ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20'
-                                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700'
-                                                    }`}>
+                                                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.risk === 'High Risk'
+                                                            ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20'
+                                                            : row.risk === 'Moderate'
+                                                                ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20'
+                                                                : row.risk
+                                                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20'
+                                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700'
+                                                        }`}>
                                                         {row.risk || 'Pending'}
                                                     </span>
                                                 </td>
@@ -677,8 +685,8 @@ const DoctorDashboard = () => {
                                     Access Full Triage
                                 </button>
                             </motion.div>
-                        
-                            
+
+
 
                         </div>
                     </div>

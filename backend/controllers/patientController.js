@@ -11,7 +11,7 @@ exports.getPatients = async (req, res) => {
     try {
         let query = {};
         // Note: diagnosis_center used to be isolated, now reverted to global for inter-center report checks
-        
+
         const patients = await Patient.find(query).populate('user', 'name email').sort('-createdAt');
         res.json({
             success: true,
@@ -224,7 +224,7 @@ exports.uploadPatientPhoto = async (req, res) => {
 // @access  Private/Patient
 exports.updateMyProfile = async (req, res) => {
     try {
-        const { name, age, phone, email } = req.body;
+        const { name, age, phone, email, diabetesType } = req.body;
         const patient = await Patient.findOne({ user: req.user.id });
         if (!patient) {
             return res.status(404).json({ success: false, message: 'Patient profile not found' });
@@ -233,6 +233,7 @@ exports.updateMyProfile = async (req, res) => {
         if (age) patient.age = Number(age);
         if (phone) patient.phoneNumber = phone;
         if (email) patient.email = email;
+        if (diabetesType) patient.diabetesType = diabetesType;
         await patient.save();
         res.json({ success: true, data: patient });
     } catch (error) {

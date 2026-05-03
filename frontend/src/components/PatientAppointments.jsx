@@ -37,7 +37,7 @@ const PatientAppointments = () => {
   const [loading, setLoading] = useState(true);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
-  
+
   // Booking Form State
   const [bookingForm, setBookingForm] = useState({
     doctorId: '',
@@ -192,7 +192,7 @@ const PatientAppointments = () => {
           <div className="flex flex-col">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight italic">Medical <span className="text-primary not-italic">Appointments</span></h1>
           </div>
-          <button 
+          <button
             onClick={() => setIsBookModalOpen(true)}
             className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-black text-xs shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
           >
@@ -247,12 +247,11 @@ const PatientAppointments = () => {
                           </div>
                         </td>
                         <td className="px-10 py-8">
-                          <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                            app.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                            app.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                            app.status === 'rejected' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                            'bg-slate-50 text-slate-600 border-slate-100'
-                          }`}>
+                          <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${app.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                              app.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                app.status === 'rejected' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                  'bg-slate-50 text-slate-600 border-slate-100'
+                            }`}>
                             {app.status}
                           </span>
                         </td>
@@ -313,11 +312,11 @@ const PatientAppointments = () => {
               <form onSubmit={handleBookAppointment} className="p-8 space-y-4">
                 <div className="space-y-1.5">
                   <label htmlFor="appointment-doctor" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Select Doctor</label>
-                  <select 
+                  <select
                     id="appointment-doctor"
                     name="doctor_id"
                     autoComplete="off"
-                    required 
+                    required
                     value={bookingForm.doctorId}
                     onChange={e => setBookingForm(f => ({ ...f, doctorId: e.target.value }))}
                     className="w-full pl-4 pr-8 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all appearance-none"
@@ -329,11 +328,11 @@ const PatientAppointments = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label htmlFor="appointment-date" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
-                    <input 
+                    <input
                       id="appointment-date"
                       name="appointment_date"
                       autoComplete="off"
-                      type="date" 
+                      type="date"
                       required
                       min={new Date().toISOString().split('T')[0]}
                       value={bookingForm.date}
@@ -343,7 +342,7 @@ const PatientAppointments = () => {
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="appointment-time" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Time</label>
-                    <select 
+                    <select
                       id="appointment-time"
                       name="appointment_time"
                       autoComplete="off"
@@ -359,7 +358,7 @@ const PatientAppointments = () => {
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="appointment-reason" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reason for Visit</label>
-                  <textarea 
+                  <textarea
                     id="appointment-reason"
                     name="appointment_reason"
                     autoComplete="off"
@@ -370,7 +369,7 @@ const PatientAppointments = () => {
                     rows={3}
                   />
                 </div>
-                
+
                 {error && (
                   <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-600 text-xs font-bold">
                     <AlertCircle size={14} /> {error}

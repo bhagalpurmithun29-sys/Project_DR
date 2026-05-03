@@ -26,7 +26,6 @@ const doctorRoutes = require('./routes/doctorRoutes');
 const scanRoutes = require('./routes/scanRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const diagnosisCenterRoutes = require('./routes/diagnosisCenterRoutes');
-const medicalResourceRoutes = require('./routes/medicalResourceRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const app = express();
@@ -87,7 +86,6 @@ app.use('/api/doctors', doctorRoutes);
 app.use('/api/scans', scanRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/diagnosis-centers', diagnosisCenterRoutes);
-app.use('/api/medical-resources', medicalResourceRoutes);
 app.use('/api/appointments', appointmentRoutes);
 // Note: /api/chat is mounted above (before the DB guard)
 

@@ -66,3 +66,56 @@ export const calculateProfileCompletion = (profile) => {
 
     return Math.min(points, totalPoints);
 };
+
+/**
+ * Calculates the completion percentage of a patient's profile.
+ * @param {Object} profile - The patient's profile object.
+ * @returns {number} - Completion percentage (0-100).
+ */
+export const calculatePatientProfileCompletion = (profile) => {
+    if (!profile) return 0;
+    let points = 0;
+    const totalPoints = 100;
+
+    // phoneNumber (25%)
+    if (profile.phoneNumber && profile.phoneNumber !== '0000000000' && profile.phoneNumber.length > 5) points += 25;
+    
+    // email (25%)
+    if (profile.email && !profile.email.includes('example.com')) points += 25;
+    
+    // age/dob (25%)
+    if (profile.age && profile.age !== 'N/A') points += 25;
+    
+    // photo (25%)
+    if (profile.photo && !profile.photo.includes('default-patient.jpg')) points += 25;
+
+    return Math.min(points, totalPoints);
+};
+
+/**
+ * Calculates the completion percentage of a diagnosis center's profile.
+ * @param {Object} profile - The center's profile object.
+ * @returns {number} - Completion percentage (0-100).
+ */
+export const calculateCenterProfileCompletion = (profile) => {
+    if (!profile) return 0;
+    let points = 0;
+    const totalPoints = 100;
+
+    // address (20%)
+    if (profile.address && profile.address !== 'N/A' && profile.address.length > 5) points += 20;
+    
+    // contactPerson (20%)
+    if (profile.contactPerson && profile.contactPerson !== 'N/A') points += 20;
+    
+    // phoneNumber (20%)
+    if (profile.phoneNumber && profile.phoneNumber !== '0000000000' && profile.phoneNumber.length > 5) points += 20;
+    
+    // email (20%)
+    if (profile.email && !profile.email.includes('example.com')) points += 20;
+    
+    // license/registration (20%)
+    if (profile.registrationNumber && profile.registrationNumber !== 'N/A') points += 20;
+
+    return Math.min(points, totalPoints);
+};

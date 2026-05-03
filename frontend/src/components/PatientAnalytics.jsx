@@ -97,10 +97,10 @@ export default function PatientAnalytics() {
           setOsScan(osScans.find(s => s.status === 'Analyzed') || osScans[0] || null);
 
           // Determine colors based on risk
-          const isHighRisk   = latest.aiResult?.includes('High');
-          const isModRisk    = latest.aiResult?.includes('Moderate');
-          const confidence   = latest.aiConfidence || 0;
-          const confPct      = (confidence * 100).toFixed(2);
+          const isHighRisk = latest.aiResult?.includes('High');
+          const isModRisk = latest.aiResult?.includes('Moderate');
+          const confidence = latest.aiConfidence || 0;
+          const confPct = (confidence * 100).toFixed(2);
 
           const predictionName = latest.prediction
             || latest.findings?.[0]?.replace('AI Analysis detects: ', '')

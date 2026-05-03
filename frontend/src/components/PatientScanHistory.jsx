@@ -296,7 +296,7 @@ const DetailedScanHistory = () => {
                               </div>
                             </div>
                           </td>
-                           <td className="px-10 py-8">
+                          <td className="px-10 py-8">
                             <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
                               (row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
                                 'bg-emerald-50 text-emerald-600 border-emerald-100'
