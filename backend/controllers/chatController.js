@@ -1,4 +1,5 @@
 const axios = require('axios');
+const Chat = require('../models/Chat');
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -32,13 +33,16 @@ Always be:
 - Clear that you are an AI and users should consult their doctor for personal medical decisions
 - Concise (2-5 sentences per response unless more detail is clearly needed)`;
 
+const formatTime = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
 /**
  * @desc    Send a message to the Diabetes AI chatbot (powered by Groq)
  * @route   POST /api/chat/message
- * @access  Public
+ * @access  Private (Patient)
  */
 const sendMessage = async (req, res) => {
     const { message, history = [] } = req.body;
+    const userId = req.user?._id;
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
         return res.status(400).json({ success: false, message: 'Message is required.' });
@@ -55,13 +59,11 @@ const sendMessage = async (req, res) => {
 
     try {
         // Build OpenAI-compatible message array
-        // Keep the last 8 conversation turns for context
         const recentHistory = history.slice(-8);
 
         const messages = [
             { role: 'system', content: SYSTEM_INSTRUCTION },
             ...recentHistory.map(turn => ({
-                // Groq uses 'assistant' instead of 'model'
                 role: turn.role === 'model' ? 'assistant' : 'user',
                 content: turn.text,
             })),
@@ -69,7 +71,7 @@ const sendMessage = async (req, res) => {
         ];
 
         const payload = {
-            model: 'llama-3.3-70b-versatile',  // Fast, powerful Groq model
+            model: 'llama-3.3-70b-versatile',
             messages,
             temperature: 0.4,
             max_tokens: 512,
@@ -88,31 +90,61 @@ const sendMessage = async (req, res) => {
         const aiText = response.data?.choices?.[0]?.message?.content;
 
         if (!aiText) {
-            return res.status(502).json({ success: false, message: 'AI returned an empty response. Please try again.' });
+            return res.status(502).json({ success: false, message: 'AI returned an empty response.' });
         }
 
-        return res.status(200).json({ success: true, reply: aiText.trim() });
+        const reply = aiText.trim();
+
+        // PERSIST TO MONGODB if user is logged in
+        if (userId) {
+            const userMsg = { role: 'user', text: message.trim(), time: formatTime(new Date()), id: Date.now().toString() };
+            const modelMsg = { role: 'model', text: reply, time: formatTime(new Date()), id: (Date.now() + 1).toString() };
+
+            await Chat.findOneAndUpdate(
+                { userId },
+                { 
+                    $push: { messages: { $each: [userMsg, modelMsg] } },
+                    $set: { updatedAt: new Date() }
+                },
+                { upsert: true, new: true }
+            );
+        }
+
+        return res.status(200).json({ success: true, reply });
 
     } catch (error) {
-        // Log the full Groq error for debugging
-        const groqError = error.response?.data;
-        console.error('❌ Groq Chatbot Error:', groqError || error.message);
-
-        if (error.code === 'ECONNABORTED') {
-            return res.status(504).json({ success: false, message: 'AI request timed out. Please try again.' });
-        }
-
-        if (error.response?.status === 429) {
-            return res.status(429).json({ success: false, message: 'AI is temporarily busy (rate limit). Please wait a moment and try again.' });
-        }
-
-        if (error.response?.status === 401) {
-            return res.status(500).json({ success: false, message: 'Invalid Groq API key. Please check your .env file.' });
-        }
-
-        const errMsg = groqError?.error?.message || error.message || 'Failed to get AI response.';
+        console.error('❌ Chatbot Error:', error.response?.data || error.message);
+        const errMsg = error.response?.data?.error?.message || 'Failed to get AI response.';
         return res.status(500).json({ success: false, message: errMsg });
     }
 };
 
-module.exports = { sendMessage };
+/**
+ * @desc    Get chat history for the logged-in user
+ * @route   GET /api/chat/history
+ * @access  Private
+ */
+const getChatHistory = async (req, res) => {
+    try {
+        const chat = await Chat.findOne({ userId: req.user._id });
+        res.status(200).json({ success: true, messages: chat ? chat.messages : [] });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch chat history' });
+    }
+};
+
+/**
+ * @desc    Clear chat history for the logged-in user
+ * @route   DELETE /api/chat/history
+ * @access  Private
+ */
+const clearChatHistory = async (req, res) => {
+    try {
+        await Chat.findOneAndDelete({ userId: req.user._id });
+        res.status(200).json({ success: true, message: 'Chat history cleared' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to clear history' });
+    }
+};
+
+module.exports = { sendMessage, getChatHistory, clearChatHistory };
