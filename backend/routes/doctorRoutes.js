@@ -8,17 +8,8 @@ const {
 } = require('../controllers/doctorController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, `profile-${Date.now()}${path.extname(file.originalname)}`);
-    }
-});
+const { profileUpload } = require('../middleware/cloudinaryConfig');
 
-const upload = multer({ storage: storage });
 
 const router = express.Router();
 
@@ -26,6 +17,6 @@ router.use(protect);
 
 router.post('/profile', createOrUpdateProfile);
 router.get('/profile', getProfile);
-router.post('/profile/photo', upload.single('photo'), uploadProfilePhoto);
+router.post('/profile/photo', profileUpload.single('photo'), uploadProfilePhoto);
 
 module.exports = router;

@@ -208,7 +208,7 @@ exports.uploadPatientPhoto = async (req, res) => {
         }
 
         // Save the file path to database
-        patient.photo = `/${req.file.path}`;
+        patient.photo = req.file.path;
         await patient.save();
 
         res.status(200).json({
@@ -252,7 +252,7 @@ exports.updateMyPhoto = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'Please upload a file' });
         }
-        patient.photo = `/${req.file.path}`;
+        patient.photo = req.file.path;
         await patient.save();
         res.json({ success: true, data: patient.photo });
     } catch (error) {
