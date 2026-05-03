@@ -323,7 +323,7 @@ const DoctorProfile = () => {
                                                 value: (!profile?.licenseNumber || profile?.licenseNumber.startsWith('TEMP-')) ? "Pending" : profile.licenseNumber 
                                             },
                                             { icon: MapPin, label: "Jurisdiction", value: profile?.country || "N/A" },
-                                            { icon: Calendar, label: "Experience", value: profile?.experience || "0-5 yrs" },
+                                            { icon: Calendar, label: "Experience", value: profile?.experience || "Pending" },
                                             { icon: Users, label: "Total Patients", value: totalPatientsCount > 0 ? `${totalPatientsCount}` : "0" }
                                         ].map((item, i) => (
                                             <div key={i} className="flex flex-col">

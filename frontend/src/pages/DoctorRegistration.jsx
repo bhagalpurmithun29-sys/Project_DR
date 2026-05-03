@@ -152,10 +152,6 @@ const DoctorRegistration = () => {
           </div>
           <span className="text-xl font-black tracking-tight italic uppercase">RetinaAI</span>
         </Link>
-        <div className="flex items-center gap-4">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Step 2 of 3</span>
-          <button className="text-xs font-black uppercase tracking-widest text-primary hover:underline hover:underline-offset-4">Security Center</button>
-        </div>
       </header>
 
       <AnimatePresence>
@@ -176,37 +172,6 @@ const DoctorRegistration = () => {
       </AnimatePresence>
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-16">
-        {/* Stepper */}
-        <div className="flex items-center justify-between mb-16 max-w-4xl mx-auto">
-          {[
-            { step: 1, label: "Basic Setup", status: "complete" },
-            { step: 2, label: "Credentials", status: "active" },
-            { step: 3, label: "Final Review", status: "pending" }
-          ].map((s, i) => (
-            <React.Fragment key={s.step}>
-              <div className="flex flex-col items-center gap-3 group">
-                <div className={`size-12 rounded-2xl flex items-center justify-center transition-all duration-500 font-black shadow-lg ${s.status === 'complete' ? 'bg-primary text-white shadow-primary/20' :
-                  s.status === 'active' ? 'bg-primary text-white shadow-primary/20 scale-110 ring-4 ring-primary/10' :
-                    'bg-white text-slate-300 border-2 border-slate-100'
-                  }`}>
-                  {s.status === 'complete' ? <Check size={22} strokeWidth={3} /> : s.step}
-                </div>
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${s.status === 'active' ? 'text-primary' : 'text-slate-400'}`}>
-                  {s.label}
-                </span>
-              </div>
-              {i < 2 && (
-                <div className="h-0.5 flex-1 mx-4 bg-slate-100 relative overflow-hidden">
-                  <motion.div
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: i === 0 ? 1 : 0 }}
-                    className="absolute inset-0 bg-primary origin-left transition-transform duration-1000"
-                  />
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
 
         {/* Page Header */}
         <motion.div
@@ -214,10 +179,7 @@ const DoctorRegistration = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-12 text-center"
         >
-          <h1 className="text-5xl font-black text-slate-900 tracking-tighter mb-4 italic">Verify <span className="text-primary not-italic">Clinical Credentials</span></h1>
-          <p className="text-lg font-medium text-slate-500 max-w-2xl mx-auto">
-            Authentication of medical licenses ensures the highest standard of patient care and data security within our network.
-          </p>
+          <h1 className="text-5xl font-black text-slate-900 tracking-tighter mb-4 italic">Update <span className="text-primary not-italic">Doctor Profile</span></h1>
         </motion.div>
 
         {/* Form Card */}
@@ -488,11 +450,6 @@ const DoctorRegistration = () => {
           </form>
         </motion.div>
 
-        {/* Secure Badge */}
-        <div className="mt-12 flex items-center justify-center gap-3 px-6 py-3 bg-white rounded-full w-fit mx-auto shadow-sm border border-slate-100">
-          <ShieldCheck className="text-primary" size={20} strokeWidth={2.5} />
-          <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">E2EE Medical Data Vault Active</span>
-        </div>
       </main>
 
       <footer className="mt-auto py-12 text-center text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">
