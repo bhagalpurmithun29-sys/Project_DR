@@ -224,7 +224,7 @@ exports.uploadPatientPhoto = async (req, res) => {
 // @access  Private/Patient
 exports.updateMyProfile = async (req, res) => {
     try {
-        const { name, age, phone, email, diabetesType } = req.body;
+        const { name, age, phone, email, gender } = req.body;
         const patient = await Patient.findOne({ user: req.user.id });
         if (!patient) {
             return res.status(404).json({ success: false, message: 'Patient profile not found' });
@@ -233,7 +233,7 @@ exports.updateMyProfile = async (req, res) => {
         if (age) patient.age = Number(age);
         if (phone) patient.phoneNumber = phone;
         if (email) patient.email = email;
-        if (diabetesType) patient.diabetesType = diabetesType;
+        if (gender) patient.gender = gender;
         await patient.save();
         res.json({ success: true, data: patient });
     } catch (error) {

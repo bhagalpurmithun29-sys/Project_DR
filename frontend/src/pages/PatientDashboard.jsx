@@ -16,6 +16,7 @@ import {
     PlusCircle,
     Calendar,
     Mail,
+    User2,
     Search,
     AlertCircle,
     CheckCircle,
@@ -102,7 +103,40 @@ const PatientDashboard = () => {
                     notificationService.getNotifications()
                 ]);
 
-                if (scansRes.success) setScans(scansRes.data);
+                if (scansRes.success) {
+                    const allScans = scansRes.data;
+                    const grouped = [];
+                    const seen = new Set();
+                    allScans.forEach(s => {
+                        if (seen.has(s._id)) return;
+                        const sibling = allScans.find(sib =>
+                            sib._id !== s._id &&
+                            sib.eyeSide !== s.eyeSide &&
+                            Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 10 * 60 * 1000
+                        );
+                        if (sibling) {
+                            grouped.push({
+                                _id: s._id,
+                                groupType: 'Bilateral',
+                                mainScan: s.eyeSide === 'OD' ? s : sibling,
+                                siblingScan: s.eyeSide === 'OD' ? sibling : s,
+                                date: s.date || s.createdAt
+                            });
+                            seen.add(s._id);
+                            seen.add(sibling._id);
+                        } else {
+                            grouped.push({
+                                _id: s._id,
+                                groupType: 'Single',
+                                mainScan: s,
+                                siblingScan: null,
+                                date: s.date || s.createdAt
+                            });
+                            seen.add(s._id);
+                        }
+                    });
+                    setScans(grouped);
+                }
                 if (notificationsRes.success) setNotifications(notificationsRes.data);
             }
         } catch (error) {
@@ -410,6 +444,8 @@ const PatientDashboard = () => {
                                         </span>
                                         <span className="flex items-center gap-2"><Mail size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.email || user?.email}</span>
                                         <span className="flex items-center gap-2"><Phone size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.phoneNumber || "N/A"}</span>
+                                        <span className="flex items-center gap-2"><User2 size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.gender || "Not Set"}</span>
+                                        <span className="flex items-center gap-2"><Activity size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.diabetesType || "N/A"}</span>
                                     </div>
                                     <div className="pt-4 flex gap-3">
                                         <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border border-slate-100 dark:border-slate-800 rounded-lg px-3 py-1 bg-slate-50 dark:bg-slate-800/50">PATIENT ID: {patient?.patientId || 'N/A'}</span>
@@ -474,30 +510,42 @@ const PatientDashboard = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                            {scans.length > 0 ? scans.map((scan) => (
-                                                <tr key={scan._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all group">
+                                            {scans.length > 0 ? scans.map((group) => {
+                                                const { mainScan: scan, siblingScan, groupType } = group;
+                                                return (
+                                                <tr key={group._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all group">
                                                     <td className="px-8 py-6">
-                                                        <p className="text-sm font-black text-slate-900 dark:text-white">{new Date(scan.date || scan.createdAt || Date.now()).toLocaleDateString()}</p>
+                                                        <p className="text-sm font-black text-slate-900 dark:text-white">{new Date(group.date).toLocaleDateString()}</p>
                                                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                                                            {scan.eyeSide === 'OD' ? 'Right Eye (OD)' : scan.eyeSide === 'OS' ? 'Left Eye (OS)' : scan.eyeSide || 'N/A'}
+                                                            {groupType === 'Bilateral' ? 'Bilateral Scan (OD/OS)' : (scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)')}
                                                         </p>
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        {scan.aiResult || (scan.status === 'Analyzed' || scan.status === 'Reviewed' ? 'None' : 'Processing')}
+                                                        <div className="flex flex-col gap-1">
+                                                            <span>{scan.aiResult || (scan.status === 'Analyzed' || scan.status === 'Reviewed' ? 'None' : 'Processing')}</span>
+                                                            {siblingScan && (
+                                                                <span className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1">
+                                                                    OS: {siblingScan.aiResult || (siblingScan.status === 'Analyzed' || siblingScan.status === 'Reviewed' ? 'None' : 'Processing')}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                     <td className="px-8 py-6 text-sm font-bold text-slate-600 dark:text-slate-400">
                                                         {scan.lesionCount !== undefined ? `${scan.lesionCount} lesions` : 'N/A'}
+                                                        {siblingScan && <span className="block text-[10px] opacity-60">OS: {siblingScan.lesionCount ?? 0} lesions</span>}
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${scan.status === 'Reviewed' || scan.status === 'Analyzed'
-                                                            ? 'text-primary'
-                                                            : 'text-amber-600'
-                                                            }`}>
-                                                            <span className={`size-1.5 rounded-full ${scan.status === 'Reviewed' || scan.status === 'Analyzed'
-                                                                ? 'bg-primary'
-                                                                : 'bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.5)] animate-pulse'
-                                                                }`}></span>
-                                                            {scan.status}
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${scan.status === 'Reviewed' || scan.status === 'Analyzed' ? 'text-primary' : 'text-amber-600'}`}>
+                                                                <span className={`size-1.5 rounded-full ${scan.status === 'Reviewed' || scan.status === 'Analyzed' ? 'bg-primary' : 'bg-amber-600 animate-pulse'}`}></span>
+                                                                {scan.status === 'Analyzed' ? 'Generated' : scan.status}
+                                                            </div>
+                                                            {siblingScan && (
+                                                                <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${siblingScan.status === 'Reviewed' || siblingScan.status === 'Analyzed' ? 'text-primary' : 'text-amber-600'}`}>
+                                                                    <span className={`size-1.5 rounded-full ${siblingScan.status === 'Reviewed' || siblingScan.status === 'Analyzed' ? 'bg-primary' : 'bg-amber-600 animate-pulse'}`}></span>
+                                                                    {siblingScan.status === 'Analyzed' ? 'Generated' : siblingScan.status}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-6 text-right">
@@ -509,7 +557,8 @@ const PatientDashboard = () => {
                                                         </button>
                                                     </td>
                                                 </tr>
-                                            )) : (
+                                                );
+                                            }) : (
                                                 <tr>
                                                     <td colSpan="5" className="px-8 py-32 text-center">
                                                         <div className="flex flex-col items-center gap-6">

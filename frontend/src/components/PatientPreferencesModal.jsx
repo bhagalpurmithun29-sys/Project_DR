@@ -20,7 +20,7 @@ const TABS = [
 const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpdate }) => {
     // ── Profile tab state ──────────────────────────────────────
     const [profileForm, setProfileForm] = useState({
-        name: '', age: '', phone: '', email: ''
+        name: '', age: '', phone: '', email: '', gender: ''
     });
     const [profileSaving, setProfileSaving] = useState(false);
     const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
@@ -61,6 +61,7 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                 email: patient?.email || user?.email || '',
                 age: patient?.age || '',
                 phone: patient?.phoneNumber || '',
+                gender: patient?.gender || '',
             });
             // Set current photo preview
             if (patient?.photo) setPhotoPreview(patient.photo);
@@ -332,6 +333,23 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                     </div>
                                                 </div>
                                             ))}
+
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Gender</label>
+                                                <div className="relative">
+                                                    <select
+                                                        value={profileForm.gender}
+                                                        onChange={e => setProfileForm(prev => ({ ...prev, gender: e.target.value }))}
+                                                        className="w-full pl-4 pr-10 py-3.5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-slate-900 dark:text-white font-bold text-sm outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 transition-all appearance-none"
+                                                    >
+                                                        <option value="">Select Gender</option>
+                                                        <option value="Male">Male</option>
+                                                        <option value="Female">Female</option>
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                                </div>
+                                            </div>
 
                                             {profileMsg.text && (
                                                 <div className={`flex items-center gap-2 text-xs font-bold px-1 ${profileMsg.type === 'error' ? 'text-rose-500' : 'text-primary'}`}>

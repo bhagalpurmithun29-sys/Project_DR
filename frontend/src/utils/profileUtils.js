@@ -79,23 +79,20 @@ export const calculatePatientProfileCompletion = (profile) => {
     // name (10%)
     if (profile.name && profile.name.length > 2) points += 10;
 
-    // email (15%)
-    if (profile.email && !profile.email.includes('example.com')) points += 15;
+    // email (20%)
+    if (profile.email && !profile.email.includes('example.com')) points += 20;
 
-    // phoneNumber (15%)
-    if (profile.phoneNumber && profile.phoneNumber !== '0000000000' && profile.phoneNumber.length > 5) points += 15;
+    // phoneNumber (20%)
+    if (profile.phoneNumber && profile.phoneNumber !== '0000000000' && profile.phoneNumber.length > 5) points += 20;
     
-    // age (15%)
-    if (profile.age && profile.age !== 0 && profile.age !== 'N/A') points += 15;
+    // age (20%)
+    if (profile.age && profile.age !== 0 && profile.age !== 'N/A') points += 20;
 
-    // gender (15%)
-    if (profile.gender && profile.gender !== 'Other' && profile.gender !== '') points += 15;
-
-    // diabetesType (15%)
-    if (profile.diabetesType && profile.diabetesType !== 'N/A') points += 15;
+    // gender (20%)
+    if (profile.gender && profile.gender !== '') points += 20;
     
-    // photo (15%)
-    if (profile.photo && !profile.photo.includes('default-patient.jpg') && profile.photo.length > 5) points += 15;
+    // photo (10%)
+    if (profile.photo && !profile.photo.includes('default-patient.jpg') && profile.photo.length > 5) points += 10;
 
     return Math.min(points, 100);
 };

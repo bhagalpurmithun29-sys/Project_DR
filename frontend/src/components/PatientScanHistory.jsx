@@ -85,7 +85,38 @@ const DetailedScanHistory = () => {
           setPatient(patientRes.data);
           const scansRes = await patientService.getPatientScans(patientRes.data._id);
           if (scansRes.success) {
-            setScans(scansRes.data);
+            const allScans = scansRes.data;
+            const grouped = [];
+            const seen = new Set();
+            allScans.forEach(s => {
+              if (seen.has(s._id)) return;
+              const sibling = allScans.find(sib =>
+                sib._id !== s._id &&
+                sib.eyeSide !== s.eyeSide &&
+                Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 10 * 60 * 1000
+              );
+              if (sibling) {
+                grouped.push({
+                  _id: s._id,
+                  groupType: 'Bilateral',
+                  mainScan: s.eyeSide === 'OD' ? s : sibling,
+                  siblingScan: s.eyeSide === 'OD' ? sibling : s,
+                  date: s.date || s.createdAt
+                });
+                seen.add(s._id);
+                seen.add(sibling._id);
+              } else {
+                grouped.push({
+                  _id: s._id,
+                  groupType: 'Single',
+                  mainScan: s,
+                  siblingScan: null,
+                  date: s.date || s.createdAt
+                });
+                seen.add(s._id);
+              }
+            });
+            setScans(grouped);
           }
         }
       } catch (error) {
@@ -103,9 +134,10 @@ const DetailedScanHistory = () => {
   };
 
   const filtered = scans.filter(
-    (s) =>
-      (s.aiResult && s.aiResult.toLowerCase().includes(search.toLowerCase())) ||
-      (s._id && s._id.toLowerCase().includes(search.toLowerCase()))
+    (g) =>
+      (g.mainScan?.aiResult && g.mainScan.aiResult.toLowerCase().includes(search.toLowerCase())) ||
+      (g.siblingScan?.aiResult && g.siblingScan.aiResult.toLowerCase().includes(search.toLowerCase())) ||
+      (g._id && g._id.toLowerCase().includes(search.toLowerCase()))
   );
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -276,63 +308,94 @@ const DetailedScanHistory = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     <AnimatePresence>
-                      {currentScans.length > 0 ? currentScans.map((row) => (
+                      {currentScans.length > 0 ? currentScans.map((group) => {
+                        const { mainScan: row, siblingScan, groupType } = group;
+                        return (
                         <motion.tr
-                          key={row._id}
+                          key={group._id}
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
                           className="hover:bg-primary/[0.02] transition-all cursor-pointer group/row"
                         >
                           <td className="px-10 py-8">
-                            <span className="text-[11px] font-black text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10 select-none">ID-{row._id.substring(0, 8).toUpperCase()}</span>
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[11px] font-black text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10 select-none">ID-{row._id.substring(0, 8).toUpperCase()}</span>
+                                <span className={`w-fit px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
+                                    {groupType}
+                                </span>
+                            </div>
                           </td>
                           <td className="px-10 py-8">
                             <div className="flex items-center gap-3">
                               <Calendar size={14} className="text-slate-300" />
                               <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-900 tracking-tight leading-none italic">{new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                <span className="text-sm font-black text-slate-900 tracking-tight leading-none italic">{new Date(group.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Certified Record</span>
                               </div>
                             </div>
                           </td>
                           <td className="px-10 py-8">
-                            <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                              (row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                'bg-emerald-50 text-emerald-600 border-emerald-100'
-                              }`}>
-                              {row.aiResult || 'Pending Analysis'}
-                            </span>
-                          </td>
-                          <td className="px-10 py-8">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-xl font-black text-slate-900 tracking-tighter leading-none">{row.lesionCount}</span>
-                              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Lesions</span>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    {siblingScan && <span className="text-[8px] font-black text-slate-400 w-4">OD:</span>}
+                                    <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${row.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                    (row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                        'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                    }`}>
+                                    {row.aiResult || 'Pending Analysis'}
+                                    </span>
+                                </div>
+                                {siblingScan && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[8px] font-black text-slate-400 w-4">OS:</span>
+                                        <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${siblingScan.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                        (siblingScan.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                            'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                        }`}>
+                                        {siblingScan.aiResult || 'Pending Analysis'}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                           </td>
                           <td className="px-10 py-8">
-                            <ConfidenceBar value={95} />
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className="text-xl font-black text-slate-900 tracking-tighter leading-none">{row.lesionCount ?? 0}</span>
+                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{siblingScan ? 'OD' : 'Lesions'}</span>
+                                </div>
+                                {siblingScan && (
+                                    <div className="flex items-baseline gap-1.5 opacity-60">
+                                        <span className="text-sm font-black text-slate-500 tracking-tighter leading-none">{siblingScan.lesionCount ?? 0}</span>
+                                        <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">OS</span>
+                                    </div>
+                                )}
+                            </div>
+                          </td>
+                          <td className="px-10 py-8">
+                            <div className="flex flex-col gap-3">
+                                <ConfidenceBar value={95} />
+                                {siblingScan && <ConfidenceBar value={92} />}
+                            </div>
                           </td>
                           <td className="px-10 py-8 text-right">
                             {['Analyzed', 'Reviewed'].includes(row.status) && (row.sentToPatient || !row.referredDoctor) ? (
                               <Link
                                 to={`/report/${row._id}`}
-                                className="h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group/btn"
+                                className="h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 group/btn"
                               >
                                 View Report <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" strokeWidth={3} />
                               </Link>
-                            ) : row.status === 'Reviewed' && !row.sentToPatient ? (
-                              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 flex items-center gap-2">
-                                <Clock size={12} /> Awaiting Release
-                              </span>
                             ) : (
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                                {row.status}
-                              </span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                                    {row.status === 'Analyzed' ? 'Generated' : row.status}
+                                </span>
                             )}
                           </td>
                         </motion.tr>
-                      )) : (
+                      );
+                    }) : (
                         <tr>
                           <td colSpan="6" className="px-10 py-24 text-center">
                             <div className="flex flex-col items-center gap-4">
@@ -350,10 +413,12 @@ const DetailedScanHistory = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 p-10 flex-1 overflow-y-auto">
-                {currentScans.map((row) => (
+                {currentScans.map((group) => {
+                  const { mainScan: row, siblingScan, groupType } = group;
+                  return (
                   <motion.div
-                    key={row._id}
-                    layoutId={row._id}
+                    key={group._id}
+                    layoutId={group._id}
                     className="group bg-main rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 cursor-pointer relative overflow-hidden"
                   >
                     <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-150 transition-transform">
@@ -362,24 +427,43 @@ const DetailedScanHistory = () => {
 
                     <div className="relative z-10 space-y-6">
                       <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm">ID-{row._id.substring(0, 6)}</span>
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm w-fit">ID-{row._id.substring(0, 6)}</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter w-fit ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
+                                {groupType}
+                            </span>
+                        </div>
                         <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2 italic">
-                          <Clock size={12} /> {new Date(row.date).toLocaleDateString()}
+                          <Clock size={12} /> {new Date(group.date).toLocaleDateString()}
                         </span>
                       </div>
 
-                      <div className="aspect-[16/10] bg-white rounded-2xl border border-slate-100 shadow-inner overflow-hidden group-hover:scale-[1.02] transition-transform duration-500">
+                      <div className="aspect-[16/10] bg-white rounded-2xl border border-slate-100 shadow-inner overflow-hidden group-hover:scale-[1.02] transition-transform duration-500 relative">
                         <img src={normalizeUrl(row.imageUrl) || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=500&auto=format"} alt="Fundus Scan" className="w-full h-full object-cover p-2 rounded-[2rem]" />
+                        {siblingScan && (
+                            <div className="absolute bottom-4 right-4 size-12 rounded-xl border-4 border-white shadow-lg overflow-hidden">
+                                <img src={normalizeUrl(siblingScan.imageUrl)} className="w-full h-full object-cover" />
+                            </div>
+                        )}
                       </div>
 
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-black text-slate-900 tracking-tight italic">{row.aiResult}</h4>
                           <div className="flex items-baseline gap-1">
-                            <span className="text-lg font-black text-primary">{row.lesionCount}</span>
+                            <span className="text-lg font-black text-primary">{row.lesionCount ?? 0}</span>
                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Lesions</span>
                           </div>
                         </div>
+                        {siblingScan && (
+                            <div className="flex items-center justify-between opacity-60">
+                                <h4 className="text-[11px] font-bold text-slate-500 italic">{siblingScan.aiResult}</h4>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-sm font-black text-slate-400">{siblingScan.lesionCount ?? 0}</span>
+                                    <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest">Lesions</span>
+                                </div>
+                            </div>
+                        )}
                         <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden">
                           <div className="h-full bg-primary w-[95%]" />
                         </div>
@@ -392,18 +476,15 @@ const DetailedScanHistory = () => {
                         >
                           Access Analysis <ArrowUpRight size={14} strokeWidth={2.5} />
                         </Link>
-                      ) : row.status === 'Reviewed' && !row.sentToPatient ? (
-                        <div className="w-full h-12 bg-amber-50 text-amber-600 border border-amber-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                          Physician Review Pending <Clock size={14} />
-                        </div>
                       ) : (
                         <div className="w-full h-12 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                          {row.status} <Clock size={14} />
+                          {row.status === 'Analyzed' ? 'Generated' : row.status} <Clock size={14} />
                         </div>
                       )}
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

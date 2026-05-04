@@ -491,7 +491,7 @@ const DoctorScanHistory = () => {
                                                                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                                                                 : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
                                                                 }`}
-                                                        >{s === 'All' ? 'Any' : s}</button>
+                                                        >{s === 'All' ? 'Any' : (s === 'Analyzed' ? 'Generated' : s)}</button>
                                                     ))}
                                                 </div>
                                             </div>

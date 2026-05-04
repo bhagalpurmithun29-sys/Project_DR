@@ -7,6 +7,7 @@ const User = require('../models/User');
 const Notification = require('../models/Notification');
 const { generateClinicalSummary } = require('../services/aiService');
 const generatePatientId = require('../utils/generatePatientId');
+const generateScanId = require('../utils/generateScanId');
 
 const backfillPatientIdIfMissing = async (patient) => {
     if (!patient || patient.patientId) return patient;
@@ -44,7 +45,7 @@ exports.createScan = async (req, res) => {
             technician: technician || req.user.name,
             imageUrl,
             eyeSide: eyeSide || 'OD',
-            scanId: `SCAN-${Math.floor(1000 + Math.random() * 9000)}`,
+            scanId: await generateScanId(),
             clinicalNotes: notes || 'Screening initiated.',
             status: 'Pending',
             referredDoctor: req.user.role === 'doctor' ? req.user._id : undefined
@@ -230,6 +231,15 @@ exports.analyzeScan = async (req, res) => {
 // @access  Private/Doctor
 exports.getScans = async (req, res) => {
     try {
+        // SELF-HEALING: Ensure all scans have sequential IDs starting from SCAN01
+        const allScans = await Scan.find().sort({ createdAt: 1 });
+        for (let i = 0; i < allScans.length; i++) {
+            const expectedId = `SCAN${(i + 1).toString().padStart(2, '0')}`;
+            if (allScans[i].scanId !== expectedId) {
+                await Scan.findByIdAndUpdate(allScans[i]._id, { scanId: expectedId });
+            }
+        }
+
         let query = {};
 
         // Role-based filtering
