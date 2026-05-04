@@ -89,10 +89,23 @@ app.use('/api/diagnosis-centers', diagnosisCenterRoutes);
 app.use('/api/appointments', appointmentRoutes);
 // Note: /api/chat is mounted above (before the DB guard)
 
-// 404 handler — must be AFTER all routes
-app.use((req, res) => {
-    res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+// 404 handler for API routes
+app.use('/api', (req, res) => {
+    res.status(404).json({ success: false, message: `API Route ${req.originalUrl} not found` });
 });
+
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../frontend/dist')));
+    app.get('*', (req, res) => {
+        res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
+    });
+} else {
+    // Generic 404 for development
+    app.use((req, res) => {
+        res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+    });
+}
 
 // Global error handler — catches unhandled errors from controllers
 // eslint-disable-next-line no-unused-vars
