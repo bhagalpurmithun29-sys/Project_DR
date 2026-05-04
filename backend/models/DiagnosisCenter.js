@@ -13,6 +13,7 @@ const diagnosisCenterSchema = new mongoose.Schema({
     centerId: {
         type: String,
         unique: true,
+        sparse: true,
     },
     licenseNumber: {
         type: String,

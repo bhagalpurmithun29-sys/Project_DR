@@ -9,6 +9,7 @@ const Notification = require('../models/Notification');
 const { OAuth2Client } = require('google-auth-library');
 const axios = require('axios');
 const generatePatientId = require('../utils/generatePatientId');
+const generateCenterId = require('../utils/generateCenterId');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -78,7 +79,7 @@ exports.registerUser = async (req, res) => {
             }
             // If diagnosis center → create DiagnosisCenter profile
             if (user.role === 'diagnosis_center') {
-                const centerId = `DC-${Math.floor(100000 + Math.random() * 900000)}`;
+                const centerId = await generateCenterId(user.name);
                 await DiagnosisCenter.create({
                     user: user._id,
                     centerName: user.name,
@@ -504,7 +505,7 @@ exports.googleLogin = async (req, res) => {
                 });
             }
             if (user.role === 'diagnosis_center') {
-                const centerId = `DC-${Math.floor(100000 + Math.random() * 900000)}`;
+                const centerId = await generateCenterId(user.name);
                 await DiagnosisCenter.create({
                     user: user._id,
                     centerName: user.name,

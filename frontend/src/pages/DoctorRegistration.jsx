@@ -115,10 +115,10 @@ const DoctorRegistration = () => {
     setLoading(true);
     setError(null);
 
-    // Strict Email Validation (alphabet, number, @)
-    const emailRegex = /^(?=.*[0-9])(?=.*[a-zA-Z])[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // Standard Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Invalid Doctor email. It must contain letters, numbers, and a valid @ domain.');
+      setError('Invalid email format. Please enter a valid doctor email (e.g. doctor@example.com).');
       setLoading(false);
       return;
     }

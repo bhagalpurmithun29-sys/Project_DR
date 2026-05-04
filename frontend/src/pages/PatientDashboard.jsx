@@ -87,24 +87,6 @@ const PatientDashboard = () => {
         return 'Low';
     };
 
-    const calculateCompletion = () => {
-        if (!patient) return 0;
-        const fields = [
-            { key: 'name', val: patient.name, weight: 20 },
-            { key: 'age', val: patient.age, weight: 20, check: (v) => v > 0 },
-            { key: 'gender', val: patient.gender, weight: 15 },
-            { key: 'phoneNumber', val: patient.phoneNumber, weight: 15 },
-            { key: 'photo', val: patient.photo, weight: 15 },
-            { key: 'diabetesType', val: patient.diabetesType, weight: 15 }
-        ];
-
-        let total = 0;
-        fields.forEach(f => {
-            const isValid = f.check ? f.check(f.val) : (f.val && f.val !== '' && f.val !== 'N/A');
-            if (isValid) total += f.weight;
-        });
-        return total;
-    };
 
     const fetchData = async () => {
         try {
@@ -380,7 +362,11 @@ const PatientDashboard = () => {
 
                     {completionPercentage < 100 && (
                         <div className="-mx-6 lg:-mx-10 mb-6">
-                            <ProfileIncompleteBanner percentage={completionPercentage} role="patient" />
+                            <ProfileIncompleteBanner 
+                                percentage={completionPercentage} 
+                                role="patient" 
+                                onClick={() => setIsPreferencesOpen(true)}
+                            />
                         </div>
                     )}
 

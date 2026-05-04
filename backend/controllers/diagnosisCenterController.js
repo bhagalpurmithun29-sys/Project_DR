@@ -1,5 +1,7 @@
 const DiagnosisCenter = require('../models/DiagnosisCenter');
 
+const generateCenterId = require('../utils/generateCenterId');
+
 // @desc    Get logged-in center's own profile
 // @route   GET /api/diagnosis-centers/me
 // @access  Private/DiagnosisCenter
@@ -10,9 +12,9 @@ exports.getMyCenter = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Diagnosis center profile not found' });
         }
 
-        // Self-Healing: Generate ID if missing
-        if (!center.centerId) {
-            center.centerId = `DC-${Math.floor(100000 + Math.random() * 900000)}`;
+        // Self-Healing: Generate ID if missing or in old random format
+        if (!center.centerId || center.centerId.startsWith('DC-')) {
+            center.centerId = await generateCenterId(center.centerName);
             await center.save();
         }
 
@@ -73,7 +75,7 @@ exports.uploadCenterPhoto = async (req, res) => {
             { user: req.user.id },
             { $set: { photo: photoUrl } },
             { new: true }
-        ).populate('user', ['name', 'email']);
+        ).populate('user', 'name email');
 
         if (!center) {
             return res.status(404).json({ success: false, message: 'Diagnosis center profile not found' });
@@ -81,6 +83,7 @@ exports.uploadCenterPhoto = async (req, res) => {
 
         res.status(200).json({ success: true, data: center });
     } catch (error) {
+        console.error('Photo Upload Error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

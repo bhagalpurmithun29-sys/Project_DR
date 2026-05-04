@@ -75,21 +75,29 @@ export const calculateProfileCompletion = (profile) => {
 export const calculatePatientProfileCompletion = (profile) => {
     if (!profile) return 0;
     let points = 0;
-    const totalPoints = 100;
 
-    // phoneNumber (25%)
-    if (profile.phoneNumber && profile.phoneNumber !== '0000000000' && profile.phoneNumber.length > 5) points += 25;
-    
-    // email (25%)
-    if (profile.email && !profile.email.includes('example.com')) points += 25;
-    
-    // age/dob (25%)
-    if (profile.age && profile.age !== 'N/A') points += 25;
-    
-    // photo (25%)
-    if (profile.photo && !profile.photo.includes('default-patient.jpg')) points += 25;
+    // name (10%)
+    if (profile.name && profile.name.length > 2) points += 10;
 
-    return Math.min(points, totalPoints);
+    // email (15%)
+    if (profile.email && !profile.email.includes('example.com')) points += 15;
+
+    // phoneNumber (15%)
+    if (profile.phoneNumber && profile.phoneNumber !== '0000000000' && profile.phoneNumber.length > 5) points += 15;
+    
+    // age (15%)
+    if (profile.age && profile.age !== 0 && profile.age !== 'N/A') points += 15;
+
+    // gender (15%)
+    if (profile.gender && profile.gender !== 'Other' && profile.gender !== '') points += 15;
+
+    // diabetesType (15%)
+    if (profile.diabetesType && profile.diabetesType !== 'N/A') points += 15;
+    
+    // photo (15%)
+    if (profile.photo && !profile.photo.includes('default-patient.jpg') && profile.photo.length > 5) points += 15;
+
+    return Math.min(points, 100);
 };
 
 /**
@@ -100,22 +108,30 @@ export const calculatePatientProfileCompletion = (profile) => {
 export const calculateCenterProfileCompletion = (profile) => {
     if (!profile) return 0;
     let points = 0;
-    const totalPoints = 100;
 
-    // address (20%)
-    if (profile.address && profile.address !== 'N/A' && profile.address.length > 5) points += 20;
-    
-    // contactPerson (20%)
-    if (profile.contactPerson && profile.contactPerson !== 'N/A') points += 20;
-    
-    // phoneNumber (20%)
-    if (profile.phoneNumber && profile.phoneNumber !== '0000000000' && profile.phoneNumber.length > 5) points += 20;
-    
-    // email (20%)
-    if (profile.email && !profile.email.includes('example.com')) points += 20;
-    
-    // license/registration (20%)
-    if (profile.registrationNumber && profile.registrationNumber !== 'N/A') points += 20;
+    // centerName (10%)
+    if (profile.centerName && profile.centerName.length > 2) points += 10;
 
-    return Math.min(points, totalPoints);
+    // centerType (10%)
+    if (profile.centerType && profile.centerType !== 'Other') points += 10;
+
+    // email (15%)
+    if (profile.email && !profile.email.includes('example.com')) points += 15;
+
+    // phone (15%)
+    if (profile.phone && profile.phone !== '0000000000' && profile.phone.length > 5) points += 15;
+
+    // address (15%)
+    if (profile.address && profile.address.length > 3) points += 15;
+
+    // city (10%)
+    if (profile.city && profile.city.length > 2) points += 10;
+    
+    // licenseNumber (15%)
+    if (profile.licenseNumber && profile.licenseNumber !== 'N/A' && profile.licenseNumber.length > 3) points += 15;
+
+    // photo (10%)
+    if (profile.photo && profile.photo.length > 5) points += 10;
+
+    return Math.min(points, 100);
 };

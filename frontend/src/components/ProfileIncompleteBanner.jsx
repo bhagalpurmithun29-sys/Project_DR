@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { AlertCircle, ArrowRight, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const ProfileIncompleteBanner = ({ percentage = 0, role = 'doctor' }) => {
+const ProfileIncompleteBanner = ({ percentage = 0, role = 'doctor', onClick }) => {
     const isDoctor = role === 'doctor';
     const isPatient = role === 'patient';
     const isCenter = role === 'center';
@@ -20,7 +20,7 @@ const ProfileIncompleteBanner = ({ percentage = 0, role = 'doctor' }) => {
             : isPatient
             ? 'Complete your profile details to unlock advanced health tracking and AI-driven diagnostic features.'
             : 'Complete your center registration to start syncing scan data and managing clinical records.',
-        link: isDoctor ? '/doctor-registration' : isPatient ? '/profile-setup' : '/diagnosis-center-profile',
+        link: isDoctor ? '/doctor-profile' : isPatient ? '/profile-setup' : '/diagnosis-center/settings',
         btnText: isDoctor ? 'complete profile' : isPatient ? 'complete profile' : 'complete registration'
     };
 
@@ -66,6 +66,12 @@ const ProfileIncompleteBanner = ({ percentage = 0, role = 'doctor' }) => {
 
                 <Link
                     to={config.link}
+                    onClick={(e) => {
+                        if (onClick) {
+                            e.preventDefault();
+                            onClick();
+                        }
+                    }}
                     className="relative z-10 h-16 px-10 bg-slate-900 text-white text-[12px] font-black uppercase tracking-[0.2em] rounded-[1.5rem] flex items-center gap-4 hover:bg-slate-800 hover:-translate-y-1 transition-all shadow-2xl shadow-slate-900/30 active:scale-95 group/btn"
                 >
                     {config.btnText}
