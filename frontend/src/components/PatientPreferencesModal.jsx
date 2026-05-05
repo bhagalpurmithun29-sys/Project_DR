@@ -53,6 +53,13 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
 
     const [activeTab, setActiveTab] = useState('profile');
 
+    // Reset active tab to 'profile' when modal is opened
+    useEffect(() => {
+        if (isOpen) {
+            setActiveTab('profile');
+        }
+    }, [isOpen]);
+
     // Populate profile form when patient data arrives
     useEffect(() => {
         if (patient || user) {
@@ -197,15 +204,15 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
-                    className="absolute inset-0 bg-sidebar/60 backdrop-blur-md"
+                    className="absolute inset-0 bg-sidebar/60 backdrop-blur-sm"
                 />
 
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.96, y: 20 }}
+                    initial={{ opacity: 0, scale: 0.98, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.96, y: 20 }}
-                    transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-                    className="relative w-full max-w-2xl h-[750px] bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-slate-100 dark:border-slate-800"
+                    exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                    transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
+                    className="relative w-full max-w-2xl h-[750px] bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-slate-100 dark:border-slate-800 will-change-transform"
                 >
                     {/* Header */}
                     <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
@@ -305,35 +312,43 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                         {/* ── Personal Info Form ── */}
                                         <h4 className="text-sm font-black text-slate-900 dark:text-white mb-4 uppercase tracking-widest">Personal Information</h4>
                                         <form onSubmit={handleSaveProfile} className="space-y-4">
-                                            {[
-                                                { label: 'Full Name', key: 'name', type: 'text', Icon: User, placeholder: 'Your full name' },
-                                                { label: 'Email Address', key: 'email', type: 'email', Icon: Mail, placeholder: 'your@email.com' },
-                                                { label: 'Age', key: 'age', type: 'number', Icon: Calendar, placeholder: 'Your age' },
-                                                { label: 'Phone Number', key: 'phone', type: 'tel', Icon: Phone, placeholder: '+91 00000-00000' },
-                                            ].map(({ label, key, type, Icon: Ic, placeholder }) => (
-                                                <div key={key} className="space-y-1.5">
-                                                    <label htmlFor={`patient-profile-${key}`} className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</label>
-                                                    <div className="relative group">
-                                                        <Ic className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors" size={16} />
-                                                        <input
-                                                            id={`patient-profile-${key}`}
-                                                            name={`patient_profile_${key}`}
-                                                            autoComplete={
-                                                                key === 'name' ? 'name' :
-                                                                key === 'email' ? 'email' :
-                                                                key === 'phone' ? 'tel' :
-                                                                'off'
-                                                            }
-                                                            type={type}
-                                                            placeholder={placeholder}
-                                                            value={profileForm[key]}
-                                                            onChange={e => setProfileForm(prev => ({ ...prev, [key]: e.target.value }))}
-                                                            className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
-                                                        />
-                                                    </div>
+                                            {/* Full Name */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor="patient-profile-name" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Full Name</label>
+                                                <div className="relative group">
+                                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors" size={16} />
+                                                    <input
+                                                        id="patient-profile-name"
+                                                        name="patient_profile_name"
+                                                        autoComplete="name"
+                                                        type="text"
+                                                        placeholder="Your full name"
+                                                        value={profileForm.name}
+                                                        onChange={e => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                                                        className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
+                                                    />
                                                 </div>
-                                            ))}
+                                            </div>
 
+                                            {/* Email Address */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor="patient-profile-email" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Email Address</label>
+                                                <div className="relative group">
+                                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors" size={16} />
+                                                    <input
+                                                        id="patient-profile-email"
+                                                        name="patient_profile_email"
+                                                        autoComplete="email"
+                                                        type="email"
+                                                        placeholder="your@email.com"
+                                                        value={profileForm.email}
+                                                        onChange={e => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
+                                                        className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Gender */}
                                             <div className="space-y-1.5">
                                                 <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Gender</label>
                                                 <div className="relative">
@@ -348,6 +363,41 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                         <option value="Other">Other</option>
                                                     </select>
                                                     <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                                </div>
+                                            </div>
+
+                                            {/* Age */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor="patient-profile-age" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Age</label>
+                                                <div className="relative group">
+                                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors" size={16} />
+                                                    <input
+                                                        id="patient-profile-age"
+                                                        name="patient_profile_age"
+                                                        type="number"
+                                                        placeholder="Your age"
+                                                        value={profileForm.age}
+                                                        onChange={e => setProfileForm(prev => ({ ...prev, age: e.target.value }))}
+                                                        className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Phone Number */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor="patient-profile-phone" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Phone Number</label>
+                                                <div className="relative group">
+                                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors" size={16} />
+                                                    <input
+                                                        id="patient-profile-phone"
+                                                        name="patient_profile_phone"
+                                                        autoComplete="tel"
+                                                        type="tel"
+                                                        placeholder="+91 00000-00000"
+                                                        value={profileForm.phone}
+                                                        onChange={e => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
+                                                        className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
+                                                    />
                                                 </div>
                                             </div>
 

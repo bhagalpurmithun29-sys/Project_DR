@@ -435,7 +435,7 @@ const PatientDashboard = () => {
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold text-slate-500 dark:text-slate-400">
-                                        <span className="flex items-center gap-2"><Calendar size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.age || "N/A"} Years</span>
+                                        <span className="flex items-center gap-2"><Calendar size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.age && patient?.age > 0 ? `${patient.age} Years` : "Age: N/A"}</span>
                                         <span className={`flex items-center gap-2 ${diabeticStage.includes('Stage 4') || diabeticStage.includes('Stage 3') ? 'text-rose-500' :
                                                 diabeticStage.includes('Stage 2') ? 'text-amber-500' : 'text-slate-500'
                                             }`}>
@@ -443,9 +443,8 @@ const PatientDashboard = () => {
                                             Diabetic Stage: {scans.length > 0 ? (diabeticStage.includes(':') ? diabeticStage.split(': ')[0] : diabeticStage) : 'N/A'}
                                         </span>
                                         <span className="flex items-center gap-2"><Mail size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.email || user?.email}</span>
-                                        <span className="flex items-center gap-2"><Phone size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.phoneNumber || "N/A"}</span>
                                         <span className="flex items-center gap-2"><User2 size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.gender || "Not Set"}</span>
-                                        <span className="flex items-center gap-2"><Activity size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.diabetesType || "N/A"}</span>
+                                        <span className="flex items-center gap-2"><Phone size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.phoneNumber || "N/A"}</span>
                                     </div>
                                     <div className="pt-4 flex gap-3">
                                         <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border border-slate-100 dark:border-slate-800 rounded-lg px-3 py-1 bg-slate-50 dark:bg-slate-800/50">PATIENT ID: {patient?.patientId || 'N/A'}</span>
