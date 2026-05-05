@@ -35,6 +35,20 @@ import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
 import { calculateProfileCompletion } from '../utils/profileUtils';
 import Toast from '../components/Toast';
 
+const formatSpecialization = (spec) => {
+    if (!spec) return 'Retina Specialist';
+    const mapping = {
+        'dr_screening': 'Diabetic Retinopathy Screening',
+        'medical_dr': 'Medical Diabetic Retinopathy',
+        'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
+        'dr_lasers': 'Laser & DR Therapeutics',
+        'general': 'General Retina',
+        'retina': 'Medical Retina',
+        'surgery': 'Vitreoretinal Surgery',
+        'pediatric': 'Pediatric Retina'
+    };
+    return mapping[spec] || spec;
+};
 
 const DoctorDashboard = () => {
     const { logout, user } = useContext(AuthContext);
@@ -224,6 +238,7 @@ const DoctorDashboard = () => {
         _id: scan._id,
         name: scan.patient?.name || "Unknown Patient",
         initials: (scan.patient?.name || "UP").split(' ').map(n => n[0]).join(''),
+        age: scan.patient?.age || "—",
         time: new Date(scan.createdAt || scan.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         risk: scan.aiResult,
         riskStyle: scan.aiResult === 'High Risk' ? "bg-rose-50 text-rose-600 border-rose-100" :
@@ -395,7 +410,9 @@ const DoctorDashboard = () => {
                         <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm" style={{ backgroundImage: `url(${normalizeUrl(profile?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-black truncate text-white">Dr. {user?.name || "Provider"}</p>
-                            <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">Retina Specialist</p>
+                            <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">
+                                {formatSpecialization(profile?.specialization)}
+                            </p>
                         </div>
                     </div>
                     <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-500/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
@@ -529,6 +546,7 @@ const DoctorDashboard = () => {
                                     <thead className="bg-[#f8fafc]/50 dark:bg-slate-950/50">
                                         <tr>
                                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Patient Entity</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Age</th>
                                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Time Sync</th>
                                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">AI Scoring</th>
                                             <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Source Portal</th>
@@ -553,6 +571,9 @@ const DoctorDashboard = () => {
                                                             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">ID: {row._id?.slice(-8).toUpperCase() || '—'}</p>
                                                         </div>
                                                     </div>
+                                                </td>
+                                                <td className="px-8 py-8 text-xs font-bold text-slate-600 dark:text-slate-400 italic">
+                                                    {row.age && row.age !== "—" ? `${row.age} yrs` : "—"}
                                                 </td>
                                                 <td className="px-8 py-8 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{row.time}</td>
                                                 <td className="px-8 py-8">

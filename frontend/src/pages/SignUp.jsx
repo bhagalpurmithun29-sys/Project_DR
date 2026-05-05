@@ -106,7 +106,7 @@ const Register = () => {
                 }
             }
 
-            await register(name, email, password, role, age);
+            await register(name, email, password, role, age, dob);
             const nextRoute = role === 'doctor'
                 ? '/doctor-registration'
                 : role === 'diagnosis_center'

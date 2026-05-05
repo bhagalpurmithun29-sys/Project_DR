@@ -111,6 +111,11 @@ const PatientAppointments = () => {
     );
   }
 
+  const hasActiveWithSelectedDoc = bookingForm.doctorId ? appointments.some(app => 
+    app.doctorId?._id === bookingForm.doctorId && 
+    (app.status === 'pending' || app.status === 'confirmed')
+  ) : false;
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
@@ -247,10 +252,12 @@ const PatientAppointments = () => {
                           </div>
                         </td>
                         <td className="px-10 py-8">
-                          <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${app.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                          <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                              app.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                              app.status === 'completed' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
                               app.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                app.status === 'rejected' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                  'bg-slate-50 text-slate-600 border-slate-100'
+                              app.status === 'rejected' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                              'bg-slate-50 text-slate-600 border-slate-100'
                             }`}>
                             {app.status}
                           </span>
@@ -370,6 +377,13 @@ const PatientAppointments = () => {
                   />
                 </div>
 
+                {hasActiveWithSelectedDoc && (
+                  <div className="flex items-start gap-2 p-4 rounded-2xl bg-amber-50 text-amber-800 text-xs font-bold border border-amber-100">
+                    <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                    <span>You already have an active appointment (Pending or Confirmed) with this doctor. You must wait for your checkup to be marked as complete by the doctor before booking another appointment.</span>
+                  </div>
+                )}
+
                 {error && (
                   <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-600 text-xs font-bold">
                     <AlertCircle size={14} /> {error}
@@ -381,8 +395,8 @@ const PatientAppointments = () => {
                   </div>
                 )}
 
-                <button type="submit" disabled={bookingLoading}
-                  className="w-full py-4 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:bg-primary/90 flex items-center justify-center gap-2 disabled:opacity-60 transition-all">
+                <button type="submit" disabled={bookingLoading || hasActiveWithSelectedDoc}
+                  className="w-full py-4 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:bg-primary/90 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all">
                   {bookingLoading ? <div className="size-5 border-2 border-white border-t-transparent animate-spin rounded-full" /> : 'Confirm Booking Request'}
                 </button>
               </form>

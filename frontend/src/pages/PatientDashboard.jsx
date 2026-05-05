@@ -435,7 +435,12 @@ const PatientDashboard = () => {
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold text-slate-500 dark:text-slate-400">
-                                        <span className="flex items-center gap-2"><Calendar size={16} className="text-slate-300 dark:text-slate-600" /> {patient?.age && patient?.age > 0 ? `${patient.age} Years` : "Age: N/A"}</span>
+                                        <span className="flex items-center gap-2">
+                                            <Calendar size={16} className="text-slate-300 dark:text-slate-600" /> 
+                                            {patient?.dob 
+                                                ? `DOB: ${new Date(patient.dob).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })} (${patient.age} Years)` 
+                                                : (patient?.age && patient?.age > 0 ? `${patient.age} Years` : "Age: N/A")}
+                                        </span>
                                         <span className={`flex items-center gap-2 ${diabeticStage.includes('Stage 4') || diabeticStage.includes('Stage 3') ? 'text-rose-500' :
                                                 diabeticStage.includes('Stage 2') ? 'text-amber-500' : 'text-slate-500'
                                             }`}>
@@ -657,21 +662,25 @@ const PatientDashboard = () => {
                 </footer>
             </main>
             {/* Patient Preferences Modal */}
-            <PatientPreferencesModal
-                isOpen={isPreferencesOpen}
-                onClose={() => setIsPreferencesOpen(false)}
-                patient={patient}
-                user={user}
-                onProfileUpdate={(updated) => setPatient(prev => {
-                    const merged = { ...prev, ...updated };
-                    // Preferences form sends 'phone', Patient model uses 'phoneNumber'
-                    if (updated.phone !== undefined) {
-                        merged.phoneNumber = updated.phone;
-                        delete merged.phone;
-                    }
-                    return merged;
-                })}
-            />
+            <AnimatePresence>
+                {isPreferencesOpen && (
+                    <PatientPreferencesModal
+                        isOpen={isPreferencesOpen}
+                        onClose={() => setIsPreferencesOpen(false)}
+                        patient={patient}
+                        user={user}
+                        onProfileUpdate={(updated) => setPatient(prev => {
+                            const merged = { ...prev, ...updated };
+                            // Preferences form sends 'phone', Patient model uses 'phoneNumber'
+                            if (updated.phone !== undefined) {
+                                merged.phoneNumber = updated.phone;
+                                delete merged.phone;
+                            }
+                            return merged;
+                        })}
+                    />
+                )}
+            </AnimatePresence>
 
             <AnimatePresence>
                 {toast.show && (

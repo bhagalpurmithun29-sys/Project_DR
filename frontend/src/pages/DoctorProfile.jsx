@@ -15,6 +15,20 @@ import NodeSettingsModal from '../components/NodeSettingsModal';
 import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
 import { calculateProfileCompletion } from '../utils/profileUtils';
 
+const formatSpecialization = (spec) => {
+    if (!spec) return 'Retina Specialist';
+    const mapping = {
+        'dr_screening': 'Diabetic Retinopathy Screening',
+        'medical_dr': 'Medical Diabetic Retinopathy',
+        'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
+        'dr_lasers': 'Laser & DR Therapeutics',
+        'general': 'General Retina',
+        'retina': 'Medical Retina',
+        'surgery': 'Vitreoretinal Surgery',
+        'pediatric': 'Pediatric Retina'
+    };
+    return mapping[spec] || spec;
+};
 
 const DoctorProfile = () => {
     const { logout, user } = useContext(AuthContext);
@@ -229,7 +243,9 @@ const DoctorProfile = () => {
                         <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm" style={{ backgroundImage: `url(${normalizeUrl(profile?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-black truncate text-white">Dr. {user?.name || "Provider"}</p>
-                            <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">Retina Specialist</p>
+                            <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">
+                                {formatSpecialization(profile?.specialization)}
+                            </p>
                         </div>
                     </div>
 
@@ -302,7 +318,7 @@ const DoctorProfile = () => {
                                 <div className="flex-1 text-center md:text-left pt-2">
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
                                         <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg border border-primary/20 flex items-center gap-1.5">
-                                            <Activity size={12} /> {profile?.specialization === 'retina' ? 'Retina Specialist' : (profile?.specialization || 'Retina Specialist')}
+                                            <Activity size={12} /> {formatSpecialization(profile?.specialization)}
                                         </span>
                                     </div>
 
@@ -315,7 +331,7 @@ const DoctorProfile = () => {
                                         {profile?.bio || 'Professional clinical biography pending synchronization. Please update your profile to include your expertise and clinical focus.'}
                                     </p>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                                         {[
                                             { 
                                                 icon: Shield, 
@@ -324,6 +340,11 @@ const DoctorProfile = () => {
                                             },
                                             { icon: MapPin, label: "Jurisdiction", value: profile?.country || "N/A" },
                                             { icon: Calendar, label: "Experience", value: profile?.experience || "Pending" },
+                                            { 
+                                                icon: Calendar, 
+                                                label: "Date of Birth", 
+                                                value: profile?.dob ? new Date(profile.dob).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Pending" 
+                                            },
                                             { icon: Users, label: "Total Patients", value: totalPatientsCount > 0 ? `${totalPatientsCount}` : "0" }
                                         ].map((item, i) => (
                                             <div key={i} className="flex flex-col">
@@ -438,6 +459,19 @@ const DoctorProfile = () => {
                                         <p className="text-sm font-bold text-slate-900">{new Date(profile?.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
                                     </div>
                                 </div>
+                                {profile?.dob && (
+                                    <div className="flex items-start gap-4">
+                                        <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 mt-1">
+                                            <Calendar size={14} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Date of Birth</p>
+                                            <p className="text-sm font-bold text-slate-900">
+                                                {new Date(profile.dob).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

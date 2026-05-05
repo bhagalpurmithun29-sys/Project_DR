@@ -5,7 +5,7 @@ const Doctor = require('../models/Doctor');
 // @access  Private
 exports.createOrUpdateProfile = async (req, res) => {
     try {
-        const { licenseNumber, country, experience, specialization, email, phoneNumber, degrees, bio } = req.body;
+        const { licenseNumber, country, experience, specialization, email, phoneNumber, degrees, bio, dob } = req.body;
 
         const profileFields = {
             user: req.user.id,
@@ -16,6 +16,7 @@ exports.createOrUpdateProfile = async (req, res) => {
             email,
             phoneNumber,
             bio,
+            dob,
             degrees: Array.isArray(degrees) ? degrees : [],
         };
 

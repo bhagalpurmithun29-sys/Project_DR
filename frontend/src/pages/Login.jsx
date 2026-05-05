@@ -347,17 +347,17 @@ export default function Login() {
                     </span>
                   </button>
                 </div>
+
+                <div className="mt-8 text-center">
+                  <p className="text-sm text-slate-500 font-bold">
+                    New to RetinaAI?{" "}
+                    <Link to="/register" className="font-black text-primary hover:underline hover:underline-offset-4">
+                      Create Account
+                    </Link>
+                  </p>
+                </div>
               </motion.div>
             </AnimatePresence>
-
-            <div className="mt-8 text-center">
-              <p className="text-sm text-slate-500 font-bold">
-                New to RetinaAI?{" "}
-                <Link to="/register" className="font-black text-primary hover:underline hover:underline-offset-4">
-                  Create Account
-                </Link>
-              </p>
-            </div>
 
 
           </div>

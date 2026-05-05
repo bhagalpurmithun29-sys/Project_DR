@@ -10,6 +10,16 @@ import api from '../services/api';
 import { useTheme } from '../context/ThemeContext';
 import { SECURITY_QUESTIONS } from '../constants/securityQuestions';
 import DeleteAccountSection from './DeleteAccountSection';
+const formatDateToInput = (dateString) => {
+    if (!dateString) return '';
+    try {
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return '';
+        return d.toISOString().split('T')[0];
+    } catch (e) {
+        return '';
+    }
+};
 
 const TABS = [
     { id: 'profile', label: 'Profile', Icon: User },
@@ -20,7 +30,7 @@ const TABS = [
 const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpdate }) => {
     // ── Profile tab state ──────────────────────────────────────
     const [profileForm, setProfileForm] = useState({
-        name: '', age: '', phone: '', email: '', gender: ''
+        name: '', age: '', phone: '', email: '', gender: '', dob: ''
     });
     const [profileSaving, setProfileSaving] = useState(false);
     const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
@@ -69,6 +79,7 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                 age: patient?.age || '',
                 phone: patient?.phoneNumber || '',
                 gender: patient?.gender || '',
+                dob: formatDateToInput(patient?.dob),
             });
             // Set current photo preview
             if (patient?.photo) setPhotoPreview(patient.photo);
@@ -197,8 +208,7 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
     if (!isOpen) return null;
 
     return (
-        <AnimatePresence>
-            <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -366,19 +376,49 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                 </div>
                                             </div>
 
+                                            {/* Date of Birth */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor="patient-profile-dob" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Date of Birth</label>
+                                                <div className="relative group">
+                                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors" size={16} />
+                                                    <input
+                                                        id="patient-profile-dob"
+                                                        name="patient_profile_dob"
+                                                        type="date"
+                                                        value={profileForm.dob}
+                                                        onChange={e => {
+                                                            const newDob = e.target.value;
+                                                            let calculatedAge = profileForm.age;
+                                                            if (newDob) {
+                                                                const birthDate = new Date(newDob);
+                                                                const today = new Date();
+                                                                let age = today.getFullYear() - birthDate.getFullYear();
+                                                                const m = today.getMonth() - birthDate.getMonth();
+                                                                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                                                                    age--;
+                                                                }
+                                                                calculatedAge = age;
+                                                            }
+                                                            setProfileForm(prev => ({ ...prev, dob: newDob, age: calculatedAge }));
+                                                        }}
+                                                        className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+
                                             {/* Age */}
                                             <div className="space-y-1.5">
-                                                <label htmlFor="patient-profile-age" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Age</label>
+                                                <label htmlFor="patient-profile-age" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Age (Calculated)</label>
                                                 <div className="relative group">
                                                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors" size={16} />
                                                     <input
                                                         id="patient-profile-age"
                                                         name="patient_profile_age"
                                                         type="number"
-                                                        placeholder="Your age"
+                                                        readOnly
+                                                        placeholder="Calculated age"
                                                         value={profileForm.age}
-                                                        onChange={e => setProfileForm(prev => ({ ...prev, age: e.target.value }))}
-                                                        className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
+                                                        className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-950/30 py-3 pl-11 pr-4 text-sm font-bold text-slate-400 dark:text-slate-500 outline-none cursor-not-allowed transition-all"
                                                     />
                                                 </div>
                                             </div>
@@ -628,7 +668,6 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                     </div>
                 </motion.div>
             </div>
-        </AnimatePresence>
     );
 };
 

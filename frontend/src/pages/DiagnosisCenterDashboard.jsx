@@ -409,19 +409,18 @@ const PatientsSection = ({ patients, onRefresh }) => {
                             <form onSubmit={handleAdd} className="p-8 space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <Input label="Full Name" icon={User} required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="John Doe" />
-                                    <Input label="Age" icon={Hash} type="number" required min={1} max={120} value={form.age} onChange={e => setForm(f => ({ ...f, age: e.target.value }))} placeholder="35" />
+                                    <Input label="Email" icon={Mail} type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="patient@email.com" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
+                                    <Input label="Age" icon={Hash} type="number" required min={1} max={120} value={form.age} onChange={e => setForm(f => ({ ...f, age: e.target.value }))} placeholder="35" />
                                     <Select label="Gender" value={form.gender} onChange={e => setForm(f => ({ ...f, gender: e.target.value }))}>
                                         {['Male', 'Female', 'Other'].map(g => <option key={g}>{g}</option>)}
                                     </Select>
-                                    <Select label="Diabetes Type" value={form.diabetesType} onChange={e => setForm(f => ({ ...f, diabetesType: e.target.value }))}>
-                                        {['Type 1', 'Type 2', 'Gestational', 'None'].map(t => <option key={t}>{t}</option>)}
-                                    </Select>
                                 </div>
-                                <Input label="Email" icon={Mail} type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="patient@email.com" />
-                                <Input label="Phone Number" icon={Phone} value={form.phoneNumber} onChange={e => setForm(f => ({ ...f, phoneNumber: e.target.value }))} placeholder="+91 9999 999 999" />
-                                <Input label="Create Password" icon={Lock} type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input label="Phone Number" icon={Phone} value={form.phoneNumber} onChange={e => setForm(f => ({ ...f, phoneNumber: e.target.value }))} placeholder="+91 9999 999 999" />
+                                    <Input label="Create Password" icon={Lock} type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
+                                </div>
                                 {msg.text && (
                                     <div className={`flex items-center gap-2 p-3 rounded-xl text-sm font-bold ${msg.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-primary/10 text-primary'}`}>
                                         {msg.type === 'error' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />} {msg.text}
@@ -599,7 +598,7 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                         <table className="w-full text-left">
                             <thead className="border-b border-slate-100 bg-slate-50/50">
                                 <tr>
-                                    {['Scan ID', 'Patient', 'Eye', 'Date', 'Source Site', 'Status', 'AI Result', 'Actions'].map(h => (
+                                    {['Scan ID', 'Patient', 'Age', 'Eye', 'Date', 'Source Site', 'Status', 'AI Result', 'Actions'].map(h => (
                                         <th key={h} className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
                                     ))}
                                 </tr>
@@ -611,6 +610,7 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                                     <tr key={group._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
                                         <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">{s.scanId || s._id?.slice(-8).toUpperCase()}</td>
                                         <td className="px-5 py-4 text-sm font-black text-slate-900">{s.patient?.name || '—'}</td>
+                                        <td className="px-5 py-4 text-sm font-bold text-slate-600 italic">{s.patient?.age || '—'}</td>
                                         <td className="px-5 py-4">
                                             <div className="flex items-center gap-2">
                                                 <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
@@ -902,7 +902,7 @@ const ReportsSection = ({ scans, setSelectedScan, setSiblingScan, setShowReport 
                         <table className="w-full text-left">
                             <thead className="border-b border-slate-100 bg-slate-50/50">
                                 <tr>
-                                    {['Report', 'Patient', 'Type', 'Date', 'Risk Level', 'Findings', 'Actions'].map(h => (
+                                    {['Report', 'Patient', 'Age', 'Type', 'Date', 'Risk Level', 'Findings', 'Actions'].map(h => (
                                         <th key={h} className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
                                     ))}
                                 </tr>
@@ -915,6 +915,7 @@ const ReportsSection = ({ scans, setSelectedScan, setSiblingScan, setShowReport 
                                         <tr key={g._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
                                             <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">RPT-{g._id?.slice(-6).toUpperCase()}</td>
                                             <td className="px-5 py-4 text-sm font-black text-slate-900">{g.patient?.name || '—'}</td>
+                                            <td className="px-5 py-4 text-sm font-bold text-slate-600 italic">{g.patient?.age || '—'}</td>
                                             <td className="px-5 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <Badge color={g.type === 'Bilateral' ? 'indigo' : 'slate'}>{g.type}</Badge>

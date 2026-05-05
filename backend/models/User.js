@@ -24,6 +24,9 @@ const userSchema = new mongoose.Schema({
     age: {
         type: Number,
     },
+    dob: {
+        type: Date,
+    },
     password: {
         type: String,
         required: function () {

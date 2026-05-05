@@ -40,7 +40,8 @@ const DoctorRegistration = () => {
     email: '',
     phoneNumber: '',
     photo: null,
-    bio: ''
+    bio: '',
+    dob: ''
   });
 
   const [degrees, setDegrees] = useState([
@@ -62,6 +63,7 @@ const DoctorRegistration = () => {
             email: p.email || (user?.email || ''),
             phoneNumber: p.phoneNumber || '',
             bio: p.bio || '',
+            dob: p.dob ? new Date(p.dob).toISOString().split('T')[0] : '',
             photo: null // We don't pre-populate the file input
           });
 
@@ -294,10 +296,10 @@ const DoctorRegistration = () => {
                   icon={Activity}
                   placeholder="Primary Focus"
                   options={[
-                    { value: 'general', label: 'General Retina' },
-                    { value: 'retina', label: 'Medical Retina' },
-                    { value: 'surgery', label: 'Vitreoretinal Surgery' },
-                    { value: 'pediatric', label: 'Pediatric Retina' }
+                    { value: 'dr_screening', label: 'Diabetic Retinopathy Screening' },
+                    { value: 'medical_dr', label: 'Medical Diabetic Retinopathy' },
+                    { value: 'dr_surgery', label: 'Advanced DR & Vitreoretinal Surgery' },
+                    { value: 'dr_lasers', label: 'Laser & DR Therapeutics' }
                   ]}
                 />
 
@@ -331,6 +333,22 @@ const DoctorRegistration = () => {
                       className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white"
                       placeholder="+91 98765 43210"
                       type="tel"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Date of Birth</label>
+                  <div className="relative group">
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
+                    </div>
+                    <input
+                      name="dob"
+                      value={formData.dob}
+                      onChange={handleInputChange}
+                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white focus:text-slate-900"
+                      type="date"
                     />
                   </div>
                 </div>
@@ -382,23 +400,29 @@ const DoctorRegistration = () => {
                       <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm text-slate-400">
                         <FileText size={20} />
                       </div>
-                      <div className="flex-1 space-y-2">
-                        <input
-                          required
-                          className="w-full bg-transparent border-none p-0 text-sm font-black text-slate-900 focus:ring-0 placeholder:text-slate-300"
-                          placeholder="Qualification Name"
-                          type="text"
-                          value={deg.title}
-                          onChange={(e) => handleDegreeChange(deg.id, 'title', e.target.value)}
-                        />
-                        <input
-                          required
-                          className="w-full bg-transparent border-none p-0 text-xs font-bold text-slate-500 focus:ring-0 placeholder:text-slate-300"
-                          placeholder="Issuing Medical School"
-                          type="text"
-                          value={deg.institution}
-                          onChange={(e) => handleDegreeChange(deg.id, 'institution', e.target.value)}
-                        />
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Qualification</label>
+                          <input
+                            required
+                            className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-white text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all placeholder:text-slate-300"
+                            placeholder="e.g. MBBS, MD"
+                            type="text"
+                            value={deg.title}
+                            onChange={(e) => handleDegreeChange(deg.id, 'title', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Medical School</label>
+                          <input
+                            required
+                            className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-white text-slate-500 font-bold text-xs outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all placeholder:text-slate-300"
+                            placeholder="e.g. AIIMS"
+                            type="text"
+                            value={deg.institution}
+                            onChange={(e) => handleDegreeChange(deg.id, 'institution', e.target.value)}
+                          />
+                        </div>
                       </div>
                       {degrees.length > 1 && (
                         <button

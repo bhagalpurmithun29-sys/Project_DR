@@ -43,6 +43,9 @@ const doctorSchema = new mongoose.Schema({
     bio: {
         type: String,
     },
+    dob: {
+        type: Date,
+    },
     createdAt: {
         type: Date,
         default: Date.now,

@@ -25,7 +25,7 @@ const generateToken = (id) => {
 // @access  Public
 exports.registerUser = async (req, res) => {
     try {
-        const { name, password, role, age } = req.body;
+        const { name, password, role, age, dob } = req.body;
         const email = req.body.email?.toLowerCase().trim();
 
         // Validation regex patterns
@@ -62,6 +62,7 @@ exports.registerUser = async (req, res) => {
             password,
             role: role || 'patient',
             age: age || 0,
+            dob: dob || null,
         });
 
         if (user) {
@@ -74,6 +75,7 @@ exports.registerUser = async (req, res) => {
                     patientId,
                     email: user.email,
                     age: age || 0,
+                    dob: dob || null,
                     diabetesType: 'Type 2'
                 });
             }
