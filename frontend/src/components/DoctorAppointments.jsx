@@ -27,6 +27,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CentralAlertsModal from './CentralAlertsModal';
 import NodeSettingsModal from './NodeSettingsModal';
 
+const formatSpecialization = (spec) => {
+  if (!spec) return 'Retina Specialist';
+  const mapping = {
+    'dr_screening': 'Diabetic Retinopathy Screening',
+    'medical_dr': 'Medical Diabetic Retinopathy',
+    'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
+    'dr_lasers': 'Laser & DR Therapeutics',
+    'general': 'General Retina',
+    'retina': 'Medical Retina',
+    'surgery': 'Vitreoretinal Surgery',
+    'pediatric': 'Pediatric Retina'
+  };
+  return mapping[spec] || spec;
+};
+
 const DoctorAppointments = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -35,6 +50,62 @@ const DoctorAppointments = () => {
   const [loading, setLoading] = useState(true);
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterDate, setFilterDate] = useState('');
+
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (modifier === 'PM' && hours < 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  };
+
+  const filteredAppointments = appointments
+    .filter(app => {
+      const matchStatus = filterStatus === 'all' || app.status === filterStatus;
+      
+      let matchDate = true;
+      if (filterDate) {
+        const appDateStr = new Date(app.date).toISOString().split('T')[0];
+        matchDate = appDateStr === filterDate;
+      }
+      
+      return matchStatus && matchDate;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      
+      return parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time);
+    });
+
+  const handleBulkAction = async (status) => {
+    const pendingToUpdate = filteredAppointments.filter(app => app.status === 'pending');
+    if (pendingToUpdate.length === 0) {
+      alert("No pending appointments found in the current filtered view.");
+      return;
+    }
+    
+    if (!window.confirm(`Are you sure you want to mark all ${pendingToUpdate.length} pending appointments as ${status}?`)) {
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await Promise.all(pendingToUpdate.map(app => appointmentService.updateStatus(app._id, status)));
+      setAppointments(prev => prev.map(app => {
+        const isUpdated = pendingToUpdate.some(p => p._id === app._id);
+        return isUpdated ? { ...app, status } : app;
+      }));
+    } catch (err) {
+      alert(err.message || "Failed to update some appointments");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -139,7 +210,9 @@ const DoctorAppointments = () => {
             <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm" style={{ backgroundImage: `url(${normalizeUrl(profile?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black truncate text-white">Dr. {user?.name || "Provider"}</p>
-              <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">Retina Specialist</p>
+              <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest">
+                {formatSpecialization(profile?.specialization)}
+              </p>
             </div>
           </div>
           <button onClick={handleLogout} className="w-full h-12 flex items-center justify-center gap-2 text-rose-500 hover:bg-rose-500/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all">
@@ -157,7 +230,16 @@ const DoctorAppointments = () => {
           <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight italic">Patient <span className="text-primary not-italic">Appointments</span></h1>
           <div className="flex items-center gap-4">
             <div className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/50 dark:border-slate-700">
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Total Queue: {appointments.length}</span>
+              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                {filterDate ? `Daily Queue` : `Total Queue`}: {
+                  appointments.filter(app => {
+                    if (app.status === 'rejected') return false;
+                    if (!filterDate) return true;
+                    const appDateStr = new Date(app.date).toISOString().split('T')[0];
+                    return appDateStr === filterDate;
+                  }).length
+                }
+              </span>
             </div>
           </div>
         </header>
@@ -168,6 +250,81 @@ const DoctorAppointments = () => {
           animate="visible"
           className="p-10 space-y-10 w-full max-w-[1500px] mx-auto flex-1 flex flex-col"
         >
+          {/* Controls Bar: Filters and Bulk Actions */}
+          <motion.div variants={itemVariants} className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/20 w-full">
+            {/* Filters Container */}
+            <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4 flex-1">
+              {/* Filter Buttons */}
+              <div className="flex flex-wrap gap-2">
+                {['all', 'pending', 'confirmed', 'completed', 'rejected'].map(status => {
+                  const appointmentsOnSelectedDate = appointments.filter(app => {
+                    if (!filterDate) return true;
+                    const appDateStr = new Date(app.date).toISOString().split('T')[0];
+                    return appDateStr === filterDate;
+                  });
+                  const count = status === 'all' 
+                    ? appointmentsOnSelectedDate.length 
+                    : appointmentsOnSelectedDate.filter(a => a.status === status).length;
+
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setFilterStatus(status)}
+                      className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                        filterStatus === status
+                          ? 'bg-primary border-primary text-white shadow-lg shadow-primary/25 scale-[1.02]'
+                          : 'bg-[#f8fafc]/50 dark:bg-slate-950/50 border-slate-100 dark:border-slate-800 hover:border-primary/20 text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {status} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Date Filter Input */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                  className="px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-[#f8fafc]/50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 outline-none focus:border-primary/20 focus:ring-2 focus:ring-primary/5 transition-all"
+                  title="Filter by Date"
+                />
+                {filterDate && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterDate('')}
+                    className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                  >
+                    Clear Date
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Bulk Action Buttons */}
+            {filteredAppointments.some(a => a.status === 'pending') && (
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleBulkAction('confirmed')}
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/10 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+                >
+                  <Check size={14} strokeWidth={2.5} /> Confirm Filtered Pending
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkAction('rejected')}
+                  className="px-5 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/10 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+                >
+                  <X size={14} strokeWidth={2.5} /> Reject Filtered Pending
+                </button>
+              </div>
+            )}
+          </motion.div>
+
           {/* Appointments Table */}
           <motion.section variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/30 overflow-hidden flex-1 flex flex-col">
             <div className="overflow-x-auto flex-1">
@@ -183,7 +340,7 @@ const DoctorAppointments = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                   <AnimatePresence>
-                    {appointments.length > 0 ? appointments.map((app) => (
+                    {filteredAppointments.length > 0 ? filteredAppointments.map((app) => (
                       <motion.tr
                         key={app._id}
                         initial={{ opacity: 0 }}

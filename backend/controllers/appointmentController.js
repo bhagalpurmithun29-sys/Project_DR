@@ -17,12 +17,26 @@ exports.createAppointment = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Only registered patients can book appointments.' });
         }
 
-        // Validate date is not in past
+        // Validate date is tomorrow or later (strict next-day-onwards booking)
         const appointmentDate = new Date(date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (appointmentDate < today) {
-            return res.status(400).json({ success: false, message: 'Cannot book appointments in the past.' });
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        if (appointmentDate < tomorrow) {
+            return res.status(400).json({ success: false, message: 'Appointments can only be booked for tomorrow or any day after.' });
+        }
+
+        // Check if patient already has any appointment with this doctor on the selected date
+        const existingSameDay = await Appointment.findOne({
+            patientId,
+            doctorId,
+            date
+        });
+        if (existingSameDay) {
+            return res.status(400).json({
+                success: false,
+                message: 'You can only book at most one appointment per day with the same doctor.'
+            });
         }
 
         // Check for double booking (same doctor, same time slot)

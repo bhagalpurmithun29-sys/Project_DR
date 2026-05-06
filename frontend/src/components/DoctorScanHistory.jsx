@@ -34,6 +34,21 @@ import api, { normalizeUrl } from '../services/api';
 import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
 
 
+const formatSpecialization = (spec) => {
+    if (!spec) return 'Retina Specialist';
+    const mapping = {
+        'dr_screening': 'Diabetic Retinopathy Screening',
+        'medical_dr': 'Medical Diabetic Retinopathy',
+        'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
+        'dr_lasers': 'Laser & DR Therapeutics',
+        'general': 'General Retina',
+        'retina': 'Medical Retina',
+        'surgery': 'Vitreoretinal Surgery',
+        'pediatric': 'Pediatric Retina'
+    };
+    return mapping[spec] || spec;
+};
+
 const DoctorScanHistory = () => {
     const { logout, user } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -379,7 +394,9 @@ const DoctorScanHistory = () => {
                         <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${normalizeUrl(profile?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
                         <div className="flex-1 min-w-0 text-left">
                             <p className="text-xs font-black truncate text-white">Dr. {user?.name || 'Provider'}</p>
-                            <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest text-left">Retina Specialist</p>
+                            <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest text-left">
+                                {formatSpecialization(profile?.specialization)}
+                            </p>
                         </div>
                     </div>
 

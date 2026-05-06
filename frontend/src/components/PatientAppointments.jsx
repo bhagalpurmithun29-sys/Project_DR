@@ -38,6 +38,33 @@ const PatientAppointments = () => {
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
 
+  const generateTenMinuteSlots = () => {
+    const slots = [];
+    const periods = [
+      { startHour: 9, endHour: 12, period: 'AM' },
+      { startHour: 14, endHour: 17, period: 'PM' }
+    ];
+    
+    periods.forEach(({ startHour, endHour, period }) => {
+      for (let h = startHour; h <= endHour; h++) {
+        let hourStr = h;
+        let displayPeriod = period;
+        if (period === 'PM' && h > 12) {
+          hourStr = h - 12;
+        }
+        if (h === 12 && period === 'AM') {
+          displayPeriod = 'PM';
+        }
+        const formattedHour = String(hourStr).padStart(2, '0');
+        for (let m = 0; m < 60; m += 10) {
+          const formattedMinute = String(m).padStart(2, '0');
+          slots.push(`${formattedHour}:${formattedMinute} ${displayPeriod}`);
+        }
+      }
+    });
+    return slots;
+  };
+
   // Booking Form State
   const [bookingForm, setBookingForm] = useState({
     doctorId: '',
@@ -332,35 +359,43 @@ const PatientAppointments = () => {
                     {doctors.map(d => <option key={d._id} value={d._id}>Dr. {d.name} ({d.specialization})</option>)}
                   </select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label htmlFor="appointment-date" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
-                    <input
-                      id="appointment-date"
-                      name="appointment_date"
-                      autoComplete="off"
-                      type="date"
-                      required
-                      min={new Date().toISOString().split('T')[0]}
-                      value={bookingForm.date}
-                      onChange={e => setBookingForm(f => ({ ...f, date: e.target.value }))}
-                      className="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label htmlFor="appointment-time" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Time</label>
-                    <select
-                      id="appointment-time"
-                      name="appointment_time"
-                      autoComplete="off"
-                      required
-                      value={bookingForm.time}
-                      onChange={e => setBookingForm(f => ({ ...f, time: e.target.value }))}
-                      className="w-full pl-4 pr-8 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all appearance-none"
-                    >
-                      <option value="">— Time —</option>
-                      {['09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'].map(t => <option key={t}>{t}</option>)}
-                    </select>
+                <div className="space-y-1.5">
+                  <label htmlFor="appointment-date" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
+                  <input
+                    id="appointment-date"
+                    name="appointment_date"
+                    autoComplete="off"
+                    type="date"
+                    required
+                    min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                    value={bookingForm.date}
+                    onChange={e => setBookingForm(f => ({ ...f, date: e.target.value }))}
+                    className="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Time Slots (10-Min Gap)</label>
+                  <div className="border-2 border-slate-100 bg-slate-50/50 rounded-2xl p-4 max-h-[160px] overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-4 gap-2">
+                      {generateTenMinuteSlots().map(t => {
+                        const isSelected = bookingForm.time === t;
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setBookingForm(f => ({ ...f, time: t }))}
+                            className={`py-2 text-[10px] font-bold rounded-xl border-2 transition-all ${
+                              isSelected 
+                                ? 'bg-primary border-primary text-white shadow-md shadow-primary/15 scale-[1.02]' 
+                                : 'bg-white border-slate-100 hover:border-primary/20 text-slate-700'
+                            }`}
+                          >
+                            {t.replace(' AM', '').replace(' PM', '')} <span className="text-[8px] opacity-75">{t.slice(-2)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-1.5">
