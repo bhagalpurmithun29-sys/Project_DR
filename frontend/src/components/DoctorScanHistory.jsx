@@ -394,7 +394,7 @@ const DoctorScanHistory = () => {
                         <div className="size-10 rounded-xl bg-cover bg-center border-2 border-white/10 shadow-sm flex-shrink-0" style={{ backgroundImage: `url(${normalizeUrl(profile?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Doctor')}&background=059669&color=fff&bold=true`})` }}></div>
                         <div className="flex-1 min-w-0 text-left">
                             <p className="text-xs font-black truncate text-white">Dr. {user?.name || 'Provider'}</p>
-                            <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest text-left">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left break-words">
                                 {formatSpecialization(profile?.specialization)}
                             </p>
                         </div>

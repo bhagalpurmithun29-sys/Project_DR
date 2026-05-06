@@ -26,4 +26,13 @@ else
     echo "⚠️ requirements.txt not found. Skipping python package installation."
 fi
 
+# 3. Build Frontend if exists (for self-contained Render deployments)
+if [ -d "../frontend" ]; then
+    echo "🌐 Building Frontend..."
+    cd ../frontend
+    npm install
+    npm run build
+    cd ../backend
+fi
+
 echo "✅ Build Completed Successfully!"
