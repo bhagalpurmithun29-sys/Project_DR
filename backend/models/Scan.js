@@ -48,7 +48,6 @@ const scanSchema = new mongoose.Schema({
     scanId: {
         type: String,
         required: true,
-        unique: true,
     },
     insights: [
         {
@@ -93,6 +92,10 @@ const scanSchema = new mongoose.Schema({
     },
     reviewedAt: {
         type: Date,
+    },
+    isBilateral: {
+        type: Boolean,
+        default: false,
     },
     createdAt: {
         type: Date,

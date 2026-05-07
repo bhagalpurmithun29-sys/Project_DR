@@ -40,12 +40,14 @@ const PatientReport = () => {
                 if (currentScan?.patient?._id) {
                     const allScansRes = await api.get(`/patients/${currentScan.patient._id}/scans`);
                     const allScans = allScansRes.data.data || [];
-                    const sibling = allScans.find(sib => 
+                    const sibling = (currentScan.isBilateral !== false) ? allScans.find(sib => 
                         sib._id !== currentScan._id &&
+                        sib.isBilateral !== false &&
+                        sib.patient?._id &&
                         sib.patient?._id === currentScan.patient?._id && 
                         sib.eyeSide !== currentScan.eyeSide &&
                         Math.abs(new Date(sib.createdAt) - new Date(currentScan.createdAt)) < 24 * 60 * 60 * 1000
-                    );
+                    ) : null;
                     setSiblingScan(sibling || null);
                 }
             } catch (err) {
@@ -234,6 +236,33 @@ const PatientReport = () => {
     }
 
     if (!scan) return <div className="p-10 text-center">Scan not found.</div>;
+
+    if (scan.status !== 'Reviewed') {
+        return (
+            <div className="min-h-screen bg-main flex items-center justify-center p-6">
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl p-10 max-w-md w-full text-center space-y-6">
+                    <div className="size-20 rounded-[2rem] bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 mx-auto animate-pulse">
+                        <Clock size={40} />
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="text-xl font-black text-slate-900 italic">Report <span className="text-amber-500 not-italic">Review Pending</span></h3>
+                        <p className="text-xs font-bold text-slate-500 leading-relaxed uppercase tracking-wide">
+                            Your doctor is currently reviewing this scan and writing clinical prescriptions.
+                        </p>
+                        <p className="text-[11px] font-medium text-slate-400">
+                            To ensure patient safety and medical accuracy, full clinical details and scans are locked until authorized by your doctor. Please check back soon!
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="w-full h-12 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg"
+                    >
+                        Return to Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-main font-display text-slate-900 antialiased flex flex-col">

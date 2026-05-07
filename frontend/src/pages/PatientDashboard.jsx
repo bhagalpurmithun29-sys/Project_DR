@@ -70,9 +70,8 @@ const PatientDashboard = () => {
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
     const latestScan = scans[0];
-    const reviewedScans = scans.filter(s => s.status === 'Reviewed');
-    const latestReviewedScan = reviewedScans[0];
-
+    const reviewedScans = scans.filter(s => s.mainScan?.status === 'Reviewed');
+    const latestReviewedScan = reviewedScans[0]?.mainScan;
     const latestResult = latestReviewedScan?.aiResult?.toLowerCase() || '';
     const diabeticStage = latestResult.includes('proliferative') || latestResult.includes('pdr') || latestResult.includes('high') ? 'Stage 4: PDR' :
         latestResult.includes('severe') ? 'Stage 3: Severe NPDR' :
@@ -109,11 +108,13 @@ const PatientDashboard = () => {
                     const seen = new Set();
                     allScans.forEach(s => {
                         if (seen.has(s._id)) return;
-                        const sibling = allScans.find(sib =>
+                        const sibling = (s.isBilateral !== false) ? allScans.find(sib =>
                             sib._id !== s._id &&
+                            !seen.has(sib._id) &&
+                            sib.isBilateral !== false &&
                             sib.eyeSide !== s.eyeSide &&
                             Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 10 * 60 * 1000
-                        );
+                        ) : null;
                         if (sibling) {
                             grouped.push({
                                 _id: s._id,
@@ -516,6 +517,7 @@ const PatientDashboard = () => {
                                         <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                             {scans.length > 0 ? scans.map((group) => {
                                                 const { mainScan: scan, siblingScan, groupType } = group;
+                                                const isReviewed = scan.status === 'Reviewed';
                                                 return (
                                                 <tr key={group._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all group">
                                                     <td className="px-8 py-6">
@@ -526,35 +528,61 @@ const PatientDashboard = () => {
                                                     </td>
                                                     <td className="px-8 py-6">
                                                         <div className="flex flex-col gap-1">
-                                                            <span>{scan.aiResult || (scan.status === 'Analyzed' || scan.status === 'Reviewed' ? 'None' : 'Processing')}</span>
+                                                            {isReviewed ? (
+                                                                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{scan.aiResult || 'None'}</span>
+                                                            ) : (
+                                                                <span className="text-xs font-black text-amber-500 italic uppercase tracking-wider">Review Pending</span>
+                                                            )}
                                                             {siblingScan && (
-                                                                <span className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1">
-                                                                    OS: {siblingScan.aiResult || (siblingScan.status === 'Analyzed' || siblingScan.status === 'Reviewed' ? 'None' : 'Processing')}
+                                                                <span className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1 flex flex-col gap-0.5">
+                                                                    {siblingScan.status === 'Reviewed' ? (
+                                                                        <span>OS: {siblingScan.aiResult || 'None'}</span>
+                                                                    ) : (
+                                                                        <span className="text-[9px] font-black text-amber-500/80 italic uppercase tracking-wider">OS: Review Pending</span>
+                                                                    )}
                                                                 </span>
                                                             )}
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-6 text-sm font-bold text-slate-600 dark:text-slate-400">
-                                                        {scan.lesionCount !== undefined ? `${scan.lesionCount} lesions` : 'N/A'}
-                                                        {siblingScan && <span className="block text-[10px] opacity-60">OS: {siblingScan.lesionCount ?? 0} lesions</span>}
+                                                        {isReviewed ? (
+                                                            <span>{scan.lesionCount !== undefined ? `${scan.lesionCount} lesions` : 'N/A'}</span>
+                                                        ) : (
+                                                            <span className="text-xs font-bold text-slate-400 italic">Awaiting Doctor</span>
+                                                        )}
+                                                        {siblingScan && (
+                                                            <span className="block text-[10px] opacity-60">
+                                                                {siblingScan.status === 'Reviewed' ? (
+                                                                    `OS: ${siblingScan.lesionCount ?? 0} lesions`
+                                                                ) : (
+                                                                    <span className="text-[9px] font-bold text-slate-400/80 italic">OS: Awaiting Doctor</span>
+                                                                )}
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="px-8 py-6">
                                                         <div className="flex flex-col gap-1">
-                                                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${scan.status === 'Reviewed' || scan.status === 'Analyzed' ? 'text-primary' : 'text-amber-600'}`}>
-                                                                <span className={`size-1.5 rounded-full ${scan.status === 'Reviewed' || scan.status === 'Analyzed' ? 'bg-primary' : 'bg-amber-600 animate-pulse'}`}></span>
-                                                                {scan.status === 'Analyzed' ? 'Generated' : scan.status}
+                                                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${isReviewed ? 'text-primary' : 'text-amber-500'}`}>
+                                                                <span className={`size-1.5 rounded-full ${isReviewed ? 'bg-primary' : 'bg-amber-500 animate-pulse'}`}></span>
+                                                                {isReviewed ? 'Reviewed' : 'Review Pending'}
                                                             </div>
                                                             {siblingScan && (
-                                                                <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${siblingScan.status === 'Reviewed' || siblingScan.status === 'Analyzed' ? 'text-primary' : 'text-amber-600'}`}>
-                                                                    <span className={`size-1.5 rounded-full ${siblingScan.status === 'Reviewed' || siblingScan.status === 'Analyzed' ? 'bg-primary' : 'bg-amber-600 animate-pulse'}`}></span>
-                                                                    {siblingScan.status === 'Analyzed' ? 'Generated' : siblingScan.status}
+                                                                <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${siblingScan.status === 'Reviewed' ? 'text-primary' : 'text-amber-500'}`}>
+                                                                    <span className={`size-1.5 rounded-full ${siblingScan.status === 'Reviewed' ? 'bg-primary' : 'bg-amber-500 animate-pulse'}`}></span>
+                                                                    {siblingScan.status === 'Reviewed' ? 'Reviewed' : 'Review Pending'}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-6 text-right">
                                                         <button
-                                                            onClick={() => navigate('/scan-history')}
+                                                            onClick={() => {
+                                                                if (isReviewed) {
+                                                                    navigate('/reports');
+                                                                } else {
+                                                                    showToast('Your doctor is currently reviewing this scan and writing prescriptions. Clinical reports will unlock once reviewed!', 'warning');
+                                                                }
+                                                            }}
                                                             className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-primary hover:text-white transition-all flex items-center justify-center group-hover:shadow-lg group-hover:shadow-primary/20"
                                                         >
                                                             <ArrowUpRight size={18} />

@@ -28,6 +28,21 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from './PatientPreferencesModal';
 
+const formatSpecialization = (spec) => {
+    if (!spec) return 'Retina Specialist';
+    const mapping = {
+        'dr_screening': 'Diabetic Retinopathy Screening',
+        'medical_dr': 'Medical Diabetic Retinopathy',
+        'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
+        'dr_lasers': 'Laser & DR Therapeutics',
+        'general': 'General Retina',
+        'retina': 'Medical Retina',
+        'surgery': 'Vitreoretinal Surgery',
+        'pediatric': 'Pediatric Retina'
+    };
+    return mapping[spec] || spec;
+};
+
 const PatientAppointments = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -266,7 +281,7 @@ const PatientAppointments = () => {
                             <div className="size-10 rounded-xl bg-cover bg-center border-2 border-slate-50 shadow-sm" style={{ backgroundImage: `url(${normalizeUrl(app.doctorId?.photo) || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.doctorId?.name || 'Dr')}&background=059669&color=fff&bold=true`})` }}></div>
                             <div>
                               <p className="text-sm font-black text-slate-900 leading-none">Dr. {app.doctorId?.name}</p>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{app.doctorId?.specialization || 'Specialist'}</p>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{formatSpecialization(app.doctorId?.specialization)}</p>
                             </div>
                           </div>
                         </td>
@@ -356,7 +371,7 @@ const PatientAppointments = () => {
                     className="w-full pl-4 pr-8 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all appearance-none"
                   >
                     <option value="">— Choose a doctor —</option>
-                    {doctors.map(d => <option key={d._id} value={d._id}>Dr. {d.name} ({d.specialization})</option>)}
+                    {doctors.map(d => <option key={d._id} value={d._id}>Dr. {d.name} ({formatSpecialization(d.specialization)})</option>)}
                   </select>
                 </div>
                 <div className="space-y-1.5">

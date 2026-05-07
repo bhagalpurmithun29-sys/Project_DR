@@ -159,7 +159,7 @@ const DoctorProfile = () => {
     
     // Grading logic based on AI result matching the frontend visual classes
     const mildCount = analyzedScans.filter(s => s.aiResult === 'Low Risk').length;
-    const moderateCount = analyzedScans.filter(s => s.aiResult === 'Moderate').length;
+    const moderateCount = analyzedScans.filter(s => s.aiResult === 'Moderate' || s.aiResult === 'Moderate Risk').length;
     const pdrCount = Math.floor(highRiskScans * 0.35); // Estimated subset of high risk
     const severeCount = highRiskScans - pdrCount;
     

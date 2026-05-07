@@ -37,6 +37,21 @@ const Badge = ({ children, color = 'emerald' }) => {
     return <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${map[color] || map.slate}`}>{children}</span>;
 };
 
+const formatSpecialization = (spec) => {
+    if (!spec) return 'Retina Specialist';
+    const mapping = {
+        'dr_screening': 'Diabetic Retinopathy Screening',
+        'medical_dr': 'Medical Diabetic Retinopathy',
+        'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
+        'dr_lasers': 'Laser & DR Therapeutics',
+        'general': 'General Retina',
+        'retina': 'Medical Retina',
+        'surgery': 'Vitreoretinal Surgery',
+        'pediatric': 'Pediatric Retina'
+    };
+    return mapping[spec] || spec;
+};
+
 const PrintStyles = () => (
     <style dangerouslySetInnerHTML={{
         __html: `
@@ -479,12 +494,15 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
     const seen = new Set();
     filtered.forEach(s => {
         if (seen.has(s._id)) return;
-        const sibling = filtered.find(sib =>
+        const sibling = (s.isBilateral !== false) ? filtered.find(sib =>
             sib._id !== s._id &&
+            !seen.has(sib._id) &&
+            sib.isBilateral !== false &&
+            sib.patient?._id &&
             sib.patient?._id === s.patient?._id &&
             sib.eyeSide !== s.eyeSide &&
             Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 10 * 60 * 1000
-        );
+        ) : null;
         if (sibling) {
             groupedScans.push({
                 _id: s._id,
@@ -530,6 +548,7 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                 formData.append('eyeSide', item.side);
                 formData.append('notes', form.notes);
                 formData.append('technician', form.technician);
+                formData.append('isBilateral', form.eye === 'Both');
                 formData.append('image', item.file);
 
                 const res = await api.post('/scans', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -871,12 +890,14 @@ const ReportsSection = ({ scans, setSelectedScan, setSiblingScan, setShowReport 
     const seen = new Set();
     filtered.forEach(s => {
         if (seen.has(s._id)) return;
-        const sibling = filtered.find(sib =>
+        const sibling = (s.isBilateral !== false) ? filtered.find(sib =>
             sib._id !== s._id &&
+            !seen.has(sib._id) &&
+            sib.isBilateral !== false &&
             sib.patient?._id === s.patient?._id &&
             sib.eyeSide !== s.eyeSide &&
             Math.abs(new Date(sib.date || sib.createdAt) - new Date(s.date || s.createdAt)) < 5 * 60 * 1000
-        );
+        ) : null;
         if (sibling) {
             grouped.push({ type: 'Bilateral', scans: [s, sibling], date: s.date || s.createdAt, patient: s.patient, _id: s._id });
             seen.add(s._id);
@@ -1615,7 +1636,7 @@ const DiagnosisCenterDashboard = () => {
                                                         className="w-full px-5 py-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-900 font-bold text-sm outline-none focus:border-primary/20 transition-all shadow-sm"
                                                     >
                                                         <option value="">Select a Specialist Doctor...</option>
-                                                        {allDoctors.map(d => <option key={d._id} value={d.user?._id || d.user}>Dr. {d.name} ({d.specialization || 'Retina Specialist'})</option>)}
+                                                        {allDoctors.map(d => <option key={d._id} value={d.user?._id || d.user}>Dr. {d.name} ({formatSpecialization(d.specialization)})</option>)}
                                                     </select>
                                                     <button
                                                         onClick={async () => {

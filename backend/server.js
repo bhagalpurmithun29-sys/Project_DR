@@ -128,6 +128,14 @@ const connectDB = async () => {
             console.log(`📡 Attempting to connect to: ${host}...`);
             const conn = await mongoose.connect(uri);
             console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+            
+            // Auto-drop unique index on scanId to allow bilateral pairs to share the same ID
+            try {
+                await conn.connection.db.collection('scans').dropIndex('scanId_1');
+                console.log('🗑️  Successfully auto-dropped legacy unique scanId index.');
+            } catch (err) {
+                // Ignore error if index doesn't exist
+            }
         } catch (error) {
             console.error(`❌ MongoDB connection failed: ${error.message}`);
             console.log('⏳ Retrying in 5 seconds...');

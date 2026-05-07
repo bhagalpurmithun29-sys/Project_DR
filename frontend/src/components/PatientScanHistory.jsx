@@ -90,11 +90,13 @@ const DetailedScanHistory = () => {
             const seen = new Set();
             allScans.forEach(s => {
               if (seen.has(s._id)) return;
-              const sibling = allScans.find(sib =>
+              const sibling = (s.isBilateral !== false) ? allScans.find(sib =>
                 sib._id !== s._id &&
+                !seen.has(sib._id) &&
+                sib.isBilateral !== false &&
                 sib.eyeSide !== s.eyeSide &&
                 Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 10 * 60 * 1000
-              );
+              ) : null;
               if (sibling) {
                 grouped.push({
                   _id: s._id,
@@ -339,48 +341,70 @@ const DetailedScanHistory = () => {
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center gap-2">
                                     {siblingScan && <span className="text-[8px] font-black text-slate-400 w-4">OD:</span>}
-                                    <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${row.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                    (row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                        'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                    }`}>
-                                    {row.aiResult || 'Pending Analysis'}
-                                    </span>
+                                    {row.status === 'Reviewed' ? (
+                                        <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${row.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                        (row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                            'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                        }`}>
+                                        {row.aiResult || 'None'}
+                                        </span>
+                                    ) : (
+                                        <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-xl text-[9px] font-black uppercase tracking-widest animate-pulse">
+                                            Review Pending
+                                        </span>
+                                    )}
                                 </div>
                                 {siblingScan && (
                                     <div className="flex items-center gap-2">
                                         <span className="text-[8px] font-black text-slate-400 w-4">OS:</span>
-                                        <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${siblingScan.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                        (siblingScan.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                            'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                        }`}>
-                                        {siblingScan.aiResult || 'Pending Analysis'}
-                                        </span>
+                                        {siblingScan.status === 'Reviewed' ? (
+                                            <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${siblingScan.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                            (siblingScan.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                            }`}>
+                                            {siblingScan.aiResult || 'None'}
+                                            </span>
+                                        ) : (
+                                            <span className="px-3 py-1 bg-amber-50/80 text-amber-600 border border-amber-100/50 rounded-xl text-[9px] font-black uppercase tracking-widest">
+                                                Review Pending
+                                            </span>
+                                        )}
                                     </div>
                                 )}
                             </div>
                           </td>
                           <td className="px-10 py-8">
                             <div className="flex flex-col gap-1">
-                                <div className="flex items-baseline gap-1.5">
-                                    <span className="text-xl font-black text-slate-900 tracking-tighter leading-none">{row.lesionCount ?? 0}</span>
-                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{siblingScan ? 'OD' : 'Lesions'}</span>
-                                </div>
+                                {row.status === 'Reviewed' ? (
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-xl font-black text-slate-900 tracking-tighter leading-none">{row.lesionCount ?? 0}</span>
+                                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{siblingScan ? 'OD' : 'Lesions'}</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-xs font-bold text-slate-400 italic">Locked</span>
+                                )}
                                 {siblingScan && (
-                                    <div className="flex items-baseline gap-1.5 opacity-60">
-                                        <span className="text-sm font-black text-slate-500 tracking-tighter leading-none">{siblingScan.lesionCount ?? 0}</span>
-                                        <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">OS</span>
+                                    <div className="flex items-baseline gap-1.5 opacity-60 mt-1">
+                                        {siblingScan.status === 'Reviewed' ? (
+                                            <>
+                                                <span className="text-sm font-black text-slate-500 tracking-tighter leading-none">{siblingScan.lesionCount ?? 0}</span>
+                                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">OS</span>
+                                            </>
+                                        ) : (
+                                            <span className="text-[9px] font-bold text-slate-400/80 italic">OS Locked</span>
+                                        )}
                                     </div>
                                 )}
                             </div>
                           </td>
                           <td className="px-10 py-8">
                             <div className="flex flex-col gap-3">
-                                <ConfidenceBar value={95} />
-                                {siblingScan && <ConfidenceBar value={92} />}
+                                {row.status === 'Reviewed' ? <ConfidenceBar value={Math.round((row.aiConfidence || 0.95) * 100)} /> : <span className="text-xs font-bold text-slate-400 italic">--</span>}
+                                {siblingScan && (siblingScan.status === 'Reviewed' ? <ConfidenceBar value={Math.round((siblingScan.aiConfidence || 0.92) * 100)} /> : <span className="text-[10px] font-bold text-slate-400/80 italic mt-1">--</span>)}
                             </div>
                           </td>
                           <td className="px-10 py-8 text-right">
-                            {['Analyzed', 'Reviewed'].includes(row.status) && (row.sentToPatient || !row.referredDoctor) ? (
+                            {row.status === 'Reviewed' ? (
                               <Link
                                 to={`/report/${row._id}`}
                                 className="h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 group/btn"
@@ -388,9 +412,12 @@ const DetailedScanHistory = () => {
                                 View Report <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" strokeWidth={3} />
                               </Link>
                             ) : (
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                                    {row.status === 'Analyzed' ? 'Generated' : row.status}
-                                </span>
+                              <button
+                                onClick={() => alert('Your doctor is currently reviewing this scan and writing prescriptions. Clinical reports will unlock once reviewed!')}
+                                className="h-10 px-5 bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-100/50 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full"
+                              >
+                                Pending <Clock size={12} />
+                              </button>
                             )}
                           </td>
                         </motion.tr>
@@ -449,17 +476,25 @@ const DetailedScanHistory = () => {
 
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-black text-slate-900 tracking-tight italic">{row.aiResult}</h4>
+                          <h4 className="text-sm font-black text-slate-900 tracking-tight italic">
+                            {row.status === 'Reviewed' ? row.aiResult : 'Review Pending'}
+                          </h4>
                           <div className="flex items-baseline gap-1">
-                            <span className="text-lg font-black text-primary">{row.lesionCount ?? 0}</span>
+                            <span className="text-lg font-black text-primary">
+                              {row.status === 'Reviewed' ? (row.lesionCount ?? 0) : '--'}
+                            </span>
                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Lesions</span>
                           </div>
                         </div>
                         {siblingScan && (
                             <div className="flex items-center justify-between opacity-60">
-                                <h4 className="text-[11px] font-bold text-slate-500 italic">{siblingScan.aiResult}</h4>
+                                <h4 className="text-[11px] font-bold text-slate-500 italic">
+                                  {siblingScan.status === 'Reviewed' ? siblingScan.aiResult : 'Review Pending'}
+                                </h4>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-sm font-black text-slate-400">{siblingScan.lesionCount ?? 0}</span>
+                                    <span className="text-sm font-black text-slate-400">
+                                      {siblingScan.status === 'Reviewed' ? (siblingScan.lesionCount ?? 0) : '--'}
+                                    </span>
                                     <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest">Lesions</span>
                                 </div>
                             </div>
@@ -469,7 +504,7 @@ const DetailedScanHistory = () => {
                         </div>
                       </div>
 
-                      {['Analyzed', 'Reviewed'].includes(row.status) && (row.sentToPatient || !row.referredDoctor) ? (
+                      {row.status === 'Reviewed' ? (
                         <Link
                           to={`/report/${row._id}`}
                           className="w-full h-12 bg-white text-slate-900 border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-white hover:border-primary transition-all flex items-center justify-center gap-2"
@@ -477,9 +512,12 @@ const DetailedScanHistory = () => {
                           Access Analysis <ArrowUpRight size={14} strokeWidth={2.5} />
                         </Link>
                       ) : (
-                        <div className="w-full h-12 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                          {row.status === 'Analyzed' ? 'Generated' : row.status} <Clock size={14} />
-                        </div>
+                        <button
+                          onClick={() => alert('Your doctor is currently reviewing this scan and writing prescriptions. Clinical reports will unlock once reviewed!')}
+                          className="w-full h-12 bg-amber-50 text-amber-600 border border-amber-100/50 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-100 transition-all flex items-center justify-center gap-2"
+                        >
+                          Pending Doctor Review <Clock size={14} />
+                        </button>
                       )}
                     </div>
                   </motion.div>

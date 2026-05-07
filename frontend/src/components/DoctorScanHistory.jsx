@@ -295,12 +295,15 @@ const DoctorScanHistory = () => {
     const seen = new Set();
     filteredScans.forEach(s => {
         if (seen.has(s.id)) return;
-        const sibling = filteredScans.find(sib =>
+        const sibling = (s.isBilateral !== false) ? filteredScans.find(sib =>
             sib.id !== s.id &&
+            !seen.has(sib.id) &&
+            sib.isBilateral !== false &&
+            sib.patientId &&
             sib.patientId === s.patientId &&
             sib.type !== s.type &&
             Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 5 * 60 * 1000
-        );
+        ) : null;
         if (sibling) {
             groupedScans.push({
                 id: s.id,
@@ -340,6 +343,31 @@ const DoctorScanHistory = () => {
     const itemVariants = {
         hidden: { opacity: 0, y: 12 },
         visible: { opacity: 1, y: 0 }
+    };
+
+    const renderClinicalSummary = (text) => {
+        if (!text) return null;
+        const sections = text.split(/##\s+/);
+        if (sections.length <= 1) {
+            return <p className="leading-relaxed italic">{text}</p>;
+        }
+        return (
+            <div className="space-y-3">
+                {sections.filter(s => s.trim()).map((sec, i) => {
+                    const lines = sec.trim().split('\n');
+                    const titleLine = lines[0];
+                    const contentLines = lines.slice(1).join('\n');
+                    const cleanTitle = titleLine.replace(/\*\*/g, '').trim();
+                    const cleanContent = contentLines.replace(/\*\*/g, '').trim();
+                    return (
+                        <div key={i} className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <h6 className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1.5">{cleanTitle}</h6>
+                            <p className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-line">{cleanContent}</p>
+                        </div>
+                    );
+                })}
+            </div>
+        );
     };
 
     return (
@@ -733,7 +761,7 @@ const DoctorScanHistory = () => {
                                     <div className="flex justify-between items-start mb-10">
                                         <div>
                                             <h3 className="text-2xl font-black text-slate-900 tracking-tight italic">Scan <span className="text-primary not-italic">Analysis</span></h3>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1 italic">Diagnostic results sync: {selectedScan.date}</p>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1 italic">Diagnostic results Date: {selectedScan.date}</p>
                                         </div>
                                         <button onClick={() => setIsAnalysisModalOpen(false)} className="size-10 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-900 transition-all flex items-center justify-center font-bold">✕</button>
                                     </div>
@@ -746,89 +774,91 @@ const DoctorScanHistory = () => {
                                                     {selectedScan.patientName.split(' ').map(n => n[0]).join('')}
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Authenticated Entity</p>
+                                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Patient Name</p>
                                                     <h4 className="text-lg font-black text-slate-900 leading-none">{selectedScan.patientName}</h4>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Results Grid */}
-                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                                                <div className="absolute top-0 right-0 p-3">
-                                                    <Activity className="text-slate-50" size={40} />
-                                                </div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">AI Scoring</p>
-                                                <div className="space-y-2 relative z-10">
-                                                    <div className="flex items-center gap-2">
-                                                        {siblingScan && <span className="text-[10px] font-black text-slate-300 w-6">OD:</span>}
-                                                        <h5 className={`text-base font-black italic ${selectedScan.risk === 'High Risk' ? 'text-rose-500' :
-                                                            selectedScan.risk === 'Moderate' ? 'text-amber-500' : 'text-emerald-500'
-                                                            }`}>{selectedScan.risk}</h5>
-                                                    </div>
+                                        {/* Bilateral Comparison Table */}
+                                        <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/20 overflow-hidden">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead className="bg-[#f8fafc]/50 border-b border-slate-100">
+                                                    <tr>
+                                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Eye Side</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-slate-400">AI Scoring</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-slate-400">AI Confidence</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Lesions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    <tr className="hover:bg-slate-50/40 transition-colors">
+                                                        <td className="px-6 py-4 flex items-center gap-2">
+                                                            <span className="size-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-[10px] font-black border border-primary/10 shadow-sm">OD</span>
+                                                            <span className="text-[11px] font-black text-slate-700 uppercase tracking-wide">Right Eye</span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all ${
+                                                                selectedScan.risk === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-sm shadow-rose-100/50' :
+                                                                (selectedScan.risk === 'Moderate' || selectedScan.risk === 'Moderate Risk') ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm shadow-amber-100/50' :
+                                                                'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm shadow-emerald-100/50'
+                                                            }`}>
+                                                                {selectedScan.risk || 'Low Risk'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-xs font-black text-slate-800">
+                                                            {selectedScan.aiConfidence ? `${(selectedScan.aiConfidence * 100).toFixed(1)}%` : '—'}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-xs font-black text-slate-800">
+                                                            {selectedScan.lesionCount ?? '0'}
+                                                        </td>
+                                                    </tr>
                                                     {siblingScan && (
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] font-black text-slate-300 w-6">OS:</span>
-                                                            <h5 className={`text-base font-black italic ${siblingScan.risk === 'High Risk' ? 'text-rose-500' :
-                                                                siblingScan.risk === 'Moderate' ? 'text-amber-500' : 'text-emerald-500'
-                                                                }`}>{siblingScan.risk}</h5>
-                                                        </div>
+                                                        <tr className="hover:bg-slate-50/40 transition-colors">
+                                                            <td className="px-6 py-4 flex items-center gap-2">
+                                                                <span className="size-6 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center text-[10px] font-black border border-indigo-100 shadow-sm">OS</span>
+                                                                <span className="text-[11px] font-black text-slate-700 uppercase tracking-wide">Left Eye</span>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <span className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all ${
+                                                                    siblingScan.risk === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-sm shadow-rose-100/50' :
+                                                                    (siblingScan.risk === 'Moderate' || siblingScan.risk === 'Moderate Risk') ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm shadow-amber-100/50' :
+                                                                    'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm shadow-emerald-100/50'
+                                                                }`}>
+                                                                    {siblingScan.risk || 'Low Risk'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-xs font-black text-slate-800">
+                                                                {siblingScan.aiConfidence ? `${(siblingScan.aiConfidence * 100).toFixed(1)}%` : '—'}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-xs font-black text-slate-800">
+                                                                {siblingScan.lesionCount ?? '0'}
+                                                            </td>
+                                                        </tr>
                                                     )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* Practitioner Information */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-slate-50/50 p-5 rounded-[1.5rem] border border-slate-100/80 flex items-center gap-3.5 transition-all hover:bg-slate-50">
+                                                <div className="size-9 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400">
+                                                    <User size={18} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Technician</p>
+                                                    <h5 className="text-xs font-black text-slate-800 uppercase tracking-wide leading-none">{selectedScan.technician || "Unknown"}</h5>
                                                 </div>
                                             </div>
-
-                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                                                <div className="absolute top-0 right-0 p-3">
-                                                    <Target className="text-slate-50" size={40} />
+                                            <div className="bg-slate-50/50 p-5 rounded-[1.5rem] border border-slate-100/80 flex items-center gap-3.5 transition-all hover:bg-slate-50">
+                                                <div className="size-9 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400">
+                                                    <Shield size={18} />
                                                 </div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">AI Confidence</p>
-                                                <div className="space-y-2 relative z-10">
-                                                    <div className="flex items-center gap-2">
-                                                        {siblingScan && <span className="text-[10px] font-black text-slate-300 w-6">OD:</span>}
-                                                        <h5 className="text-base font-black text-slate-900">{selectedScan.aiConfidence ? `${(selectedScan.aiConfidence * 100).toFixed(1)}%` : '—'}</h5>
-                                                    </div>
-                                                    {siblingScan && (
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] font-black text-slate-300 w-6">OS:</span>
-                                                            <h5 className="text-base font-black text-slate-900">{siblingScan.aiConfidence ? `${(siblingScan.aiConfidence * 100).toFixed(1)}%` : '—'}</h5>
-                                                        </div>
-                                                    )}
+                                                <div>
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Physician</p>
+                                                    <h5 className="text-xs font-black text-slate-800 uppercase tracking-wide leading-none">Dr. {selectedScan.doctorName || "Review Pending"}</h5>
                                                 </div>
-                                            </div>
-
-                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                                                <div className="absolute top-0 right-0 p-3">
-                                                    <AlertCircle className="text-slate-50" size={40} />
-                                                </div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Lesions Detected</p>
-                                                <div className="space-y-2 relative z-10">
-                                                    <div className="flex items-center gap-2">
-                                                        {siblingScan && <span className="text-[10px] font-black text-slate-300 w-6">OD:</span>}
-                                                        <h5 className="text-base font-black text-slate-900">{selectedScan.lesionCount ?? '—'}</h5>
-                                                    </div>
-                                                    {siblingScan && (
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] font-black text-slate-300 w-6">OS:</span>
-                                                            <h5 className="text-base font-black text-slate-900">{siblingScan.lesionCount ?? '—'}</h5>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                                                <div className="absolute top-0 right-0 p-3">
-                                                    <User className="text-slate-50" size={40} />
-                                                </div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Technician</p>
-                                                <h5 className="text-lg font-black text-slate-900 relative z-10 capitalize">{selectedScan.technician || "Unknown"}</h5>
-                                            </div>
-
-                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                                                <div className="absolute top-0 right-0 p-3">
-                                                    <Shield className="text-slate-50" size={40} />
-                                                </div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Physician</p>
-                                                <h5 className="text-lg font-black text-slate-900 relative z-10 leading-tight">Dr. {selectedScan.doctorName || "Review Pending"}</h5>
                                             </div>
                                         </div>
 
@@ -839,12 +869,12 @@ const DoctorScanHistory = () => {
                                                 <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-inner italic text-xs font-bold text-slate-600 leading-relaxed space-y-4">
                                                     <div>
                                                         {siblingScan && <span className="font-black text-[10px] text-slate-400 uppercase block mb-1">Right Eye (OD)</span>}
-                                                        {selectedScan.aiReportSummary}
+                                                        {renderClinicalSummary(selectedScan.aiReportSummary)}
                                                     </div>
                                                     {siblingScan && siblingScan.aiReportSummary && (
                                                         <div className="pt-4 border-t border-slate-100">
                                                             <span className="font-black text-[10px] text-slate-400 uppercase block mb-1">Left Eye (OS)</span>
-                                                            {siblingScan.aiReportSummary}
+                                                            {renderClinicalSummary(siblingScan.aiReportSummary)}
                                                         </div>
                                                     )}
                                                 </div>

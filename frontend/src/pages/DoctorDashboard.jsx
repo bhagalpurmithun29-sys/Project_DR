@@ -158,10 +158,47 @@ const DoctorDashboard = () => {
         navigate('/login');
     };
 
-    const analyzedScans = scans.filter(s => s.status !== 'Pending');
-    const totalAnalyzed = analyzedScans.length;
-    const highRiskCount = analyzedScans.filter(s => s.aiResult === 'High Risk').length;
-    const moderateCount = analyzedScans.filter(s => s.aiResult === 'Moderate').length;
+    const groupedScans = [];
+    const seenGroup = new Set();
+    scans.forEach(s => {
+        if (!s._id) return;
+        if (seenGroup.has(s._id.toString())) return;
+        const sibling = (s.isBilateral !== false) ? scans.find(sib =>
+            sib._id &&
+            sib._id.toString() !== s._id.toString() &&
+            !seenGroup.has(sib._id.toString()) &&
+            sib.isBilateral !== false &&
+            sib.patient?._id === s.patient?._id &&
+            sib.eyeSide !== s.eyeSide &&
+            Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 10 * 60 * 1000
+        ) : null;
+        if (sibling) {
+            groupedScans.push({
+                type: 'Bilateral',
+                scans: [s, sibling],
+                date: s.createdAt || s.date,
+                patient: s.patient,
+                _id: s._id,
+                status: (s.status === 'Reviewed' && sibling.status === 'Reviewed') ? 'Reviewed' : 'Analyzed'
+            });
+            seenGroup.add(s._id.toString());
+            seenGroup.add(sibling._id.toString());
+        } else {
+            groupedScans.push({
+                type: 'Single',
+                scans: [s],
+                date: s.createdAt || s.date,
+                patient: s.patient,
+                _id: s._id,
+                status: s.status
+            });
+            seenGroup.add(s._id.toString());
+        }
+    });
+
+    const totalAnalyzed = groupedScans.length;
+    const highRiskCount = groupedScans.filter(g => g.scans.some(s => s.aiResult === 'High Risk')).length;
+    const moderateCount = groupedScans.filter(g => !g.scans.some(s => s.aiResult === 'High Risk') && g.scans.some(s => s.aiResult === 'Moderate' || s.aiResult === 'Moderate Risk')).length;
     const lowRiskCount = Math.max(0, totalAnalyzed - highRiskCount - moderateCount);
 
     const severityStats = [
@@ -193,8 +230,8 @@ const DoctorDashboard = () => {
 
     // Real new patients count (patients whose first scan was created today)
     const todayStr = new Date().toDateString();
-    const todayScans = scans.filter(s => new Date(s.createdAt).toDateString() === todayStr);
-    const newPatientsToday = new Set(todayScans.map(s => s.patient?._id)).size;
+    const todayScans = groupedScans.filter(g => new Date(g.date).toDateString() === todayStr);
+    const newPatientsToday = new Set(todayScans.map(g => g.patient?._id)).size;
 
     const KPI_CARDS = [
         {
@@ -206,7 +243,7 @@ const DoctorDashboard = () => {
                 ...scans.map(s => s.patient?._id).filter(id => id),
                 ...appointments.map(a => a.patientId?._id).filter(id => id)
             ]).size.toString(),
-            trend: newPatientsToday > 0 ? `+${newPatientsToday} today` : "+0 today",
+            trend: newPatientsToday > 0 ? "+" + newPatientsToday + " today" : "+0 today",
             trendUp: true,
         },
         {
@@ -214,9 +251,9 @@ const DoctorDashboard = () => {
             iconBg: "bg-teal-500/10",
             iconColor: "text-teal-500",
             label: "Total Scans",
-            value: scans.length.toString(),
-            trend: scans.filter(s => {
-                const d = new Date(s.createdAt);
+            value: groupedScans.length.toString(),
+            trend: groupedScans.filter(g => {
+                const d = new Date(g.date);
                 const now = new Date();
                 return d.toDateString() === now.toDateString();
             }).length.toString() + " today",
@@ -227,7 +264,7 @@ const DoctorDashboard = () => {
             iconBg: "bg-rose-500/10",
             iconColor: "text-rose-500",
             label: "High Risk Cases",
-            value: scans.filter(s => s.aiResult === 'High Risk').length.toString(),
+            value: highRiskCount.toString(),
             trend: "Critical",
             trendUp: false,
             valueColor: "text-rose-500",
@@ -237,29 +274,38 @@ const DoctorDashboard = () => {
             iconBg: "bg-amber-500/10",
             iconColor: "text-amber-500",
             label: "Pending Review",
-            value: scans.filter(s => s.status === 'Pending').length.toString(),
+            value: groupedScans.filter(g => g.scans.some(s => s.status !== 'Reviewed')).length.toString(),
             trend: "Awaiting",
             trendUp: true,
         },
     ];
 
-    const RECENT_ACTIVITY = scans.slice(0, 5).map(scan => ({
-        _id: scan._id,
-        name: scan.patient?.name || "Unknown Patient",
-        initials: (scan.patient?.name || "UP").split(' ').map(n => n[0]).join(''),
-        age: scan.patient?.age || "—",
-        time: new Date(scan.createdAt || scan.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        risk: scan.aiResult,
-        riskStyle: scan.aiResult === 'High Risk' ? "bg-rose-50 text-rose-600 border-rose-100" :
-            scan.aiResult === 'Moderate' ? "bg-amber-50 text-amber-600 border-amber-100" :
-                "bg-emerald-50 text-emerald-600 border-emerald-100",
-        status: scan.status,
-        statusStyle: scan.status === 'Pending' ? "text-amber-600" : "text-primary",
-        statusDot: scan.status === 'Pending' ? "bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.4)] animate-pulse" : "bg-primary",
-        action: scan.status === 'Pending' ? "Analyze" : "Details",
-        source: scan.diagnosisCenter?.name || 'Self',
-        diagnosor: scan.technician || 'Direct Entry'
-    }));
+    const RECENT_ACTIVITY = groupedScans.slice(0, 5).map(g => {
+        const mainScan = g.scans[0];
+        const hasHigh = g.scans.some(s => s.aiResult === 'High Risk');
+        const hasMod = g.scans.some(s => s.aiResult === 'Moderate' || s.aiResult === 'Moderate Risk');
+        const risk = hasHigh ? 'High Risk' : hasMod ? 'Moderate Risk' : 'Low Risk';
+        const isPending = g.scans.some(s => s.status === 'Pending');
+        const isReviewed = g.scans.every(s => s.status === 'Reviewed');
+        const status = isReviewed ? 'Reviewed' : 'Analyzed';
+        return {
+            _id: g._id,
+            name: g.patient?.name || "Unknown Patient",
+            initials: (g.patient?.name || "UP").split(' ').map(n => n[0]).join(''),
+            age: g.patient?.age || "—",
+            time: new Date(g.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            risk: risk,
+            riskStyle: risk === 'High Risk' ? "bg-rose-50 text-rose-600 border-rose-100" :
+                risk === 'Moderate Risk' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                    "bg-emerald-50 text-emerald-600 border-emerald-100",
+            status: status,
+            statusStyle: status === 'Pending' ? "text-amber-600" : "text-primary",
+            statusDot: status === 'Pending' ? "bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.4)] animate-pulse" : "bg-primary",
+            action: status === 'Pending' ? "Analyze" : "Details",
+            source: mainScan.diagnosisCenter?.name || 'Self',
+            diagnosor: mainScan.technician || 'Direct Entry'
+        };
+    });
 
     const filteredPatients = patients.filter(p =>
         (p.name?.toLowerCase() || '').includes(search.toLowerCase()) ||
@@ -327,14 +373,14 @@ const DoctorDashboard = () => {
                                         className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer group/res"
                                     >
                                         <div className={`size-10 rounded-xl flex items-center justify-center font-black text-[9px] border-2 border-white shadow-sm ${s.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-500' :
-                                            s.aiResult === 'Moderate' ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'
+                                            (s.aiResult === 'Moderate' || s.aiResult === 'Moderate Risk') ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'
                                             }`}>
                                             {s.eyeSide}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-black text-slate-900 group-hover/res:text-primary transition-colors">{s.patient?.name || 'Unknown'}</p>
                                             <div className="flex items-center gap-2">
-                                                <span className={`text-[9px] font-black uppercase tracking-widest ${s.aiResult === 'High Risk' ? 'text-rose-500' : s.aiResult === 'Moderate' ? 'text-amber-500' : 'text-emerald-500'
+                                                <span className={`text-[9px] font-black uppercase tracking-widest ${s.aiResult === 'High Risk' ? 'text-rose-500' : (s.aiResult === 'Moderate' || s.aiResult === 'Moderate Risk') ? 'text-amber-500' : 'text-emerald-500'
                                                     }`}>{s.aiResult || 'Pending'}</span>
                                                 <span className="size-1 rounded-full bg-slate-200" />
                                                 <span className="text-[9px] font-bold text-slate-300 italic">{new Date(s.createdAt).toLocaleDateString()}</span>
@@ -500,8 +546,8 @@ const DoctorDashboard = () => {
                                 Diagnostic metrics sync completed.
                                 {highRiskCount > 0
                                     ? ` You have ${highRiskCount} high-risk case${highRiskCount !== 1 ? 's' : ''} requiring urgent review.`
-                                    : scans.filter(s => s.status === 'Pending').length > 0
-                                        ? ` You have ${scans.filter(s => s.status === 'Pending').length} scan${scans.filter(s => s.status === 'Pending').length !== 1 ? 's' : ''} pending analysis.`
+                                    : scans.filter(s => s.status !== 'Reviewed').length > 0
+                                        ? ` You have ${scans.filter(s => s.status !== 'Reviewed').length} scan${scans.filter(s => s.status === 'Pending').length !== 1 ? 's' : ''} pending analysis.`
                                         : ' All cases are up to date.'}
                             </p>
                         </div>
@@ -588,7 +634,7 @@ const DoctorDashboard = () => {
                                                 <td className="px-8 py-8">
                                                     <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.risk === 'High Risk'
                                                             ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20'
-                                                            : row.risk === 'Moderate'
+                                                            : (row.risk === 'Moderate' || row.risk === 'Moderate Risk')
                                                                 ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20'
                                                                 : row.risk
                                                                     ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20'

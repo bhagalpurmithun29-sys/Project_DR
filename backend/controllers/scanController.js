@@ -23,7 +23,7 @@ const backfillPatientIdIfMissing = async (patient) => {
 // @access  Private/Doctor/Technician
 exports.createScan = async (req, res) => {
     try {
-        const { patientId, technician, eyeSide, notes } = req.body;
+        const { patientId, technician, eyeSide, notes, isBilateral } = req.body;
         const imageFile = req.file;
 
         // Image is required for doctor/technician scans; optional for diagnosis centers
@@ -45,10 +45,11 @@ exports.createScan = async (req, res) => {
             technician: technician || req.user.name,
             imageUrl,
             eyeSide: eyeSide || 'OD',
-            scanId: await generateScanId(),
+            scanId: await generateScanId(patientId, eyeSide || 'OD', isBilateral === 'true' || isBilateral === true),
             clinicalNotes: notes || 'Screening initiated.',
             status: 'Pending',
-            referredDoctor: req.user.role === 'doctor' ? req.user._id : undefined
+            referredDoctor: req.user.role === 'doctor' ? req.user._id : undefined,
+            isBilateral: isBilateral === 'true' || isBilateral === true
         });
 
         // Populate patient name for response
@@ -231,13 +232,42 @@ exports.analyzeScan = async (req, res) => {
 // @access  Private/Doctor
 exports.getScans = async (req, res) => {
     try {
-        // SELF-HEALING: Ensure all scans have sequential IDs starting from SCAN01
+        // SELF-HEALING: Ensure all scans have sequential IDs starting from SCAN01, grouping bilateral pairs
         const allScans = await Scan.find().sort({ createdAt: 1 });
+        const seen = new Set();
+        let groupIndex = 1;
         for (let i = 0; i < allScans.length; i++) {
-            const expectedId = `SCAN${(i + 1).toString().padStart(2, '0')}`;
-            if (allScans[i].scanId !== expectedId) {
-                await Scan.findByIdAndUpdate(allScans[i]._id, { scanId: expectedId });
+            const s = allScans[i];
+            if (seen.has(s._id.toString())) continue;
+
+            const expectedId = `SCAN${groupIndex.toString().padStart(2, '0')}`;
+
+            // Find sibling scan (bilateral match)
+            const sibling = (s.isBilateral !== false) ? allScans.find(sib =>
+                sib._id.toString() !== s._id.toString() &&
+                !seen.has(sib._id.toString()) &&
+                sib.isBilateral !== false &&
+                sib.patient && s.patient &&
+                sib.patient.toString() === s.patient.toString() &&
+                sib.eyeSide !== s.eyeSide &&
+                Math.abs(new Date(sib.createdAt) - new Date(s.createdAt)) < 10 * 60 * 1000
+            ) : null;
+
+            if (s.scanId !== expectedId) {
+                await Scan.findByIdAndUpdate(s._id, { scanId: expectedId });
+                s.scanId = expectedId;
             }
+            seen.add(s._id.toString());
+
+            if (sibling) {
+                if (sibling.scanId !== expectedId) {
+                    await Scan.findByIdAndUpdate(sibling._id, { scanId: expectedId });
+                    sibling.scanId = expectedId;
+                }
+                seen.add(sibling._id.toString());
+            }
+
+            groupIndex++;
         }
 
         let query = {};
