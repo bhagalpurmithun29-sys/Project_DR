@@ -28,6 +28,7 @@ import { AuthContext } from '../context/AuthContext';
 import doctorService from '../services/doctorService';
 import scanService from '../services/scanService';
 import patientService from '../services/patientService';
+import appointmentService from '../services/appointmentService';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { normalizeUrl } from '../services/api';
@@ -56,6 +57,7 @@ const DoctorDashboard = () => {
     const [profile, setProfile] = useState(null);
     const [scans, setScans] = useState([]);
     const [patients, setPatients] = useState([]);
+    const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAlertsOpen, setIsAlertsOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -85,11 +87,12 @@ const DoctorDashboard = () => {
 
     const fetchData = async () => {
         try {
-            const [profileRes, scansRes, patientsRes, notificationsRes] = await Promise.allSettled([
+            const [profileRes, scansRes, patientsRes, notificationsRes, appointmentsRes] = await Promise.allSettled([
                 doctorService.getProfile(),
                 scanService.getScans(),
                 patientService.getAllPatients(),
-                api.get('/notifications')
+                api.get('/notifications'),
+                appointmentService.getDoctorAppointments('me')
             ]);
 
             if (profileRes.status === 'fulfilled' && profileRes.value.data) {
@@ -109,6 +112,9 @@ const DoctorDashboard = () => {
 
             if (scansRes.status === 'fulfilled') setScans(scansRes.value.data);
             if (patientsRes.status === 'fulfilled') setPatients(patientsRes.value.data);
+            if (appointmentsRes && appointmentsRes.status === 'fulfilled' && appointmentsRes.value?.data) {
+                setAppointments(appointmentsRes.value.data);
+            }
             if (notificationsRes.status === 'fulfilled') {
                 const unread = (notificationsRes.value.data.data || []).filter(n => !n.isRead).length;
                 setUnreadNotifications(unread);
@@ -196,7 +202,10 @@ const DoctorDashboard = () => {
             iconBg: "bg-primary/10",
             iconColor: "text-primary",
             label: "Patient Base",
-            value: new Set(scans.map(s => s.patient?._id)).size.toString(),
+            value: new Set([
+                ...scans.map(s => s.patient?._id).filter(id => id),
+                ...appointments.map(a => a.patientId?._id).filter(id => id)
+            ]).size.toString(),
             trend: newPatientsToday > 0 ? `+${newPatientsToday} today` : "+0 today",
             trendUp: true,
         },

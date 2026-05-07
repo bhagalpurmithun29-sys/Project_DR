@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { normalizeUrl } from '../services/api';
 import scanService from '../services/scanService';
+import appointmentService from '../services/appointmentService';
 import {
     Camera, Loader2, LogOut, Activity, LayoutDashboard, User,
     Bell, Settings, Edit3, Shield, Star, Award, MapPin, Calendar,
@@ -35,6 +36,7 @@ const DoctorProfile = () => {
     const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
     const [scans, setScans] = useState([]);
+    const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
     const [completionPercentage, setCompletionPercentage] = useState(0);
@@ -58,9 +60,10 @@ const DoctorProfile = () => {
     useEffect(() => {
         const fetchProfileData = async () => {
             try {
-                const [profileRes, scansRes] = await Promise.allSettled([
+                const [profileRes, scansRes, appointmentsRes] = await Promise.allSettled([
                     doctorService.getProfile(),
-                    scanService.getScans()
+                    scanService.getScans(),
+                    appointmentService.getDoctorAppointments('me')
                 ]);
 
                 if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
@@ -77,6 +80,10 @@ const DoctorProfile = () => {
 
                 if (scansRes.status === 'fulfilled' && scansRes.value?.data) {
                     setScans(scansRes.value.data);
+                }
+
+                if (appointmentsRes && appointmentsRes.status === 'fulfilled' && appointmentsRes.value?.data) {
+                    setAppointments(appointmentsRes.value.data);
                 }
             } catch (err) {
                 console.error('Failed to fetch data', err);
@@ -161,8 +168,11 @@ const DoctorProfile = () => {
     const sevPct = totalAnalyzed > 0 ? ((severeCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
     const pdrPct = totalAnalyzed > 0 ? ((pdrCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
 
-    // Dynamic Patient Count
-    const totalPatientsCount = new Set(scans.map(s => s.patient?._id).filter(id => id)).size;
+    // Dynamic Patient Count (Scans + Appointments)
+    const totalPatientsCount = new Set([
+        ...scans.map(s => s.patient?._id).filter(id => id),
+        ...appointments.map(a => a.patientId?._id).filter(id => id)
+    ]).size;
 
     // Dynamic Response Time Calculation
     const reviewedScans = scans.filter(s => s.status === 'Reviewed' && s.reviewedAt);
@@ -446,7 +456,7 @@ const DoctorProfile = () => {
                                         <Mail size={14} />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Authenticated Endpoint</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Registered Email ID</p>
                                         <p className="text-sm font-bold text-slate-900 break-all">{user?.email}</p>
                                     </div>
                                 </div>
@@ -455,7 +465,7 @@ const DoctorProfile = () => {
                                         <Calendar size={14} />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Member Inception</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Date Of Joining</p>
                                         <p className="text-sm font-bold text-slate-900">{new Date(profile?.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
                                     </div>
                                 </div>

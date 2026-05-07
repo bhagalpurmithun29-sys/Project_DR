@@ -346,7 +346,10 @@ const DoctorRegistration = () => {
                     <input
                       name="dob"
                       value={formData.dob}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        e.target.blur();
+                      }}
                       className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white focus:text-slate-900"
                       type="date"
                     />

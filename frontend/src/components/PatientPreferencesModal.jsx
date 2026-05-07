@@ -400,6 +400,7 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                                 calculatedAge = age;
                                                             }
                                                             setProfileForm(prev => ({ ...prev, dob: newDob, age: calculatedAge }));
+                                                            e.target.blur();
                                                         }}
                                                         className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
                                                     />
