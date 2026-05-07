@@ -88,13 +88,47 @@ export default function PatientAnalytics() {
           const sorted = [...scanData].sort((a, b) =>
             new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)
           );
-          const latest = sorted.find(s => s.status === 'Analyzed') || sorted[0] || {};
+          const reviewedScans = sorted.filter(s => s.status === 'Reviewed');
+          const latest = reviewedScans[0] || {};
 
           // Separate by eye side
-          const odScans = sorted.filter(s => s.eyeSide === 'OD');
-          const osScans = sorted.filter(s => s.eyeSide === 'OS');
-          setOdScan(odScans.find(s => s.status === 'Analyzed') || odScans[0] || null);
-          setOsScan(osScans.find(s => s.status === 'Analyzed') || osScans[0] || null);
+          const odScans = reviewedScans.filter(s => s.eyeSide === 'OD');
+          const osScans = reviewedScans.filter(s => s.eyeSide === 'OS');
+          setOdScan(odScans[0] || null);
+          setOsScan(osScans[0] || null);
+
+          // Logical grouping of bilateral scan sessions
+          const grouped = [];
+          const seen = new Set();
+          sorted.forEach(s => {
+              if (seen.has(s._id)) return;
+              const sibling = (s.isBilateral !== false) ? sorted.find(sib =>
+                  sib._id !== s._id &&
+                  !seen.has(sib._id) &&
+                  sib.isBilateral !== false &&
+                  sib.eyeSide !== s.eyeSide &&
+                  Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 10 * 60 * 1000
+              ) : null;
+              if (sibling) {
+                  grouped.push({
+                      _id: s._id,
+                      groupType: 'Bilateral',
+                      mainScan: s,
+                      siblingScan: sibling,
+                      date: s.date || s.createdAt
+                  });
+                  seen.add(s._id);
+                  seen.add(sibling._id);
+              } else {
+                  grouped.push({
+                      _id: s._id,
+                      groupType: 'Single',
+                      mainScan: s,
+                      date: s.date || s.createdAt
+                  });
+                  seen.add(s._id);
+              }
+          });
 
           // Determine colors based on risk
           const isHighRisk = latest.aiResult?.includes('High');
@@ -104,7 +138,7 @@ export default function PatientAnalytics() {
 
           const predictionName = latest.prediction
             || latest.findings?.[0]?.replace('AI Analysis detects: ', '')
-            || (latest.status === 'Analyzed' ? latest.aiResult : 'No Scan Yet');
+            || (latest.status === 'Reviewed' || latest.status === 'Analyzed' ? latest.aiResult : 'No Scan Yet');
 
           const dynamicStats = [
             // ── Card 1: Prediction (DR grade) ──────────────────
@@ -137,21 +171,21 @@ export default function PatientAnalytics() {
               iconBg: (latest.lesionCount || 0) > 2 ? "bg-rose-500/10" : (latest.lesionCount || 0) > 0 ? "bg-amber-500/10" : "bg-teal-500/10",
               iconColor: (latest.lesionCount || 0) > 2 ? "text-rose-500" : (latest.lesionCount || 0) > 0 ? "text-amber-500" : "text-teal-500",
               label: "Lesions Detected",
-              value: latest.status === 'Analyzed' ? (latest.lesionCount ?? 0).toString() : "—",
+              value: (latest.status === 'Reviewed' || latest.status === 'Analyzed') ? (latest.lesionCount ?? 0).toString() : "—",
               unit: latest.lesionCount > 0 ? "Focal" : "",
               barWidth: Math.min((latest.lesionCount || 0) * 12, 100),
               trend: (latest.lesionCount || 0) > 2 ? "High Risk" : (latest.lesionCount || 0) > 0 ? "Moderate" : "Stable",
               trendUp: (latest.lesionCount || 0) <= 1,
             },
-            // ── Card 4: Scan Progress (original) ───────────────
+            // ── Card 4: Scan Progress ───────────────────────
             {
               icon: Activity,
               iconBg: "bg-primary/10",
               iconColor: "text-primary",
               label: "Scan Progress",
-              value: scanData.length.toString(),
+              value: grouped.length.toString(),
               unit: "Total",
-              barWidth: Math.min(scanData.length * 10, 100),
+              barWidth: Math.min(grouped.length * 10, 100),
               trend: "Stable",
               trendUp: true,
             },

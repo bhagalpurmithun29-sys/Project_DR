@@ -322,7 +322,7 @@ const DetailedScanHistory = () => {
                         >
                           <td className="px-10 py-8">
                             <div className="flex flex-col gap-1">
-                                <span className="text-[11px] font-black text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10 select-none">ID-{row._id.substring(0, 8).toUpperCase()}</span>
+                                <span className="text-[11px] font-black text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10 select-none">{row.scanId || `ID-${row._id.substring(0, 8).toUpperCase()}`}</span>
                                 <span className={`w-fit px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
                                     {groupType}
                                 </span>
@@ -455,7 +455,7 @@ const DetailedScanHistory = () => {
                     <div className="relative z-10 space-y-6">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col gap-1">
-                            <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm w-fit">ID-{row._id.substring(0, 6)}</span>
+                             <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm w-fit">{row.scanId || `ID-${row._id.substring(0, 6).toUpperCase()}`}</span>
                             <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter w-fit ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
                                 {groupType}
                             </span>

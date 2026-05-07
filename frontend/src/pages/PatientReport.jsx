@@ -40,14 +40,18 @@ const PatientReport = () => {
                 if (currentScan?.patient?._id) {
                     const allScansRes = await api.get(`/patients/${currentScan.patient._id}/scans`);
                     const allScans = allScansRes.data.data || [];
-                    const sibling = (currentScan.isBilateral !== false) ? allScans.find(sib => 
-                        sib._id !== currentScan._id &&
-                        sib.isBilateral !== false &&
-                        sib.patient?._id &&
-                        sib.patient?._id === currentScan.patient?._id && 
-                        sib.eyeSide !== currentScan.eyeSide &&
-                        Math.abs(new Date(sib.createdAt) - new Date(currentScan.createdAt)) < 24 * 60 * 60 * 1000
-                    ) : null;
+                    const currentScanPatientId = currentScan.patient._id;
+                    const sibling = (currentScan.isBilateral !== false) ? allScans.find(sib => {
+                        const sibPatientId = sib.patient?._id || sib.patient;
+                        const currentScanTime = new Date(currentScan.createdAt || currentScan.date).getTime();
+                        const sibTime = new Date(sib.createdAt || sib.date).getTime();
+                        return sib._id !== currentScan._id &&
+                            sib.isBilateral !== false &&
+                            sibPatientId &&
+                            sibPatientId.toString() === currentScanPatientId.toString() && 
+                            sib.eyeSide !== currentScan.eyeSide &&
+                            Math.abs(sibTime - currentScanTime) < 24 * 60 * 60 * 1000;
+                    }) : null;
                     setSiblingScan(sibling || null);
                 }
             } catch (err) {
@@ -85,7 +89,7 @@ const PatientReport = () => {
             doc.setFontSize(10);
             doc.setTextColor(150);
             doc.setFont('helvetica', 'normal');
-            doc.text(`Diagnostic Unit: ${scan._id.toUpperCase()}`, 105, 28, { align: 'center' });
+            doc.text(`Diagnostic Unit: ${(scan.scanId || scan._id).toUpperCase()}`, 105, 28, { align: 'center' });
 
             // Horizontal Line
             doc.setDrawColor(240);
@@ -210,7 +214,7 @@ const PatientReport = () => {
             doc.setFont('helvetica', 'normal');
             doc.line(20, pageHeight - 25, 190, pageHeight - 25);
             doc.text('RetinaAI Digital Security Handshake Verified', 20, pageHeight - 15);
-            doc.text(`Report Reference: ${scan._id.toUpperCase()}`, 190, pageHeight - 15, { align: 'right' });
+            doc.text(`Report Reference: ${(scan.scanId || scan._id).toUpperCase()}`, 190, pageHeight - 15, { align: 'right' });
             doc.text(`Generated on ${new Date().toLocaleString()}`, 105, pageHeight - 10, { align: 'center' });
 
             doc.save(`RetinaAI_Report_${scan.patient?.name || 'Scan'}.pdf`);
@@ -386,7 +390,7 @@ const PatientReport = () => {
                     </button>
                     <div>
                         <h1 className="text-xl font-black text-slate-900 tracking-tight italic">Patient <span className="text-primary not-italic">Report</span></h1>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Diagnostic Unit: {scan._id.substring(0, 8)}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Diagnostic Unit: {scan.scanId || scan._id.substring(0, 8)}</p>
                     </div>
                 </div>
 
@@ -562,7 +566,7 @@ const PatientReport = () => {
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em]">RetinaAI Digital Security Handshake Verified</p>
                     </div>
                     <div className="flex items-center gap-8">
-                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Report Ref: {scan._id.toUpperCase()}</span>
+                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Report Ref: {(scan.scanId || scan._id).toUpperCase()}</span>
                          <div className="size-2 bg-primary rounded-full shadow-[0_0_8px_rgba(5,150,105,0.6)]" />
                     </div>
                 </div>
@@ -572,7 +576,7 @@ const PatientReport = () => {
             <div className="print-only-report">
                 <div className="print-header">
                     <h1>RETINAAI CLINICAL REPORT</h1>
-                    <p>Diagnostic Unit: {scan._id.toUpperCase()}</p>
+                    <p>Diagnostic Unit: {(scan.scanId || scan._id).toUpperCase()}</p>
                 </div>
 
                 <div className="print-section">
@@ -638,7 +642,7 @@ const PatientReport = () => {
                 )}
 
                 <div style={{ marginTop: '50px', borderTop: '1px solid #f1f5f9', paddingTop: '20px', fontSize: '9px', color: '#94a3b8', textAlign: 'center' }}>
-                    <p>RetinaAI Digital Security Handshake Verified • Report Ref: {scan._id.toUpperCase()}</p>
+                    <p>RetinaAI Digital Security Handshake Verified • Report Ref: {(scan.scanId || scan._id).toUpperCase()}</p>
                     <p style={{ marginTop: '5px' }}>Generated on {new Date().toLocaleString()}</p>
                 </div>
             </div>
