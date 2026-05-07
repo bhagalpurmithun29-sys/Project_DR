@@ -644,35 +644,7 @@ const PatientDashboard = () => {
                                 </div>
                             </motion.div>
 
-                            {/* AI Insights Card */}
-                            <motion.div variants={itemVariants} className="bg-white shadow-xl shadow-slate-200/30 rounded-[2.5rem] p-8 border border-slate-100 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors" />
-                                <h4 className="text-slate-900 text-xs font-black uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-                                    <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                                        <Brain size={16} />
-                                    </div>
-                                    AI Core Insights
-                                </h4>
-                                <ul className="space-y-6">
-                                    {latestReviewedScan?.insights && latestReviewedScan.insights.length > 0 ? latestReviewedScan.insights.map((insight, idx) => (
-                                        <li key={idx} className="flex gap-4">
-                                            <div className="size-8 rounded-xl bg-slate-50 flex-shrink-0 flex items-center justify-center text-primary border border-slate-100">
-                                                {insight.type === 'high_risk' ? <AlertCircle size={14} /> : <CheckCircle size={14} />}
-                                            </div>
-                                            <p className="text-xs font-bold leading-relaxed text-slate-500" dangerouslySetInnerHTML={{
-                                                __html: insight.message
-                                                    .replace(/(\d+%)/, '<span class="px-1.5 py-0.5 bg-primary/10 rounded-md font-black text-primary">$1</span>')
-                                                    .replace(/(In \d+ Months)/, '<span class="text-primary font-black underline underline-offset-4 decoration-primary/30">$1</span>')
-                                            }} />
-                                        </li>
-                                    )) : (
-                                        <div className="text-center py-6 text-slate-300 italic text-xs font-black uppercase tracking-widest">Awaiting Scan Analysis...</div>
-                                    )}
-                                </ul>
-                                <button className="w-full mt-10 py-4 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all">
-                                    Full Engine Report
-                                </button>
-                            </motion.div>
+
 
 
 
