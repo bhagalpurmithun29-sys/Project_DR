@@ -26,7 +26,7 @@ export const ChatProvider = ({ children }) => {
                 } else if (user?.name) {
                     setMessages([{
                         role: 'model',
-                        text: `👋 Hello ${user.name.split(' ')[0]}! I'm your RetinaAI Diabetes Assistant.\n\nI can help you to understand your diagnostic reports, explain the different stages of Diabetic Retinopathy, and provide guidance on eye health.\n\nWhat would you like to know today?`,
+                        text: `👋 Hello ${user.name.split(' ')[0]}! I'm your Retinal AI Diabetes Assistant.\n\nI can help you to understand your diagnostic reports, explain the different stages of Diabetic Retinopathy, and provide guidance on eye health.\n\nWhat would you like to know today?`,
                         time: formatTime(new Date()),
                         id: 'welcome',
                     }]);

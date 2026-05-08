@@ -19,7 +19,12 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['doctor', 'patient', 'technician', 'diagnosis_center'],
+        enum: ['doctor', 'patient', 'technician', 'diagnosis_center', 'admin'],
+    },
+    isVerified: {
+        type: String,
+        enum: ['pending', 'verified', 'rejected'],
+        default: 'verified',
     },
     age: {
         type: Number,

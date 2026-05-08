@@ -224,7 +224,7 @@ export default function PatientAnalytics() {
             <Activity size={24} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="font-black text-lg tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
+            <h1 className="font-black text-lg tracking-tight text-white italic uppercase leading-none">Retinal AI</h1>
             <p className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] mt-1">Patients Portal</p>
           </div>
         </div>
@@ -502,7 +502,7 @@ export default function PatientAnalytics() {
         {/* Footer */}
         <footer className="mt-auto px-10 py-12 text-center border-t border-slate-100 bg-white/50 backdrop-blur-sm">
           <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
-            © 2024 RetinaAI Analytics Systems / v2.4.1-STABLE / Node {user?._id?.substring(0, 8) || "882B-7"}
+            © 2024 Retinal AI Analytics Systems / v2.4.1-STABLE / Node {user?._id?.substring(0, 8) || "882B-7"}
           </p>
         </footer>
       </main>

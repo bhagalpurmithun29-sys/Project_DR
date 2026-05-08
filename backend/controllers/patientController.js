@@ -225,6 +225,11 @@ exports.uploadPatientPhoto = async (req, res) => {
 exports.updateMyProfile = async (req, res) => {
     try {
         const { name, age, phone, email, gender, dob } = req.body;
+
+        if (dob && new Date(dob) > new Date()) {
+            return res.status(400).json({ success: false, message: 'Date of Birth cannot be in the future.' });
+        }
+
         const patient = await Patient.findOne({ user: req.user.id });
         if (!patient) {
             return res.status(404).json({ success: false, message: 'Patient profile not found' });

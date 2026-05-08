@@ -9,8 +9,8 @@ export const calculateProfileCompletion = (profile) => {
     let points = 0;
     const totalPoints = 100;
 
-    // licenseNumber (10%) - Case-insensitive check for TEMP-
-    if (profile.licenseNumber && !profile.licenseNumber.toUpperCase().startsWith('TEMP-')) {
+    // licenseNumber (10%)
+    if (profile.licenseNumber && profile.licenseNumber.trim().length > 0) {
         points += 10;
     }
 
@@ -21,46 +21,39 @@ export const calculateProfileCompletion = (profile) => {
 
     // experience (10%)
     if (profile.experience && 
-        profile.experience !== 'Experience Range' && 
-        profile.experience !== '0') points += 10;
+        profile.experience !== 'Experience Range') points += 10;
 
     // specialization (10%)
     if (profile.specialization && 
-        profile.specialization !== 'Primary Focus' && 
-        profile.specialization !== 'Retina Specialist') points += 10;
+        profile.specialization !== 'Primary Focus') points += 10;
 
-    // phoneNumber (10%) - Ignore placeholder 0000000000
-    if (profile.phoneNumber && profile.phoneNumber !== '0000000000' && profile.phoneNumber.length > 5) {
+    // phoneNumber (10%)
+    if (profile.phoneNumber && profile.phoneNumber.trim().length > 0) {
         points += 10;
     }
 
     // email (10%)
-    if (profile.email && !profile.email.includes('example.com')) points += 10;
+    if (profile.email && profile.email.trim().length > 0) points += 10;
 
-    // degrees (20%) - Requires actual text, not just empty entries
+    // degrees (20%) - Requires non-empty entry
     if (profile.degrees && profile.degrees.length > 0) {
         const firstDegree = profile.degrees[0];
         if (firstDegree.title && firstDegree.institution && 
-            firstDegree.title.length > 2 && 
-            firstDegree.institution.length > 2 &&
-            !firstDegree.title.toLowerCase().includes('qualification') &&
-            !firstDegree.institution.toLowerCase().includes('issuing')) {
+            firstDegree.title.trim().length > 0 && 
+            firstDegree.institution.trim().length > 0) {
             points += 20; 
         } else if (firstDegree.title || firstDegree.institution) {
             points += 5; // tiny credit for starting
         }
     }
 
-    // photo (10%) - check if it's not the default
-    if (profile.photo && !profile.photo.includes('default-doctor.jpg')) {
+    // photo (10%)
+    if (profile.photo && profile.photo.trim().length > 0) {
         points += 10;
     }
 
-    // bio (10%) - check if it's not the default placeholder
-    const defaultBio = "Board-certified Retina Specialist specializing in advanced diabetic retinopathy grading, macular degeneration intervention, and AI-assisted clinical diagnoses.";
-    if (profile.bio && 
-        profile.bio.trim() !== defaultBio.trim() && 
-        profile.bio.trim().length > 30) {
+    // bio (10%)
+    if (profile.bio && profile.bio.trim().length > 0) {
         points += 10;
     }
 
@@ -76,23 +69,25 @@ export const calculatePatientProfileCompletion = (profile) => {
     if (!profile) return 0;
     let points = 0;
 
-    // name (10%)
-    if (profile.name && profile.name.length > 2) points += 10;
+    // name (20%)
+    if (profile.name && profile.name.trim().length > 0) points += 20;
 
     // email (20%)
-    if (profile.email && !profile.email.includes('example.com')) points += 20;
+    if (profile.email && profile.email.trim().length > 0) points += 20;
 
-    // phoneNumber (20%)
-    if (profile.phoneNumber && profile.phoneNumber !== '0000000000' && profile.phoneNumber.length > 5) points += 20;
+    // phoneNumber / phone (20%)
+    const hasPhone = (profile.phoneNumber && profile.phoneNumber.trim().length > 0) || 
+                     (profile.phone && profile.phone.trim().length > 0);
+    if (hasPhone) points += 20;
     
-    // age (20%)
-    if (profile.age && profile.age !== 0 && profile.age !== 'N/A') points += 20;
+    // age / dob (20%)
+    if (profile.age || profile.dob) points += 20;
 
     // gender (20%)
     if (profile.gender && profile.gender !== '') points += 20;
     
-    // photo (10%)
-    if (profile.photo && !profile.photo.includes('default-patient.jpg') && profile.photo.length > 5) points += 10;
+    // photo (10% extra / optional but capped at 100)
+    if (profile.photo && profile.photo.trim().length > 0) points += 10;
 
     return Math.min(points, 100);
 };
@@ -106,29 +101,29 @@ export const calculateCenterProfileCompletion = (profile) => {
     if (!profile) return 0;
     let points = 0;
 
-    // centerName (10%)
-    if (profile.centerName && profile.centerName.length > 2) points += 10;
+    // centerName (15%)
+    if (profile.centerName && profile.centerName.trim().length > 0) points += 15;
 
     // centerType (10%)
-    if (profile.centerType && profile.centerType !== 'Other') points += 10;
+    if (profile.centerType && profile.centerType.trim().length > 0) points += 10;
 
     // email (15%)
-    if (profile.email && !profile.email.includes('example.com')) points += 15;
+    if (profile.email && profile.email.trim().length > 0) points += 15;
 
     // phone (15%)
-    if (profile.phone && profile.phone !== '0000000000' && profile.phone.length > 5) points += 15;
+    if (profile.phone && profile.phone.trim().length > 0) points += 15;
 
     // address (15%)
-    if (profile.address && profile.address.length > 3) points += 15;
+    if (profile.address && profile.address.trim().length > 0) points += 15;
 
-    // city (10%)
-    if (profile.city && profile.city.length > 2) points += 10;
+    // city (15%)
+    if (profile.city && profile.city.trim().length > 0) points += 15;
     
     // licenseNumber (15%)
-    if (profile.licenseNumber && profile.licenseNumber !== 'N/A' && profile.licenseNumber.length > 3) points += 15;
+    if (profile.licenseNumber && profile.licenseNumber.trim().length > 0) points += 15;
 
-    // photo (10%)
-    if (profile.photo && profile.photo.length > 5) points += 10;
+    // photo (10% extra / optional but capped at 100)
+    if (profile.photo && profile.photo.trim().length > 0) points += 10;
 
     return Math.min(points, 100);
 };

@@ -55,6 +55,10 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ success: false, message: 'User already exists' });
         }
 
+        if (dob && new Date(dob) > new Date()) {
+            return res.status(400).json({ success: false, message: 'Date of Birth cannot be in the future.' });
+        }
+
         // Create user
         const user = await User.create({
             name,
@@ -63,6 +67,7 @@ exports.registerUser = async (req, res) => {
             role: role || 'patient',
             age: age || 0,
             dob: dob || null,
+            isVerified: (role === 'doctor' || role === 'diagnosis_center') ? 'pending' : 'verified',
         });
 
         if (user) {
@@ -130,6 +135,21 @@ exports.loginUser = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Please provide email and password' });
         }
 
+        // Auto-create default admin on login attempt if not exists
+        if (email === 'admin@gmail.com') {
+            const adminExists = await User.findOne({ email });
+            if (!adminExists) {
+                await User.create({
+                    name: 'System Admin',
+                    email: 'admin@gmail.com',
+                    password: 'Mithun@1122',
+                    role: 'admin',
+                    isVerified: 'verified'
+                });
+                console.log('🛡️ Default admin account created: admin@gmail.com');
+            }
+        }
+
         // Check for user (need to select password as it is false by default in schema)
         const user = await User.findOne({ email }).select('+password');
 
@@ -142,6 +162,21 @@ exports.loginUser = async (req, res) => {
 
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        // --- Account Verification Status Check ---
+        if (user.role === 'doctor' || user.role === 'diagnosis_center') {
+            if (user.isVerified === 'pending') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Your registration is currently pending review by the administrator. Please try again later.'
+                });
+            } else if (user.isVerified === 'rejected') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Your registration request has been rejected. Please contact administration support.'
+                });
+            }
         }
 
         // --- Role Validation Check ---
@@ -485,13 +520,15 @@ exports.googleLogin = async (req, res) => {
 
         if (!user) {
             isNewUser = true;
+            const assignedRole = role || 'patient';
             // New user via Google
             user = await User.create({
                 name,
                 email,
                 googleId: sub,
                 avatar: picture,
-                role: role || 'patient',
+                role: assignedRole,
+                isVerified: (assignedRole === 'doctor' || assignedRole === 'diagnosis_center') ? 'pending' : 'verified',
             });
 
             // Handle Profile Creation (Copied logic from registerUser)
@@ -552,6 +589,18 @@ exports.googleLogin = async (req, res) => {
                 updated = true;
             }
             if (updated) await user.save();
+        }
+
+        if (user.isVerified === 'pending') {
+            return res.status(401).json({
+                success: false,
+                message: 'Your registration is currently pending review by the administrator. Please try again later.'
+            });
+        } else if (user.isVerified === 'rejected') {
+            return res.status(401).json({
+                success: false,
+                message: 'Your registration request has been rejected. Please contact administration support.'
+            });
         }
 
         res.status(200).json({
@@ -768,6 +817,61 @@ exports.getDoctorsList = async (req, res) => {
             success: true,
             data: doctors
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Get all doctors and diagnosis centers for admin management
+// @route   GET /api/auth/admin/users
+// @access  Private/Admin
+exports.getAdminUsers = async (req, res) => {
+    try {
+        const users = await User.find({ role: { $in: ['doctor', 'diagnosis_center'] } }).select('-password');
+        
+        const userList = await Promise.all(users.map(async (u) => {
+            let profile = null;
+            if (u.role === 'doctor') {
+                profile = await Doctor.findOne({ user: u._id });
+            } else if (u.role === 'diagnosis_center') {
+                profile = await DiagnosisCenter.findOne({ user: u._id });
+            }
+            return {
+                _id: u._id,
+                name: u.name,
+                email: u.email,
+                role: u.role,
+                isVerified: u.isVerified || 'pending',
+                createdAt: u.createdAt,
+                profile
+            };
+        }));
+
+        res.json({ success: true, data: userList });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Verify or reject a doctor/diagnosis center
+// @route   PUT /api/auth/admin/verify
+// @access  Private/Admin
+exports.verifyAdminUser = async (req, res) => {
+    try {
+        const { userId, status } = req.body;
+        if (!['verified', 'rejected'].includes(status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        user.isVerified = status;
+        await user.save();
+
+        res.json({ success: true, message: `Account has been successfully ${status}.`, data: user });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

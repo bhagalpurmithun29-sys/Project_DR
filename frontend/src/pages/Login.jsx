@@ -100,11 +100,13 @@ export default function Login() {
       // AuthContext.login() returns res.data directly, so role lives at res.role (not res.data.role)
       const res = await login(email, password, role);
       const userRole = res?.data?.role;
-      const targetPath = userRole === 'doctor' || userRole === 'technician' 
-        ? "/doctor-dashboard" 
-        : userRole === 'diagnosis_center' 
-          ? "/diagnosis-center/" 
-          : "/dashboard";
+      const targetPath = userRole === 'admin'
+        ? "/admin-dashboard"
+        : userRole === 'doctor' || userRole === 'technician' 
+          ? "/doctor-dashboard" 
+          : userRole === 'diagnosis_center' 
+            ? "/diagnosis-center/" 
+            : "/dashboard";
       
       navigate(targetPath, { state: { loginSuccess: true } });
     } catch (err) {
@@ -142,7 +144,7 @@ export default function Login() {
             <div className="rounded-xl bg-white/20 p-2.5 backdrop-blur-md transition-transform group-hover:scale-110">
               <Activity className="text-white" size={28} strokeWidth={2.5} />
             </div>
-            <h2 className="text-xl font-black tracking-tight text-white uppercase italic">RetinaAI</h2>
+            <h2 className="text-xl font-black tracking-tight text-white uppercase italic">Retinal AI</h2>
           </Link>
 
           <div className="relative z-10 space-y-8">
@@ -164,7 +166,7 @@ export default function Login() {
           </div>
 
           <div className="relative z-10 flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-white/40">
-            <span>© 2024 RetinaAI Systems Inc.</span>
+            <span>© 2024 Retinal AI Systems Inc.</span>
             <div className="flex gap-4">
               <a href="#" className="transition-colors hover:text-white">Privacy</a>
               <a href="#" className="transition-colors hover:text-white">Terms</a>
@@ -186,23 +188,26 @@ export default function Login() {
 
             <div className="mb-6">
               <h2 className="mb-2 text-3xl font-black tracking-tight text-slate-900">
-                {role === 'doctor' ? 'Provider Portal' : role === 'diagnosis_center' ? 'Diagnosis Center portal' : 'Patients Portal'}
+                {role === 'admin' ? 'Administrator Portal' : role === 'doctor' ? 'Provider Portal' : role === 'diagnosis_center' ? 'Diagnosis Center portal' : 'Patients Portal'}
               </h2>
               <p className="text-base font-medium text-slate-500">
-                {role === 'doctor'
-                  ? 'Welcome back, Doctor.'
-                  : role === 'diagnosis_center'
-                    ? 'Sign in to manage your facility.'
-                    : 'View your health history.'}
+                {role === 'admin'
+                  ? 'Sign in to manage clinicians & facilities.'
+                  : role === 'doctor'
+                    ? 'Welcome back, Doctor.'
+                    : role === 'diagnosis_center'
+                      ? 'Sign in to manage your facility.'
+                      : 'View your health history.'}
               </p>
             </div>
 
-            {/* Role Switcher — 3 tabs */}
+            {/* Role Switcher — 4 tabs */}
             <div className="mb-6 flex items-center p-1.5 bg-slate-200/50 rounded-2xl h-12 shadow-inner gap-1">
               {[
                 { id: 'doctor', label: 'Clinician' },
                 { id: 'patient', label: 'Patient' },
                 { id: 'diagnosis_center', label: 'Center' },
+                { id: 'admin', label: 'Admin' },
               ].map(({ id, label }) => (
                 <button
                   key={id}
@@ -254,7 +259,7 @@ export default function Login() {
                         autoComplete="email"
                         required
                         type="email"
-                        placeholder="clinician@retinaai.health"
+                        placeholder="Email@gmail.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50/50 py-4 pl-14 pr-6 text-slate-900 font-bold outline-none transition-all focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 shadow-sm"
@@ -350,7 +355,7 @@ export default function Login() {
 
                 <div className="mt-8 text-center">
                   <p className="text-sm text-slate-500 font-bold">
-                    New to RetinaAI?{" "}
+                    New to Retinal AI?{" "}
                     <Link to="/register" className="font-black text-primary hover:underline hover:underline-offset-4">
                       Create Account
                     </Link>

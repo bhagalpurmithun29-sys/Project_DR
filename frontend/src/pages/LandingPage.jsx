@@ -196,7 +196,7 @@ export default function LandingPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/25 transition-transform group-hover:scale-110">
                 <Eye size={24} strokeWidth={2.5} />
               </div>
-              <span className="text-xl font-black tracking-tight text-slate-900">RetinaAI</span>
+              <span className="text-xl font-black tracking-tight text-slate-900">Retinal AI</span>
             </Link>
 
             <nav className="hidden items-center gap-8 md:flex">
@@ -510,7 +510,7 @@ export default function LandingPage() {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
                     <Eye size={18} strokeWidth={2.5} />
                   </div>
-                  <span className="text-xl font-black tracking-tight text-slate-900">RetinaAI</span>
+                  <span className="text-xl font-black tracking-tight text-slate-900">Retinal AI</span>
                 </Link>
                 <p className="text-lg leading-relaxed text-slate-500 font-medium max-w-sm">
                   Redefining retinal diagnostics through medical-grade artificial intelligence.
@@ -548,7 +548,7 @@ export default function LandingPage() {
 
             <div className="mt-20 pt-8 border-t border-slate-50 flex flex-col items-center justify-between gap-6 md:flex-row">
               <p className="text-sm font-bold text-slate-400">
-                © 2024 RetinaAI Systems Inc.
+                © 2024 Retinal AI Systems Inc.
               </p>
               <div className="flex items-center gap-6 text-sm font-bold text-slate-400">
                 <a href="#" className="hover:text-slate-900 transition-colors">Privacy</a>

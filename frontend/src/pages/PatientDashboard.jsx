@@ -234,7 +234,7 @@ const PatientDashboard = () => {
                         <Activity size={24} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h1 className="font-black text-lg tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
+                        <h1 className="font-black text-lg tracking-tight text-white italic uppercase leading-none">Retinal AI</h1>
                         <p className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] mt-1">Patients Portal</p>
                     </div>
                 </div>
@@ -657,7 +657,7 @@ const PatientDashboard = () => {
                 {/* Footer */}
                 <footer className="mt-auto px-10 py-10 text-center border-t border-slate-100 dark:border-slate-800">
                     <p className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.4em]">
-                        © 2024 RetinaAI Clinical Systems / v2.4.1-stable / Patient Vault Active
+                        © 2024 Retinal AI Clinical Systems / v2.4.1-stable / Patient Vault Active
                     </p>
                 </footer>
             </main>

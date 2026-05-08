@@ -109,7 +109,7 @@ const PatientReport = () => {
             doc.setFontSize(24);
             doc.setTextColor(5, 150, 105); // Global Emerald Primary
             doc.setFont('helvetica', 'bold');
-            doc.text('RETINAAI CLINICAL REPORT', 105, 20, { align: 'center' });
+            doc.text('RETINAL AI CLINICAL REPORT', 105, 20, { align: 'center' });
 
             doc.setFontSize(10);
             doc.setTextColor(150);
@@ -238,11 +238,11 @@ const PatientReport = () => {
             doc.setTextColor(180);
             doc.setFont('helvetica', 'normal');
             doc.line(20, pageHeight - 25, 190, pageHeight - 25);
-            doc.text('RetinaAI Digital Security Handshake Verified', 20, pageHeight - 15);
+            doc.text('Retinal AI Digital Security Handshake Verified', 20, pageHeight - 15);
             doc.text(`Report Reference: ${(scan.scanId || scan._id).toUpperCase()}`, 190, pageHeight - 15, { align: 'right' });
             doc.text(`Generated on ${new Date().toLocaleString()}`, 105, pageHeight - 10, { align: 'center' });
 
-            doc.save(`RetinaAI_Report_${scan.patient?.name || 'Scan'}.pdf`);
+            doc.save(`Retinal_AI_Report_${scan.patient?.name || 'Scan'}.pdf`);
         } catch (err) {
             console.error('PDF Generation failed', err);
             alert('Failed to generate PDF. Please try again.');
@@ -586,7 +586,7 @@ const PatientReport = () => {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 py-10 border-t border-slate-200/60 opacity-60">
                     <div className="flex items-center gap-4">
                         <Shield className="text-slate-400" size={20} />
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em]">RetinaAI Digital Security Handshake Verified</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em]">Retinal AI Digital Security Handshake Verified</p>
                     </div>
                     <div className="flex items-center gap-8">
                         <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Report Ref: {(scan.scanId || scan._id).toUpperCase()}</span>
@@ -598,7 +598,7 @@ const PatientReport = () => {
             {/* Print-Only Structured Medical Report (Mirroring PDF Layout) */}
             <div className="print-only-report">
                 <div className="print-header">
-                    <h1>RETINAAI CLINICAL REPORT</h1>
+                    <h1>RETINAL AI CLINICAL REPORT</h1>
                     <p>Diagnostic Unit: {(scan.scanId || scan._id).toUpperCase()}</p>
                 </div>
 
@@ -665,7 +665,7 @@ const PatientReport = () => {
                 )}
 
                 <div style={{ marginTop: '50px', borderTop: '1px solid #f1f5f9', paddingTop: '20px', fontSize: '9px', color: '#94a3b8', textAlign: 'center' }}>
-                    <p>RetinaAI Digital Security Handshake Verified • Report Ref: {(scan.scanId || scan._id).toUpperCase()}</p>
+                    <p>Retinal AI Digital Security Handshake Verified • Report Ref: {(scan.scanId || scan._id).toUpperCase()}</p>
                     <p style={{ marginTop: '5px' }}>Generated on {new Date().toLocaleString()}</p>
                 </div>
             </div>

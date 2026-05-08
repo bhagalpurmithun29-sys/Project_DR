@@ -379,7 +379,7 @@ const DoctorScanHistory = () => {
                         <Activity size={24} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h1 className="text-xl font-black tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
+                        <h1 className="text-xl font-black tracking-tight text-white italic uppercase leading-none">Retinal AI</h1>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-1 text-primary">Clinical Portal</p>
                     </div>
                 </div>
@@ -942,7 +942,7 @@ const DoctorScanHistory = () => {
                 {/* Footer */}
                 <footer className="mt-auto px-10 py-12 text-center border-t border-slate-100 bg-white/50 backdrop-blur-sm">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
-                        © 2024 RetinaAI Clinical Systems / Data Repository / Unit-{user?.id?.substring(0, 8) || "882B-7"}
+                        © 2024 Retinal AI Clinical Systems / Data Repository / Unit-{user?.id?.substring(0, 8) || "882B-7"}
                     </p>
                 </footer>
             </main>

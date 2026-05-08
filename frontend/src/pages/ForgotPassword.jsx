@@ -103,7 +103,7 @@ export default function ForgotPassword() {
             <div className="rounded-xl bg-white/20 p-2.5 backdrop-blur-md transition-transform group-hover:scale-110">
               <Activity className="text-white" size={28} strokeWidth={2.5} />
             </div>
-            <h2 className="text-xl font-black tracking-tight text-white uppercase italic">RetinaAI</h2>
+            <h2 className="text-xl font-black tracking-tight text-white uppercase italic">Retinal AI</h2>
           </Link>
 
           <div className="relative z-10 space-y-8 max-w-md">
@@ -134,7 +134,7 @@ export default function ForgotPassword() {
                 Recovery
               </h2>
               <p className="text-lg font-medium text-slate-500">
-                Regain access to your RetinaAI account.
+                Regain access to your Retinal AI account.
               </p>
             </div>
 

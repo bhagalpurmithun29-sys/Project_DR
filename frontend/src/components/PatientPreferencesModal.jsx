@@ -99,6 +99,13 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
         e.preventDefault();
         setProfileSaving(true);
         setProfileMsg({ type: '', text: '' });
+
+        if (profileForm.dob && new Date(profileForm.dob) > new Date()) {
+            setProfileMsg({ type: 'error', text: 'Date of Birth cannot be in the future.' });
+            setProfileSaving(false);
+            return;
+        }
+
         try {
             const res = await api.put('/patients/me/profile', profileForm);
             setProfileMsg({ type: 'success', text: 'Profile updated successfully!' });
@@ -403,6 +410,7 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                             e.target.blur();
                                                         }}
                                                         className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
+                                                        max={new Date().toISOString().split('T')[0]}
                                                     />
                                                 </div>
                                             </div>

@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
-const { registerUser, loginUser, googleLogin, getMe, changePassword, setPassword, forgotPassword, resetPassword, getSecurityQuestions, verifySecurityQuestions, updateSecurityQuestions, uploadUserPhoto, deleteAccount, getDoctorsList } = require('../controllers/authController');
+const { registerUser, loginUser, googleLogin, getMe, changePassword, setPassword, forgotPassword, resetPassword, getSecurityQuestions, verifySecurityQuestions, updateSecurityQuestions, uploadUserPhoto, deleteAccount, getDoctorsList, getAdminUsers, verifyAdminUser } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
 const { profileUpload: cloudinaryProfileUpload } = require('../middleware/cloudinaryConfig');
@@ -18,6 +18,10 @@ router.put('/security-questions', protect, updateSecurityQuestions);
 router.post('/photo', protect, cloudinaryProfileUpload.single('photo'), uploadUserPhoto);
 router.delete('/delete-account', protect, deleteAccount);
 router.get('/doctors', protect, getDoctorsList);
+
+// Admin Verification routes
+router.get('/admin/users', protect, getAdminUsers);
+router.put('/admin/verify', protect, verifyAdminUser);
 
 // Password Reset Flow
 router.post('/forgot-password', forgotPassword); // Used for email link if desired

@@ -125,6 +125,12 @@ const DoctorRegistration = () => {
       return;
     }
 
+    if (formData.dob && new Date(formData.dob) > new Date()) {
+      setError('Date of Birth cannot be in the future.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const profileData = {
         ...formData,
@@ -152,7 +158,7 @@ const DoctorRegistration = () => {
           <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm group-hover:scale-110 transition-transform">
             <Activity size={24} strokeWidth={2.5} />
           </div>
-          <span className="text-xl font-black tracking-tight italic uppercase">RetinaAI</span>
+          <span className="text-xl font-black tracking-tight italic uppercase">Retinal AI</span>
         </Link>
       </header>
 
@@ -352,6 +358,7 @@ const DoctorRegistration = () => {
                       }}
                       className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white focus:text-slate-900"
                       type="date"
+                      max={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                 </div>
@@ -480,7 +487,7 @@ const DoctorRegistration = () => {
       </main>
 
       <footer className="mt-auto py-12 text-center text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">
-        © 2024 RetinaAI Systems Inc. / Enterprise Clinical License v2.4.1
+        © 2024 Retinal AI Systems Inc. / Enterprise Clinical License v2.4.1
       </footer>
     </div>
   );

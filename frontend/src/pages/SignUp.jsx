@@ -94,6 +94,11 @@ const Register = () => {
         }
 
         try {
+            if (dob && new Date(dob) > new Date()) {
+                setError('Date of Birth cannot be in the future.');
+                return;
+            }
+
             // Calculate age from dob
             let age = 0;
             if (dob) {
@@ -150,7 +155,7 @@ const Register = () => {
                         <div className="bg-white/20 p-2.5 rounded-xl backdrop-blur-md transition-transform group-hover:scale-110">
                             <Activity className="text-white" size={28} strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-white text-xl font-black tracking-tight italic uppercase">RetinaAI</h2>
+                        <h2 className="text-white text-xl font-black tracking-tight italic uppercase">Retinal AI</h2>
                     </Link>
 
                     <div className="relative z-10">
@@ -167,7 +172,7 @@ const Register = () => {
                     </div>
 
                     <div className="relative z-10 flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-white/40">
-                        <span>© 2024 RetinaAI Systems Inc.</span>
+                        <span>© 2024 Retinal AI Systems Inc.</span>
                         <div className="flex gap-4">
                             <a href="#" className="hover:text-white transition-colors">Privacy</a>
                             <a href="#" className="hover:text-white transition-colors">HIPAA</a>
@@ -282,7 +287,7 @@ const Register = () => {
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
                                                 className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-900 font-bold focus:ring-4 focus:ring-primary/20 focus:border-primary/20 outline-none transition-all shadow-sm"
-                                                placeholder="Dr. John Doe"
+                                                placeholder="Full Name"
                                                 type="text"
                                             />
                                         </div>
@@ -303,13 +308,14 @@ const Register = () => {
                                                 }}
                                                 className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-400 font-bold focus:ring-4 focus:ring-primary/20 focus:border-primary/20 outline-none transition-all shadow-sm"
                                                 type="date"
+                                                max={new Date().toISOString().split('T')[0]}
                                             />
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label htmlFor="signup-email" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Connection</label>
+                                    <label htmlFor="signup-email" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
                                     <div className="relative group">
                                         <Mail size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" />
                                         <input
@@ -320,7 +326,7 @@ const Register = () => {
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-900 font-bold focus:ring-4 focus:ring-primary/20 focus:border-primary/20 outline-none transition-all shadow-sm"
-                                            placeholder="clinician@example.com"
+                                            placeholder="Email@gmail.com"
                                             type="email"
                                         />
                                     </div>

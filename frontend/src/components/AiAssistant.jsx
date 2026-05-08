@@ -44,7 +44,7 @@ const AiAssistant = () => {
             <Activity size={24} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="font-black text-lg tracking-tight text-white italic uppercase leading-none">RetinaAI</h1>
+            <h1 className="font-black text-lg tracking-tight text-white italic uppercase leading-none">Retinal AI</h1>
             <p className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] mt-1">Patients Portal</p>
           </div>
         </div>

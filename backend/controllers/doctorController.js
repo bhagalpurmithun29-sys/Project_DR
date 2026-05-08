@@ -7,6 +7,10 @@ exports.createOrUpdateProfile = async (req, res) => {
     try {
         const { licenseNumber, country, experience, specialization, email, phoneNumber, degrees, bio, dob } = req.body;
 
+        if (dob && new Date(dob) > new Date()) {
+            return res.status(400).json({ success: false, message: 'Date of Birth cannot be in the future.' });
+        }
+
         const profileFields = {
             user: req.user.id,
             licenseNumber,

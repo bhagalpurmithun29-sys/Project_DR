@@ -22,6 +22,7 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import PatientReport from './pages/PatientReport';
 import DiagnosisCenterDashboard from './pages/DiagnosisCenterDashboard';
 import ProfileSetup from './pages/ProfileSetup';
+import AdminDashboard from './pages/AdminDashboard';
 import SharedChat from './components/SharedChat';
 import PatientAppointments from './components/PatientAppointments';
 import DoctorAppointments from './components/DoctorAppointments';
@@ -42,6 +43,14 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<SignUp />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route
+                  path="/admin-dashboard"
+                  element={
+                    <RoleRoute allowedRoles={['admin']}>
+                      <AdminDashboard />
+                    </RoleRoute>
+                  }
+                />
                 <Route path="/auth/google/callback" element={<div className="min-h-screen bg-main flex items-center justify-center font-bold">Verifying...</div>} />
                 <Route
                   path="/profile-setup"

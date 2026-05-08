@@ -1313,7 +1313,7 @@ const SettingsSection = ({ center, user, onCenterUpdate }) => {
                             </div>
                             <div className="border-t border-slate-100 pt-8">
                                 <h3 className="text-base font-black text-slate-900 mb-1">Account Info</h3>
-                                <p className="text-sm text-slate-400 font-medium mb-4">Your account details managed by RetinaAI.</p>
+                                <p className="text-sm text-slate-400 font-medium mb-4">Your account details managed by Retinal AI.</p>
                                 <div className="space-y-3">
                                     {[
                                         { label: 'Role', value: 'Diagnosis Center' },
@@ -1435,7 +1435,7 @@ const DiagnosisCenterDashboard = () => {
                             <Activity className="text-primary" size={20} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h2 className="text-sm font-black text-white tracking-tight italic uppercase">RetinaAI</h2>
+                            <h2 className="text-sm font-black text-white tracking-tight italic uppercase">Retinal AI</h2>
                             <p className="text-[9px] font-black text-primary/60 uppercase tracking-[0.2em]">Center Portal</p>
                         </div>
                     </Link>
@@ -1488,7 +1488,7 @@ const DiagnosisCenterDashboard = () => {
                 </AnimatePresence>
                 <div className="mt-10 text-center">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                        © 2024 RetinaAI Systems · Diagnosis Center Portal · HIPAA Vault Active
+                        © 2024 Retinal AI Systems · Diagnosis Center Portal · HIPAA Vault Active
                     </p>
                 </div>
             </main>
@@ -1524,7 +1524,7 @@ const DiagnosisCenterDashboard = () => {
                                 </div>
                                 {/* Print Header (only visible in print) */}
                                 <div className="hidden print:flex flex-col gap-1 text-center w-full">
-                                    <h2 className="text-3xl font-black text-slate-900 uppercase italic">RetinaAI Diagnostic Report</h2>
+                                    <h2 className="text-3xl font-black text-slate-900 uppercase italic">Retinal AI Diagnostic Report</h2>
                                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Comprehensive Bilateral Retinal Screening Results</p>
                                     <div className="mt-4 flex justify-center gap-8 text-[10px] font-black uppercase text-slate-400">
                                         <span>Patient: {selectedScan.patient?.name}</span>
