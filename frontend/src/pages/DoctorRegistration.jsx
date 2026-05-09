@@ -447,18 +447,6 @@ const DoctorRegistration = () => {
                   ))}
                 </AnimatePresence>
 
-                <motion.div
-                  whileHover={{ y: -2 }}
-                  onClick={addDegree}
-                  className="p-6 rounded-3xl border-2 border-dashed border-slate-200 bg-white/40 flex items-center justify-center group hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer"
-                >
-                  <div className="flex flex-col items-center py-2 text-center">
-                    <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-200 group-hover:bg-primary/10 group-hover:text-primary transition-colors mb-3">
-                      <UploadCloud size={24} />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary">Add further credential</span>
-                  </div>
-                </motion.div>
               </div>
             </div>
 

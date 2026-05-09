@@ -1,0 +1,226 @@
+[
+  {
+    "kicker": "Retinal AI",
+    "title": "AI-Powered Diabetic Retinopathy Screening Platform",
+    "subtitle": "Detailed project presentation based on the implemented full-stack application in this repository.",
+    "bullets": [
+      "Project type: multi-role healthcare web platform for diabetic retinopathy screening and patient follow-up.",
+      "Core users: patients, doctors, diagnostic centers, technicians, and a super-admin reviewer.",
+      "Main value: connect retinal scan intake, AI-based grading, clinical review, reporting, appointments, and patient education in one system."
+    ],
+    "notes": "Use this as the opening slide. Introduce the product as a complete workflow platform rather than only an AI model demo."
+  },
+  {
+    "kicker": "Executive Summary",
+    "title": "What The Project Delivers",
+    "bullets": [
+      "A React 19 + Vite frontend with role-based dashboards and protected navigation.",
+      "A Node.js + Express backend with JWT auth, Google login, MongoDB persistence, and Cloudinary uploads.",
+      "A Python ResNet50 inference pipeline for retinal image classification integrated through the backend.",
+      "A Groq Llama 3.3 powered assistant and AI-generated clinical report summaries.",
+      "Operational features beyond AI: profile setup, appointments, notifications, reporting, and admin verification."
+    ],
+    "notes": "Frame the platform as a product ecosystem. It is not just image classification; it includes user management and clinical operations."
+  },
+  {
+    "kicker": "Problem Statement",
+    "title": "Why This System Is Needed",
+    "bullets": [
+      "Diabetic retinopathy screening can be delayed when retinal scans must wait for manual review.",
+      "Hospitals and diagnostic centers often use fragmented tools for patient records, scan uploads, and specialist communication.",
+      "Patients need understandable results, appointment scheduling, and follow-up guidance after scans are reviewed.",
+      "Clinical systems also need role separation and verification before sensitive patient data becomes accessible."
+    ],
+    "notes": "Connect the medical problem with the software architecture problem: delay, fragmentation, and security."
+  },
+  {
+    "kicker": "Objectives",
+    "title": "Project Goals And Stakeholders",
+    "bullets": [
+      "Patients: register, complete profile, view reports, monitor analytics, chat with the diabetes assistant, and book appointments.",
+      "Doctors: maintain profile, review scan history, analyze cases, manage appointments, and receive notifications.",
+      "Diagnostic centers: create and manage patient records, upload scans, track reports, and refer cases for review.",
+      "Admin: verify doctor and diagnosis center registrations before they can access the system.",
+      "System goal: create a safe, traceable, end-to-end screening workflow with AI support."
+    ],
+    "notes": "Point out that stakeholder separation is reflected both in frontend routes and backend authorization rules."
+  },
+  {
+    "kicker": "Architecture",
+    "title": "High-Level System Architecture",
+    "bullets": [
+      "Frontend SPA: React application served by Vite in development and by Express in production.",
+      "Backend API: Express server exposes auth, patient, doctor, scan, notification, center, chat, and appointment endpoints.",
+      "Database: MongoDB stores users, profiles, scans, appointments, notifications, and chat history.",
+      "Media storage: Cloudinary handles uploaded profile photos and retinal scans.",
+      "AI pipeline: backend launches Python inference for ResNet50 classification and calls Groq for summary generation."
+    ],
+    "notes": "Mention that the server starts even if MongoDB is not ready, then responds with friendly 503 messages until connected."
+  },
+  {
+    "kicker": "Frontend",
+    "title": "Frontend Architecture And User Experience",
+    "bullets": [
+      "Main stack: React 19, React Router 7, Tailwind CSS 4, Framer Motion, Lucide icons, Recharts, and jsPDF.",
+      "Core routing covers landing, login, registration, forgot password, profile setup, dashboards, reports, analytics, AI assistant, and appointments.",
+      "Context providers manage authentication, theme selection, language selection, and chat state.",
+      "Role protection is enforced through `PrivateRoute` and `RoleRoute` components.",
+      "UI includes multilingual support, profile-completion utilities, toasts, alerts modals, and settings/preferences flows."
+    ],
+    "notes": "You can mention that the open file `DoctorRegistration.jsx` is part of the onboarding flow for doctor-specific profile capture."
+  },
+  {
+    "kicker": "Backend",
+    "title": "Backend Modules And API Design",
+    "bullets": [
+      "Server modules are split into controllers, routes, models, middleware, services, tests, and utility generators.",
+      "Routes include `/auth`, `/patients`, `/doctors`, `/scans`, `/notifications`, `/diagnosis-centers`, `/appointments`, and `/chat`.",
+      "Middleware includes JWT protection, role-based authorization, Cloudinary upload configuration, and CORS allowlist generation.",
+      "The server includes API 404 handling, a global error handler, static asset serving, and a database connection retry loop.",
+      "Production mode serves the frontend build directly from the backend process."
+    ],
+    "notes": "This slide is useful to explain maintainability: the project follows a recognizable layered Express structure."
+  },
+  {
+    "kicker": "Data Layer",
+    "title": "Core Database Models",
+    "bullets": [
+      "User model stores identity, role, verification state, password or Google ID, avatar, reset fields, and security questions.",
+      "Patient model stores demographics, diabetes-related profile details, risk level, patient ID, and diagnostic center link.",
+      "Doctor model stores specialization, experience, degrees, contact info, photo, bio, and license number.",
+      "Scan model stores patient reference, image URL, eye side, AI result, confidence, findings, report summary, referral status, and bilateral flag.",
+      "Additional models cover diagnosis centers, appointments, notifications, and persistent chat history."
+    ],
+    "notes": "Highlight that the app uses Mongoose references between User and role-specific profile documents."
+  },
+  {
+    "kicker": "Security",
+    "title": "Authentication, Authorization, And Safety Controls",
+    "bullets": [
+      "JWT-based login is used for authenticated API access, with frontend request interceptors attaching tokens automatically.",
+      "Google OAuth login is supported through the backend auth controller and the frontend Google login flow.",
+      "Doctor and diagnosis center accounts enter a `pending` verification state until approved by admin.",
+      "Security questions are required during profile setup and are used in password recovery flows.",
+      "Additional guardrails include password complexity validation, future-date DOB blocking, CORS allowlisting, and role-based route checks."
+    ],
+    "notes": "This is one of the strongest slides for academic or clinical review because it shows the system considers governance, not only features."
+  },
+  {
+    "kicker": "AI Engine",
+    "title": "Retinal Image Analysis Workflow",
+    "bullets": [
+      "Uploaded scan images are stored and then analyzed through `backend/ai/resnet_predict.py`.",
+      "The Python script loads a ResNet50 model with five output classes: Mild NPDR, Moderate NPDR, No DR, Proliferate DR, and Severe NPDR.",
+      "Softmax probabilities are converted into practical risk levels: Low, Moderate, or High risk.",
+      "The backend stores prediction, confidence, findings, lesion proxy count, and generated insights on the scan record.",
+      "Groq Llama 3.3 then creates a structured clinical summary with impression, patient explanation, and recommendations."
+    ],
+    "notes": "Make it clear that the CNN handles classification while the LLM handles explanation and summarization."
+  },
+  {
+    "kicker": "Patient Flow",
+    "title": "Patient Journey In The Application",
+    "bullets": [
+      "Patient registers with email/password or Google, then completes profile setup and security questions.",
+      "Patient dashboard and analytics views expose profile progress, scan history, and risk trends.",
+      "Patient report screens provide access to reviewed scan outcomes and exported report content.",
+      "Appointments can be booked with doctors, with backend rules preventing same-slot and invalid-date bookings.",
+      "The AI assistant provides diabetes-focused Q&A with persistent conversation history stored in MongoDB."
+    ],
+    "notes": "Emphasize that patient engagement continues after diagnosis through reports, appointments, and education."
+  },
+  {
+    "kicker": "Center Flow",
+    "title": "Diagnosis Center And Technician Workflow",
+    "bullets": [
+      "Diagnosis centers can maintain their profile, manage patient records, and upload retinal scans.",
+      "Scan creation supports eye-side tagging and bilateral grouping using generated scan IDs.",
+      "If a center uploads a scan, the backend broadcasts notifications to doctors for review.",
+      "Centers can inspect historical scans and reports, giving them continuity across multiple visits.",
+      "Profile-completion utilities encourage centers to supply address, contact, type, license, and branding details."
+    ],
+    "notes": "This slide shows the system supports real operational intake, not only doctor-side review."
+  },
+  {
+    "kicker": "Doctor Flow",
+    "title": "Doctor Workflow And Clinical Review",
+    "bullets": [
+      "Doctors maintain a detailed profile including specialization, degrees, experience, contact details, and photo.",
+      "Doctor dashboards show scan queues, patient details, and prior screening history.",
+      "Doctors can trigger AI analysis, inspect confidence and findings, and review the generated clinical summary.",
+      "Doctors manage patient appointments and can update appointment status to pending, confirmed, rejected, or completed.",
+      "Notifications keep doctors aware of new diagnostic requests and workflow events."
+    ],
+    "notes": "If presenting live, explain that doctors remain in the loop for final review instead of handing decisions fully to AI."
+  },
+  {
+    "kicker": "Admin Flow",
+    "title": "Administrator Verification Portal",
+    "bullets": [
+      "Admin login is supported through the auth flow and opens a dedicated admin dashboard.",
+      "Admin can inspect doctor and diagnosis center accounts by status: pending, verified, or rejected.",
+      "Verification is not cosmetic; login access for those roles is blocked until approval is granted.",
+      "The dashboard includes search, analytics cards, and segmented lists for account auditing.",
+      "This design reduces the risk of unverified clinical users gaining access to patient workflows."
+    ],
+    "notes": "Explain that governance is built into both backend checks and frontend management screens."
+  },
+  {
+    "kicker": "Supporting Systems",
+    "title": "Appointments, Notifications, And Chat",
+    "bullets": [
+      "Appointments enforce business rules: future scheduling, one appointment per doctor per day, and no duplicate active bookings.",
+      "Notification records support report, system, security, and appointment events and can be read, cleared, or deleted.",
+      "Chat history is stored per user, so the AI assistant session persists between visits.",
+      "The assistant is intentionally constrained to diabetes-related topics for safer domain focus.",
+      "Speech recognition with silence detection allows hands-free message input on the frontend."
+    ],
+    "notes": "This slide helps show product maturity: the app includes operational glue features that users actually need."
+  },
+  {
+    "kicker": "Quality",
+    "title": "Validation, Testing, And Reliability Measures",
+    "bullets": [
+      "Backend tests currently cover CORS configuration and patient password utility behavior using Node's built-in test runner.",
+      "Input validation exists for email format, password strength, DOB rules, message length, appointment constraints, and profile fields.",
+      "The backend includes friendly 503 responses when MongoDB is unavailable instead of crashing immediately.",
+      "Database connection retry logic and placeholder image fallback improve resilience in imperfect deployment conditions.",
+      "Profile-completion scoring utilities are implemented for doctor, patient, and diagnosis center flows."
+    ],
+    "notes": "Be honest that testing exists but is still limited relative to the full feature set."
+  },
+  {
+    "kicker": "Deployment",
+    "title": "Environment And Deployment Model",
+    "bullets": [
+      "Root `npm run dev` runs backend and frontend concurrently for local development.",
+      "Frontend defaults to `http://localhost:5001/api` during local dev unless `VITE_API_BASE_URL` is supplied.",
+      "Backend expects environment variables such as `MONGO_URI`, `JWT_SECRET`, Google client values, and `GROQ_API_KEY`.",
+      "Frontend contains Vercel configuration while the backend can serve the production frontend build directly.",
+      "Cloudinary and MongoDB Atlas are external dependencies for media persistence and application data."
+    ],
+    "notes": "This is the implementation-grounded deployment story visible from the repository, not a hypothetical cloud design."
+  },
+  {
+    "kicker": "Assessment",
+    "title": "Strengths, Current Gaps, And Future Scope",
+    "bullets": [
+      "Strengths: multi-role design, real AI integration, persistent data model, secure onboarding, and strong end-to-end workflow coverage.",
+      "Current gaps: limited automated test coverage, Python inference dependency management, and room for deeper audit logging and analytics.",
+      "Possible future work: model performance reporting, report approval workflows, stronger clinical explainability, calendar integration, and richer admin auditing.",
+      "The codebase already provides a strong foundation for scaling into a production-grade retinal screening product."
+    ],
+    "notes": "This slide is important for viva, demo, or investor-style presentation because it shows balanced judgment."
+  },
+  {
+    "kicker": "Conclusion",
+    "title": "Project Conclusion",
+    "bullets": [
+      "Retinal AI combines healthcare workflow design with AI-assisted retinal screening in a single application.",
+      "The repository demonstrates full-stack implementation depth across UI, API, database, security, and AI integration.",
+      "It is suitable to present as both a software engineering project and a healthcare technology solution.",
+      "The generated presentation assets can now be used directly for classroom, demo day, or stakeholder presentation."
+    ],
+    "notes": "Close by tying together technical depth and healthcare impact."
+  }
+]

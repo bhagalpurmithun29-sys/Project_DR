@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence, useSpring } from "framer-motion";
 import { Link } from "react-router-dom";
+import api from "../services/api";
 
 const NAV_LINKS = [
   { label: "How it Works", href: "#how-it-works" },
@@ -26,7 +27,7 @@ const FEATURE_CARDS = [
   {
     icon: <Zap className="text-white" size={28} />,
     title: "Fast AI Detection",
-    desc: "Instant screening results in under 5 seconds with high sensitivity and specificity. Reduce patient wait times significantly.",
+    desc: "Instant AI Report in under 10 seconds with high sensitivity and specificity. Reduce patient wait times significantly.",
     link: "Learn more",
   },
   {
@@ -67,6 +68,21 @@ const DOCTOR_AVATARS = [
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
+  const [scansCount, setScansCount] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get('/scans/public-stats');
+        if (res.data.success) {
+          setScansCount(res.data.count);
+        }
+      } catch (err) {
+        console.error("Failed to fetch public stats:", err);
+      }
+    };
+    fetchStats();
+  }, []);
 
   // Smooth spring values for the image pan (follows cursor toward card center offset)
   const imgX = useSpring(0, { stiffness: 55, damping: 18 });
@@ -280,7 +296,7 @@ export default function LandingPage() {
                 >
                   <ShieldCheck size={16} strokeWidth={2.5} />
                   <span className="text-xs font-black uppercase tracking-widest">
-                    Clinical Grade AI v4.0
+                    Clinical Grade AI v1.0
                   </span>
                 </motion.div>
 
@@ -446,7 +462,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-7xl relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
               {[
                 { val: "98.2%", label: "Model Accuracy" },
-                { val: "500k+", label: "Scans Processed" },
+                { val: scansCount, label: "Scans Processed" },
                 { val: "< 2s", label: "Inference Time" },
                 { val: "99.9%", label: "Uptime" },
               ].map((stat, i) => (
@@ -492,9 +508,6 @@ export default function LandingPage() {
                   >
                     Get Started For Free
                   </Link>
-                  <button className="rounded-2xl border-2 border-white/20 bg-white/10 backdrop-blur-md px-12 py-5 text-lg font-black text-white transition-all hover:bg-white/20">
-                    Contact Specialist
-                  </button>
                 </div>
               </div>
             </motion.div>

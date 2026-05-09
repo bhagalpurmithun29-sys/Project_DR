@@ -129,7 +129,7 @@ export default function AdminDashboard() {
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] bg-emerald-500 text-white font-black uppercase tracking-widest px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <ShieldCheck size={10} strokeWidth={3} /> CLINICAL GRADE AI V4.0
+                    <ShieldCheck size={10} strokeWidth={3} /> CLINICAL GRADE AI V1.0
                   </span>
                   <span className="text-[10px] bg-white/15 text-white/90 font-black uppercase tracking-widest px-2.5 py-1 rounded-full">
                     SYSTEM ADMIN

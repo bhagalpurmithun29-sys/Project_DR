@@ -929,12 +929,14 @@ const ReportsSection = ({ scans, setSelectedScan, setSiblingScan, setShowReport 
                                 </tr>
                             </thead>
                             <tbody>
-                                {grouped.map(g => {
+                                {grouped.map((g, idx) => {
                                     const mainScan = g.scans[0];
                                     const sibling = g.scans[1];
+                                    const reportNum = grouped.length - idx;
+                                    const reportId = `RP${String(reportNum).padStart(2, '0')}`;
                                     return (
                                         <tr key={g._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">RPT-{g._id?.slice(-6).toUpperCase()}</td>
+                                            <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">{reportId}</td>
                                             <td className="px-5 py-4 text-sm font-black text-slate-900">{g.patient?.name || '—'}</td>
                                             <td className="px-5 py-4 text-sm font-bold text-slate-600 italic">{g.patient?.age || '—'}</td>
                                             <td className="px-5 py-4">

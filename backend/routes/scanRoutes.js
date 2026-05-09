@@ -18,6 +18,16 @@ const { upload: cloudinaryUpload } = require('../middleware/cloudinaryConfig');
 
 const router = express.Router();
 
+router.get('/public-stats', async (req, res) => {
+    try {
+        const Scan = require('../models/Scan');
+        const count = await Scan.countDocuments();
+        res.json({ success: true, count });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 router.use(protect);
 
 router.route('/')
