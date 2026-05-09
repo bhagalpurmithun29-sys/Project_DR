@@ -21,8 +21,10 @@ const router = express.Router();
 router.get('/public-stats', async (req, res) => {
     try {
         const Scan = require('../models/Scan');
+        const User = require('../models/User');
         const count = await Scan.countDocuments();
-        res.json({ success: true, count });
+        const doctorsCount = await User.countDocuments({ role: 'doctor' });
+        res.json({ success: true, count, doctorsCount });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

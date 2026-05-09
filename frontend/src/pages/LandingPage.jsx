@@ -26,21 +26,21 @@ const NAV_LINKS = [
 const FEATURE_CARDS = [
   {
     icon: <Zap className="text-white" size={28} />,
-    title: "Fast AI Detection",
-    desc: "Instant AI Report in under 10 seconds with high sensitivity and specificity. Reduce patient wait times significantly.",
-    link: "Learn more",
+    title: "Bilateral AI Scanning",
+    desc: "Automatically checks diabetic retinopathy severity (Low, Moderate, or High Risk) with detailed findings in less than 10 seconds.",
+    link: "Analyze Scans",
   },
   {
     icon: <Microscope className="text-white" size={28} />,
-    title: "Lesion Segmentation",
-    desc: "Precise visual mapping of microaneurysms, hemorrhages, and exudates using voxel-level precision modeling.",
-    link: "View demo",
+    title: "Specialist Referral Network",
+    desc: "Seamless clinic workflow connecting diagnostic centers with certified ophthalmologists for professional audit, second opinions, and official prescriptions.",
+    link: "View Workflow",
   },
   {
     icon: <FileText className="text-white" size={28} />,
-    title: "Clinical Reports",
-    desc: "Automated generation of detailed PDF reports compatible with EMR systems for seamless clinical integration.",
-    link: "Sample report",
+    title: "AI Chat Assistant",
+    desc: "Hands-free, bilingual assistant with 3-second silence detection. Delivers context-matched diabetes and eye health advice in English or Romanized Hinglish.",
+    link: "Try Voice Chat",
   },
 ];
 
@@ -69,6 +69,7 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [scansCount, setScansCount] = useState(0);
+  const [doctorsCount, setDoctorsCount] = useState(0);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -76,12 +77,15 @@ export default function LandingPage() {
         const res = await api.get('/scans/public-stats');
         if (res.data.success) {
           setScansCount(res.data.count);
+          setDoctorsCount(res.data.doctorsCount);
         }
       } catch (err) {
         console.error("Failed to fetch public stats:", err);
       }
     };
     fetchStats();
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // Smooth spring values for the image pan (follows cursor toward card center offset)
@@ -312,7 +316,7 @@ export default function LandingPage() {
                   variants={itemVariants}
                   className="max-w-xl text-xl leading-relaxed text-slate-500 font-medium"
                 >
-                  Automated, state-of-the-art screening for diabetic retinopathy. Empowering clinicians with instant, voxel-level diagnostic insights.
+                  Advanced automated eye scanning for diabetic retinopathy in both eyes. Helping doctors with fast, accurate diagnosis and easy-to-understand AI-powered summaries.
                 </motion.p>
 
                 <motion.div variants={itemVariants} className="flex items-center gap-6 pt-6">
@@ -326,7 +330,7 @@ export default function LandingPage() {
                       />
                     ))}
                     <div className="h-12 w-12 rounded-full border-4 border-white bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500 shadow-lg">
-                      +500
+                      +{doctorsCount}
                     </div>
                   </div>
                   <div>
@@ -426,7 +430,7 @@ export default function LandingPage() {
                   transition={{ delay: 0.2 }}
                   className="mt-6 text-lg text-slate-500 font-medium leading-relaxed"
                 >
-                  Proprietary neural networks trained on millions of clinical markers to deliver instant precision in Retina.
+                  Custom AI systems trained on thousands of medical data points to quickly provide accurate retina analysis.
                 </motion.p>
               </div>
 
@@ -526,7 +530,7 @@ export default function LandingPage() {
                   <span className="text-xl font-black tracking-tight text-slate-900">Retinal AI</span>
                 </Link>
                 <p className="text-lg leading-relaxed text-slate-500 font-medium max-w-sm">
-                  Redefining retinal diagnostics through medical-grade artificial intelligence.
+                  Improving retina diagnosis with advanced medical AI.
                 </p>
                 <div className="flex gap-4 mt-8">
                   {[Twitter, Github, Linkedin].map((Icon, i) => (

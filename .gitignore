@@ -79,3 +79,7 @@ lint_output.txt
 # --- Clinical Data (HIPAA) ---
 **/uploads/*
 !**/uploads/.gitkeep
+
+# --- Presentation Files ---
+presentation_deck.html
+Retinal_AI_Project_Presentation.pptx
