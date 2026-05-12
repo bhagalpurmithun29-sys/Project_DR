@@ -46,7 +46,7 @@ exports.createScan = async (req, res) => {
             imageUrl,
             eyeSide: eyeSide || 'OD',
             scanId: await generateScanId(patientId, eyeSide || 'OD', isBilateral === 'true' || isBilateral === true),
-            clinicalNotes: notes || 'Screening initiated.',
+            clinicalNotes: notes || 'scanning initiated.',
             status: 'Pending',
             referredDoctor: req.user.role === 'doctor' ? req.user._id : undefined,
             isBilateral: isBilateral === 'true' || isBilateral === true
@@ -65,9 +65,9 @@ exports.createScan = async (req, res) => {
             try {
                 // Find all active doctors
                 const doctors = await User.find({ role: 'doctor' });
-                
+
                 // Create notifications in parallel
-                await Promise.all(doctors.map(dr => 
+                await Promise.all(doctors.map(dr =>
                     Notification.create({
                         user: dr._id,
                         title: 'New Diagnostic Request',
@@ -105,14 +105,14 @@ exports.analyzeScan = async (req, res) => {
             path.resolve(__dirname, '../ai/venv/bin/python3'),
             path.resolve(__dirname, '../ai/model/bin/python3')
         ];
-        
+
         const venvPath = venvPaths.find(p => fs.existsSync(p));
         const pythonPath = venvPath || 'python3';
         const scriptPath = path.resolve(__dirname, '../ai/resnet_predict.py');
-        
+
         // Detect if imageUrl is a remote URL or a local file path
-        const imagePath = scan.imageUrl.startsWith('http') 
-            ? scan.imageUrl 
+        const imagePath = scan.imageUrl.startsWith('http')
+            ? scan.imageUrl
             : path.join(__dirname, '../', scan.imageUrl);
 
         // Execute Python Inference
@@ -161,7 +161,7 @@ exports.analyzeScan = async (req, res) => {
             // check for model error reported by predict.py
             if (aiResults.error) {
                 currentScan.insights = [{ type: 'error', message: `Analysis Error: ${aiResults.error}` }];
-                currentScan.status = 'Pending'; 
+                currentScan.status = 'Pending';
                 await currentScan.save();
                 return res.status(500).json({ success: false, message: aiResults.error });
             }
@@ -171,7 +171,7 @@ exports.analyzeScan = async (req, res) => {
             currentScan.aiConfidence = aiResults.probability || 0;
             currentScan.lesionCount = aiResults.lesionCount;
             currentScan.findings = aiResults.findings || [];
-            
+
             // --- NEW: Generate Clinical Summary via Gemini ---
             try {
                 const patient = await Patient.findById(currentScan.patient);
@@ -184,15 +184,15 @@ exports.analyzeScan = async (req, res) => {
                 currentScan.aiReportSummary = summary;
             } catch (geminiErr) {
                 console.error('Gemini Summary Failed:', geminiErr);
-                currentScan.aiReportSummary = `Diagnostic screening complete. Risk: ${aiResults.riskLevel}. Findings: ${aiResults.findings?.join(', ')}.`;
+                currentScan.aiReportSummary = `Diagnostic scanning complete. Risk: ${aiResults.riskLevel}. Findings: ${aiResults.findings?.join(', ')}.`;
             }
 
             currentScan.status = 'Analyzed';
             currentScan.insights = [
-                { type: 'info', message: 'Automated AI screening complete.' },
-                { 
-                    type: aiResults.riskLevel === 'Low Risk' ? 'info' : 'high_risk', 
-                    message: `Risk level determined as ${aiResults.riskLevel} (${Math.round((aiResults.probability || 0) * 100)}% confidence). ${aiResults.findings?.length || 0} findings recorded.` 
+                { type: 'info', message: 'Automated AI scanning complete.' },
+                {
+                    type: aiResults.riskLevel === 'Low Risk' ? 'info' : 'high_risk',
+                    message: `Risk level determined as ${aiResults.riskLevel} (${Math.round((aiResults.probability || 0) * 100)}% confidence). ${aiResults.findings?.length || 0} findings recorded.`
                 }
             ];
 
@@ -207,7 +207,7 @@ exports.analyzeScan = async (req, res) => {
                     let mappedRisk = 'Low';
                     if (aiResults.riskLevel?.includes('High')) mappedRisk = 'High';
                     else if (aiResults.riskLevel?.includes('Moderate')) mappedRisk = 'Moderate';
-                    
+
                     // Update patient risk regardless of level to stay in sync with latest scan
                     patient.riskLevel = mappedRisk;
                     await patient.save();
@@ -275,7 +275,7 @@ exports.getScans = async (req, res) => {
         // Role-based filtering
         if (req.user.role === 'diagnosis_center') {
             // Centers can see all scans to check previous patient reports
-            query = {}; 
+            query = {};
         } else if (req.user.role === 'doctor') {
             query = {
                 $or: [
@@ -348,7 +348,7 @@ exports.getScan = async (req, res) => {
 exports.updateScan = async (req, res) => {
     try {
         const { status } = req.body;
-        
+
         const scan = await Scan.findById(req.params.id).populate({
             path: 'patient',
             populate: { path: 'user' }
@@ -370,7 +370,7 @@ exports.updateScan = async (req, res) => {
         }
 
         await scan.save();
-        
+
         // Populate referredDoctor for consistent frontend display
         await scan.populate('referredDoctor', 'name');
 

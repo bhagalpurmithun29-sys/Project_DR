@@ -39,7 +39,7 @@ import Toast from '../components/Toast';
 const formatSpecialization = (spec) => {
     if (!spec) return 'Retina Specialist';
     const mapping = {
-        'dr_screening': 'Diabetic Retinopathy Screening',
+        'dr_scanning': 'Diabetic Retinopathy scanning',
         'medical_dr': 'Medical Diabetic Retinopathy',
         'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
         'dr_lasers': 'Laser & DR Therapeutics',
@@ -633,12 +633,12 @@ const DoctorDashboard = () => {
                                                 <td className="px-8 py-8 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{row.time}</td>
                                                 <td className="px-8 py-8">
                                                     <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${row.risk === 'High Risk'
-                                                            ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20'
-                                                            : (row.risk === 'Moderate' || row.risk === 'Moderate Risk')
-                                                                ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20'
-                                                                : row.risk
-                                                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20'
-                                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700'
+                                                        ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20'
+                                                        : (row.risk === 'Moderate' || row.risk === 'Moderate Risk')
+                                                            ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20'
+                                                            : row.risk
+                                                                ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20'
+                                                                : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700'
                                                         }`}>
                                                         {row.risk || 'Pending'}
                                                     </span>
@@ -771,7 +771,7 @@ const DoctorDashboard = () => {
                 {/* Footer */}
                 <footer className="mt-auto px-10 py-12 text-center border-t border-slate-100 bg-white/50 backdrop-blur-sm">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
-                        © 2024 Retinal AI Clinical Systems / v2.4.1-stable / Node {user?.id?.substring(0, 8) || "882B-7"}
+                        © 2026 Retinal AI Clinical Systems / v2.4.1-stable / Node {user?.id?.substring(0, 8) || "882B-7"}
                     </p>
                 </footer>
             </main>

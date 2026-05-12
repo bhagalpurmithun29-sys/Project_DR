@@ -29,7 +29,7 @@ import PatientPreferencesModal from './PatientPreferencesModal';
 import patientService from "../services/patientService";
 import { normalizeUrl } from "../services/api";
 
-const X_AXIS_LABELS = ["Jan 2024", "Mar 2024", "May 2024", "Jul 2024", "Sep 2024", "Nov 2024"];
+const X_AXIS_LABELS = ["Jan 2026", "Mar 2026", "May 2026", "Jul 2026", "Sep 2026", "Nov 2026"];
 
 export default function PatientAnalytics() {
   const { user, logout } = useContext(AuthContext);
@@ -101,33 +101,33 @@ export default function PatientAnalytics() {
           const grouped = [];
           const seen = new Set();
           sorted.forEach(s => {
-              if (seen.has(s._id)) return;
-              const sibling = (s.isBilateral !== false) ? sorted.find(sib =>
-                  sib._id !== s._id &&
-                  !seen.has(sib._id) &&
-                  sib.isBilateral !== false &&
-                  sib.eyeSide !== s.eyeSide &&
-                  Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 10 * 60 * 1000
-              ) : null;
-              if (sibling) {
-                  grouped.push({
-                      _id: s._id,
-                      groupType: 'Bilateral',
-                      mainScan: s,
-                      siblingScan: sibling,
-                      date: s.date || s.createdAt
-                  });
-                  seen.add(s._id);
-                  seen.add(sibling._id);
-              } else {
-                  grouped.push({
-                      _id: s._id,
-                      groupType: 'Single',
-                      mainScan: s,
-                      date: s.date || s.createdAt
-                  });
-                  seen.add(s._id);
-              }
+            if (seen.has(s._id)) return;
+            const sibling = (s.isBilateral !== false) ? sorted.find(sib =>
+              sib._id !== s._id &&
+              !seen.has(sib._id) &&
+              sib.isBilateral !== false &&
+              sib.eyeSide !== s.eyeSide &&
+              Math.abs(new Date(sib.createdAt || sib.date) - new Date(s.createdAt || s.date)) < 10 * 60 * 1000
+            ) : null;
+            if (sibling) {
+              grouped.push({
+                _id: s._id,
+                groupType: 'Bilateral',
+                mainScan: s,
+                siblingScan: sibling,
+                date: s.date || s.createdAt
+              });
+              seen.add(s._id);
+              seen.add(sibling._id);
+            } else {
+              grouped.push({
+                _id: s._id,
+                groupType: 'Single',
+                mainScan: s,
+                date: s.date || s.createdAt
+              });
+              seen.add(s._id);
+            }
           });
 
           // Determine colors based on risk
@@ -502,7 +502,7 @@ export default function PatientAnalytics() {
         {/* Footer */}
         <footer className="mt-auto px-10 py-12 text-center border-t border-slate-100 bg-white/50 backdrop-blur-sm">
           <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
-            © 2024 Retinal AI Analytics Systems / v2.4.1-STABLE / Node {user?._id?.substring(0, 8) || "882B-7"}
+            © 2026 Retinal AI Analytics Systems / v2.4.1-STABLE / Node {user?._id?.substring(0, 8) || "882B-7"}
           </p>
         </footer>
       </main>

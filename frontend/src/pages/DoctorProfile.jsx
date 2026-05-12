@@ -19,7 +19,7 @@ import { calculateProfileCompletion } from '../utils/profileUtils';
 const formatSpecialization = (spec) => {
     if (!spec) return 'Retina Specialist';
     const mapping = {
-        'dr_screening': 'Diabetic Retinopathy Screening',
+        'dr_scanning': 'Diabetic Retinopathy scanning',
         'medical_dr': 'Medical Diabetic Retinopathy',
         'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
         'dr_lasers': 'Laser & DR Therapeutics',
@@ -152,17 +152,17 @@ const DoctorProfile = () => {
     const totalScans = scans.length;
     const analyzedScans = scans.filter(s => s.status !== 'Pending');
     const totalAnalyzed = analyzedScans.length;
-    
+
     const highRiskScans = analyzedScans.filter(s => s.aiResult === 'High Risk').length;
     const nonHighRiskScans = totalAnalyzed - highRiskScans;
     const successRate = totalAnalyzed > 0 ? Math.round((nonHighRiskScans / totalAnalyzed) * 100) + '%' : '0%';
-    
+
     // Grading logic based on AI result matching the frontend visual classes
     const mildCount = analyzedScans.filter(s => s.aiResult === 'Low Risk').length;
     const moderateCount = analyzedScans.filter(s => s.aiResult === 'Moderate' || s.aiResult === 'Moderate Risk').length;
     const pdrCount = Math.floor(highRiskScans * 0.35); // Estimated subset of high risk
     const severeCount = highRiskScans - pdrCount;
-    
+
     const mildPct = totalAnalyzed > 0 ? ((mildCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
     const modPct = totalAnalyzed > 0 ? ((moderateCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
     const sevPct = totalAnalyzed > 0 ? ((severeCount / totalAnalyzed) * 100).toFixed(1) + '%' : '0%';
@@ -343,17 +343,17 @@ const DoctorProfile = () => {
 
                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                                         {[
-                                            { 
-                                                icon: Shield, 
-                                                label: "Medical License", 
-                                                value: (!profile?.licenseNumber || profile?.licenseNumber.startsWith('TEMP-')) ? "Pending" : profile.licenseNumber 
+                                            {
+                                                icon: Shield,
+                                                label: "Medical License",
+                                                value: (!profile?.licenseNumber || profile?.licenseNumber.startsWith('TEMP-')) ? "Pending" : profile.licenseNumber
                                             },
                                             { icon: MapPin, label: "Jurisdiction", value: profile?.country || "N/A" },
                                             { icon: Calendar, label: "Experience", value: profile?.experience || "Pending" },
-                                            { 
-                                                icon: Calendar, 
-                                                label: "Date of Birth", 
-                                                value: profile?.dob ? new Date(profile.dob).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Pending" 
+                                            {
+                                                icon: Calendar,
+                                                label: "Date of Birth",
+                                                value: profile?.dob ? new Date(profile.dob).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Pending"
                                             },
                                             { icon: Users, label: "Total Patients", value: totalPatientsCount > 0 ? `${totalPatientsCount}` : "0" }
                                         ].map((item, i) => (
@@ -516,13 +516,13 @@ const DoctorProfile = () => {
 
 
 
-                       
+
                     </motion.div>
                 </motion.div>
 
                 <footer className="mt-auto px-10 py-12 text-center border-t border-slate-100 bg-white/80 backdrop-blur-md">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
-                        © 2024 Retinal AI Clinical Systems / v2.4.1-stable / Node {user?.id?.substring(0, 8) || "882B-7"}
+                        © 2026 Retinal AI Clinical Systems / v2.4.1-stable / Node {user?.id?.substring(0, 8) || "882B-7"}
                     </p>
                 </footer>
             </main>

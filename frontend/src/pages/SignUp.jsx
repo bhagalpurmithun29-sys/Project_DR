@@ -172,7 +172,7 @@ const Register = () => {
                     </div>
 
                     <div className="relative z-10 flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-white/40">
-                        <span>© 2024 Retinal AI Systems Inc.</span>
+                        <span>© 2026 Retinal AI Systems Inc.</span>
                         <div className="flex gap-4">
                             <a href="#" className="hover:text-white transition-colors">Privacy</a>
                             <a href="#" className="hover:text-white transition-colors">HIPAA</a>
@@ -247,7 +247,7 @@ const Register = () => {
                                             </div>
                                         </div>
                                         <h4 className="font-black text-slate-900 text-base">Clinician</h4>
-                                        <p className="text-[11px] font-bold text-slate-400 mt-1 leading-relaxed">Advanced screening tools and patient management.</p>
+                                        <p className="text-[11px] font-bold text-slate-400 mt-1 leading-relaxed">Advanced scanning tools and patient management.</p>
                                     </motion.div>
 
                                     {/* Diagnosis Center */}

@@ -313,116 +313,116 @@ const DetailedScanHistory = () => {
                       {currentScans.length > 0 ? currentScans.map((group) => {
                         const { mainScan: row, siblingScan, groupType } = group;
                         return (
-                        <motion.tr
-                          key={group._id}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="hover:bg-primary/[0.02] transition-all cursor-pointer group/row"
-                        >
-                          <td className="px-10 py-8">
-                            <div className="flex flex-col gap-1">
+                          <motion.tr
+                            key={group._id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="hover:bg-primary/[0.02] transition-all cursor-pointer group/row"
+                          >
+                            <td className="px-10 py-8">
+                              <div className="flex flex-col gap-1">
                                 <span className="text-[11px] font-black text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10 select-none">{row.scanId || `ID-${row._id.substring(0, 8).toUpperCase()}`}</span>
                                 <span className={`w-fit px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
-                                    {groupType}
+                                  {groupType}
                                 </span>
-                            </div>
-                          </td>
-                          <td className="px-10 py-8">
-                            <div className="flex items-center gap-3">
-                              <Calendar size={14} className="text-slate-300" />
-                              <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-900 tracking-tight leading-none italic">{new Date(group.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Certified Record</span>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-10 py-8">
-                            <div className="flex flex-col gap-2">
+                            </td>
+                            <td className="px-10 py-8">
+                              <div className="flex items-center gap-3">
+                                <Calendar size={14} className="text-slate-300" />
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-black text-slate-900 tracking-tight leading-none italic">{new Date(group.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Certified Record</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-10 py-8">
+                              <div className="flex flex-col gap-2">
                                 <div className="flex items-center gap-2">
-                                    {siblingScan && <span className="text-[8px] font-black text-slate-400 w-4">OD:</span>}
-                                    {row.status === 'Reviewed' ? (
-                                        <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${row.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                        (row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                            'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                        }`}>
-                                        {row.aiResult || 'None'}
-                                        </span>
-                                    ) : (
-                                        <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-xl text-[9px] font-black uppercase tracking-widest animate-pulse">
-                                            Review Pending
-                                        </span>
-                                    )}
+                                  {siblingScan && <span className="text-[8px] font-black text-slate-400 w-4">OD:</span>}
+                                  {row.status === 'Reviewed' ? (
+                                    <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${row.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                      (row.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                        'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                      }`}>
+                                      {row.aiResult || 'None'}
+                                    </span>
+                                  ) : (
+                                    <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-xl text-[9px] font-black uppercase tracking-widest animate-pulse">
+                                      Review Pending
+                                    </span>
+                                  )}
                                 </div>
                                 {siblingScan && (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[8px] font-black text-slate-400 w-4">OS:</span>
-                                        {siblingScan.status === 'Reviewed' ? (
-                                            <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${siblingScan.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                            (siblingScan.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                            }`}>
-                                            {siblingScan.aiResult || 'None'}
-                                            </span>
-                                        ) : (
-                                            <span className="px-3 py-1 bg-amber-50/80 text-amber-600 border border-amber-100/50 rounded-xl text-[9px] font-black uppercase tracking-widest">
-                                                Review Pending
-                                            </span>
-                                        )}
-                                    </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[8px] font-black text-slate-400 w-4">OS:</span>
+                                    {siblingScan.status === 'Reviewed' ? (
+                                      <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${siblingScan.aiResult === 'High Risk' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                        (siblingScan.aiResult || '').includes('Moderate') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                          'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                        }`}>
+                                        {siblingScan.aiResult || 'None'}
+                                      </span>
+                                    ) : (
+                                      <span className="px-3 py-1 bg-amber-50/80 text-amber-600 border border-amber-100/50 rounded-xl text-[9px] font-black uppercase tracking-widest">
+                                        Review Pending
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
-                            </div>
-                          </td>
-                          <td className="px-10 py-8">
-                            <div className="flex flex-col gap-1">
+                              </div>
+                            </td>
+                            <td className="px-10 py-8">
+                              <div className="flex flex-col gap-1">
                                 {row.status === 'Reviewed' ? (
-                                    <div className="flex items-baseline gap-1.5">
-                                        <span className="text-xl font-black text-slate-900 tracking-tighter leading-none">{row.lesionCount ?? 0}</span>
-                                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{siblingScan ? 'OD' : 'Lesions'}</span>
-                                    </div>
+                                  <div className="flex items-baseline gap-1.5">
+                                    <span className="text-xl font-black text-slate-900 tracking-tighter leading-none">{row.lesionCount ?? 0}</span>
+                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{siblingScan ? 'OD' : 'Lesions'}</span>
+                                  </div>
                                 ) : (
-                                    <span className="text-xs font-bold text-slate-400 italic">Locked</span>
+                                  <span className="text-xs font-bold text-slate-400 italic">Locked</span>
                                 )}
                                 {siblingScan && (
-                                    <div className="flex items-baseline gap-1.5 opacity-60 mt-1">
-                                        {siblingScan.status === 'Reviewed' ? (
-                                            <>
-                                                <span className="text-sm font-black text-slate-500 tracking-tighter leading-none">{siblingScan.lesionCount ?? 0}</span>
-                                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">OS</span>
-                                            </>
-                                        ) : (
-                                            <span className="text-[9px] font-bold text-slate-400/80 italic">OS Locked</span>
-                                        )}
-                                    </div>
+                                  <div className="flex items-baseline gap-1.5 opacity-60 mt-1">
+                                    {siblingScan.status === 'Reviewed' ? (
+                                      <>
+                                        <span className="text-sm font-black text-slate-500 tracking-tighter leading-none">{siblingScan.lesionCount ?? 0}</span>
+                                        <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">OS</span>
+                                      </>
+                                    ) : (
+                                      <span className="text-[9px] font-bold text-slate-400/80 italic">OS Locked</span>
+                                    )}
+                                  </div>
                                 )}
-                            </div>
-                          </td>
-                          <td className="px-10 py-8">
-                            <div className="flex flex-col gap-3">
+                              </div>
+                            </td>
+                            <td className="px-10 py-8">
+                              <div className="flex flex-col gap-3">
                                 {row.status === 'Reviewed' ? <ConfidenceBar value={Math.round((row.aiConfidence || 0.95) * 100)} /> : <span className="text-xs font-bold text-slate-400 italic">--</span>}
                                 {siblingScan && (siblingScan.status === 'Reviewed' ? <ConfidenceBar value={Math.round((siblingScan.aiConfidence || 0.92) * 100)} /> : <span className="text-[10px] font-bold text-slate-400/80 italic mt-1">--</span>)}
-                            </div>
-                          </td>
-                          <td className="px-10 py-8 text-right">
-                            {row.status === 'Reviewed' ? (
-                              <Link
-                                to={`/report/${row._id}`}
-                                className="h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 group/btn"
-                              >
-                                View Report <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" strokeWidth={3} />
-                              </Link>
-                            ) : (
-                              <button
-                                onClick={() => alert('Your doctor is currently reviewing this scan and writing prescriptions. Clinical reports will unlock once reviewed!')}
-                                className="h-10 px-5 bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-100/50 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full"
-                              >
-                                Pending <Clock size={12} />
-                              </button>
-                            )}
-                          </td>
-                        </motion.tr>
-                      );
-                    }) : (
+                              </div>
+                            </td>
+                            <td className="px-10 py-8 text-right">
+                              {row.status === 'Reviewed' ? (
+                                <Link
+                                  to={`/report/${row._id}`}
+                                  className="h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 group/btn"
+                                >
+                                  View Report <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" strokeWidth={3} />
+                                </Link>
+                              ) : (
+                                <button
+                                  onClick={() => alert('Your doctor is currently reviewing this scan and writing prescriptions. Clinical reports will unlock once reviewed!')}
+                                  className="h-10 px-5 bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-100/50 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full"
+                                >
+                                  Pending <Clock size={12} />
+                                </button>
+                              )}
+                            </td>
+                          </motion.tr>
+                        );
+                      }) : (
                         <tr>
                           <td colSpan="6" className="px-10 py-24 text-center">
                             <div className="flex flex-col items-center gap-4">
@@ -443,84 +443,84 @@ const DetailedScanHistory = () => {
                 {currentScans.map((group) => {
                   const { mainScan: row, siblingScan, groupType } = group;
                   return (
-                  <motion.div
-                    key={group._id}
-                    layoutId={group._id}
-                    className="group bg-main rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 cursor-pointer relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-150 transition-transform">
-                      <Activity size={80} />
-                    </div>
-
-                    <div className="relative z-10 space-y-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-col gap-1">
-                             <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm w-fit">{row.scanId || `ID-${row._id.substring(0, 6).toUpperCase()}`}</span>
-                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter w-fit ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
-                                {groupType}
-                            </span>
-                        </div>
-                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2 italic">
-                          <Clock size={12} /> {new Date(group.date).toLocaleDateString()}
-                        </span>
+                    <motion.div
+                      key={group._id}
+                      layoutId={group._id}
+                      className="group bg-main rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 cursor-pointer relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-150 transition-transform">
+                        <Activity size={80} />
                       </div>
 
-                      <div className="aspect-[16/10] bg-white rounded-2xl border border-slate-100 shadow-inner overflow-hidden group-hover:scale-[1.02] transition-transform duration-500 relative">
-                        <img src={normalizeUrl(row.imageUrl) || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=500&auto=format"} alt="Fundus Scan" className="w-full h-full object-cover p-2 rounded-[2rem]" />
-                        {siblingScan && (
-                            <div className="absolute bottom-4 right-4 size-12 rounded-xl border-4 border-white shadow-lg overflow-hidden">
-                                <img src={normalizeUrl(siblingScan.imageUrl)} className="w-full h-full object-cover" />
-                            </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-4">
+                      <div className="relative z-10 space-y-6">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-black text-slate-900 tracking-tight italic">
-                            {row.status === 'Reviewed' ? row.aiResult : 'Review Pending'}
-                          </h4>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-lg font-black text-primary">
-                              {row.status === 'Reviewed' ? (row.lesionCount ?? 0) : '--'}
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm w-fit">{row.scanId || `ID-${row._id.substring(0, 6).toUpperCase()}`}</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter w-fit ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
+                              {groupType}
                             </span>
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Lesions</span>
+                          </div>
+                          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2 italic">
+                            <Clock size={12} /> {new Date(group.date).toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        <div className="aspect-[16/10] bg-white rounded-2xl border border-slate-100 shadow-inner overflow-hidden group-hover:scale-[1.02] transition-transform duration-500 relative">
+                          <img src={normalizeUrl(row.imageUrl) || "https://images.unsplash.com/photo-1579154235602-3c22bd4b5683?w=500&auto=format"} alt="Fundus Scan" className="w-full h-full object-cover p-2 rounded-[2rem]" />
+                          {siblingScan && (
+                            <div className="absolute bottom-4 right-4 size-12 rounded-xl border-4 border-white shadow-lg overflow-hidden">
+                              <img src={normalizeUrl(siblingScan.imageUrl)} className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-black text-slate-900 tracking-tight italic">
+                              {row.status === 'Reviewed' ? row.aiResult : 'Review Pending'}
+                            </h4>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-lg font-black text-primary">
+                                {row.status === 'Reviewed' ? (row.lesionCount ?? 0) : '--'}
+                              </span>
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Lesions</span>
+                            </div>
+                          </div>
+                          {siblingScan && (
+                            <div className="flex items-center justify-between opacity-60">
+                              <h4 className="text-[11px] font-bold text-slate-500 italic">
+                                {siblingScan.status === 'Reviewed' ? siblingScan.aiResult : 'Review Pending'}
+                              </h4>
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-sm font-black text-slate-400">
+                                  {siblingScan.status === 'Reviewed' ? (siblingScan.lesionCount ?? 0) : '--'}
+                                </span>
+                                <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest">Lesions</span>
+                              </div>
+                            </div>
+                          )}
+                          <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary w-[95%]" />
                           </div>
                         </div>
-                        {siblingScan && (
-                            <div className="flex items-center justify-between opacity-60">
-                                <h4 className="text-[11px] font-bold text-slate-500 italic">
-                                  {siblingScan.status === 'Reviewed' ? siblingScan.aiResult : 'Review Pending'}
-                                </h4>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-sm font-black text-slate-400">
-                                      {siblingScan.status === 'Reviewed' ? (siblingScan.lesionCount ?? 0) : '--'}
-                                    </span>
-                                    <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest">Lesions</span>
-                                </div>
-                            </div>
-                        )}
-                        <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden">
-                          <div className="h-full bg-primary w-[95%]" />
-                        </div>
-                      </div>
 
-                      {row.status === 'Reviewed' ? (
-                        <Link
-                          to={`/report/${row._id}`}
-                          className="w-full h-12 bg-white text-slate-900 border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-white hover:border-primary transition-all flex items-center justify-center gap-2"
-                        >
-                          Access Analysis <ArrowUpRight size={14} strokeWidth={2.5} />
-                        </Link>
-                      ) : (
-                        <button
-                          onClick={() => alert('Your doctor is currently reviewing this scan and writing prescriptions. Clinical reports will unlock once reviewed!')}
-                          className="w-full h-12 bg-amber-50 text-amber-600 border border-amber-100/50 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-100 transition-all flex items-center justify-center gap-2"
-                        >
-                          Pending Doctor Review <Clock size={14} />
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
+                        {row.status === 'Reviewed' ? (
+                          <Link
+                            to={`/report/${row._id}`}
+                            className="w-full h-12 bg-white text-slate-900 border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-white hover:border-primary transition-all flex items-center justify-center gap-2"
+                          >
+                            Access Analysis <ArrowUpRight size={14} strokeWidth={2.5} />
+                          </Link>
+                        ) : (
+                          <button
+                            onClick={() => alert('Your doctor is currently reviewing this scan and writing prescriptions. Clinical reports will unlock once reviewed!')}
+                            className="w-full h-12 bg-amber-50 text-amber-600 border border-amber-100/50 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-100 transition-all flex items-center justify-center gap-2"
+                          >
+                            Pending Doctor Review <Clock size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -553,7 +553,7 @@ const DetailedScanHistory = () => {
         {/* Footer */}
         <footer className="mt-auto px-10 py-12 text-center border-t border-slate-100 bg-white/50 backdrop-blur-sm">
           <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
-            © 2024 Retinal AI Clinical Systems / Diagnostic Repository / Node-{user?._id?.substring(0, 8) || "882B-7"}
+            © 2026 Retinal AI Clinical Systems / Diagnostic Repository / Node-{user?._id?.substring(0, 8) || "882B-7"}
           </p>
         </footer>
       </main>

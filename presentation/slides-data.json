@@ -1,10 +1,10 @@
 [
   {
     "kicker": "Retinal AI",
-    "title": "AI-Powered Diabetic Retinopathy Screening Platform",
+    "title": "AI-Powered Diabetic Retinopathy scanning Platform",
     "subtitle": "Detailed project presentation based on the implemented full-stack application in this repository.",
     "bullets": [
-      "Project type: multi-role healthcare web platform for diabetic retinopathy screening and patient follow-up.",
+      "Project type: multi-role healthcare web platform for diabetic retinopathy scanning and patient follow-up.",
       "Core users: patients, doctors, diagnostic centers, technicians, and a super-admin reviewer.",
       "Main value: connect retinal scan intake, AI-based grading, clinical review, reporting, appointments, and patient education in one system."
     ],
@@ -26,7 +26,7 @@
     "kicker": "Problem Statement",
     "title": "Why This System Is Needed",
     "bullets": [
-      "Diabetic retinopathy screening can be delayed when retinal scans must wait for manual review.",
+      "Diabetic retinopathy scanning can be delayed when retinal scans must wait for manual review.",
       "Hospitals and diagnostic centers often use fragmented tools for patient records, scan uploads, and specialist communication.",
       "Patients need understandable results, appointment scheduling, and follow-up guidance after scans are reviewed.",
       "Clinical systems also need role separation and verification before sensitive patient data becomes accessible."
@@ -41,7 +41,7 @@
       "Doctors: maintain profile, review scan history, analyze cases, manage appointments, and receive notifications.",
       "Diagnostic centers: create and manage patient records, upload scans, track reports, and refer cases for review.",
       "Admin: verify doctor and diagnosis center registrations before they can access the system.",
-      "System goal: create a safe, traceable, end-to-end screening workflow with AI support."
+      "System goal: create a safe, traceable, end-to-end scanning workflow with AI support."
     ],
     "notes": "Point out that stakeholder separation is reflected both in frontend routes and backend authorization rules."
   },
@@ -146,7 +146,7 @@
     "title": "Doctor Workflow And Clinical Review",
     "bullets": [
       "Doctors maintain a detailed profile including specialization, degrees, experience, contact details, and photo.",
-      "Doctor dashboards show scan queues, patient details, and prior screening history.",
+      "Doctor dashboards show scan queues, patient details, and prior scanning history.",
       "Doctors can trigger AI analysis, inspect confidence and findings, and review the generated clinical summary.",
       "Doctors manage patient appointments and can update appointment status to pending, confirmed, rejected, or completed.",
       "Notifications keep doctors aware of new diagnostic requests and workflow events."
@@ -208,7 +208,7 @@
       "Strengths: multi-role design, real AI integration, persistent data model, secure onboarding, and strong end-to-end workflow coverage.",
       "Current gaps: limited automated test coverage, Python inference dependency management, and room for deeper audit logging and analytics.",
       "Possible future work: model performance reporting, report approval workflows, stronger clinical explainability, calendar integration, and richer admin auditing.",
-      "The codebase already provides a strong foundation for scaling into a production-grade retinal screening product."
+      "The codebase already provides a strong foundation for scaling into a production-grade retinal scanning product."
     ],
     "notes": "This slide is important for viva, demo, or investor-style presentation because it shows balanced judgment."
   },
@@ -216,7 +216,7 @@
     "kicker": "Conclusion",
     "title": "Project Conclusion",
     "bullets": [
-      "Retinal AI combines healthcare workflow design with AI-assisted retinal screening in a single application.",
+      "Retinal AI combines healthcare workflow design with AI-assisted retinal scanning in a single application.",
       "The repository demonstrates full-stack implementation depth across UI, API, database, security, and AI integration.",
       "It is suitable to present as both a software engineering project and a healthcare technology solution.",
       "The generated presentation assets can now be used directly for classroom, demo day, or stakeholder presentation."

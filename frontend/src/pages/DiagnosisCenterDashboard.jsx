@@ -40,7 +40,7 @@ const Badge = ({ children, color = 'emerald' }) => {
 const formatSpecialization = (spec) => {
     if (!spec) return 'Retina Specialist';
     const mapping = {
-        'dr_screening': 'Diabetic Retinopathy Screening',
+        'dr_scanning': 'Diabetic Retinopathy scanning',
         'medical_dr': 'Medical Diabetic Retinopathy',
         'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
         'dr_lasers': 'Laser & DR Therapeutics',
@@ -50,6 +50,31 @@ const formatSpecialization = (spec) => {
         'pediatric': 'Pediatric Retina'
     };
     return mapping[spec] || spec;
+};
+
+const renderClinicalSummary = (text) => {
+    if (!text) return null;
+    const sections = text.split(/##\s+/);
+    if (sections.length <= 1) {
+        return <p className="leading-relaxed italic">{text}</p>;
+    }
+    return (
+        <div className="space-y-4">
+            {sections.filter(s => s.trim()).map((sec, i) => {
+                const lines = sec.trim().split('\n');
+                const titleLine = lines[0];
+                const contentLines = lines.slice(1).join('\n');
+                const cleanTitle = titleLine.replace(/\*\*/g, '').trim();
+                const cleanContent = contentLines.replace(/\*\*/g, '').trim();
+                return (
+                    <div key={i} className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 shadow-sm">
+                        <h6 className="text-[9px] font-black uppercase tracking-wider text-primary mb-1.5">{cleanTitle}</h6>
+                        <p className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-line">{cleanContent}</p>
+                    </div>
+                );
+            })}
+        </div>
+    );
 };
 
 const PrintStyles = () => (
@@ -626,159 +651,159 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                                 {groupedScans.map(group => {
                                     const { mainScan: s, siblingScan, groupType } = group;
                                     return (
-                                    <tr key={group._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">{s.scanId || s._id?.slice(-8).toUpperCase()}</td>
-                                        <td className="px-5 py-4 text-sm font-black text-slate-900">{s.patient?.name || '—'}</td>
-                                        <td className="px-5 py-4 text-sm font-bold text-slate-600 italic">{s.patient?.age || '—'}</td>
-                                        <td className="px-5 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
-                                                    {groupType}
-                                                </span>
-                                                {groupType === 'Single' && (
-                                                    <span className="text-[10px] font-bold text-slate-700">{s.eyeSide === 'OD' ? 'OD' : 'OS'}</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4 text-xs font-bold text-slate-500">{new Date(s.date || s.createdAt).toLocaleDateString()}</td>
-                                        <td className="px-5 py-4">
-                                            <div className="flex flex-col">
-                                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none truncate max-w-[120px]" title={s.diagnosisCenter?.name || 'Direct'}>
-                                                    {s.diagnosisCenter?.name || 'Direct'}
-                                                </p>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">{s.technician || 'Technician'}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            <div className="flex flex-col gap-1">
-                                                {siblingScan && s.status === siblingScan.status ? (
-                                                    <Badge color={statusColor(s)}>{s.status === 'Analyzed' ? 'Generated' : (s.status || 'Pending')}</Badge>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex items-center gap-2">
-                                                            {siblingScan && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest w-4">OD:</span>}
-                                                            <Badge color={statusColor(s)}>{s.status === 'Analyzed' ? 'Generated' : (s.status || 'Pending')}</Badge>
-                                                        </div>
-                                                        {siblingScan && (
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest w-4">OS:</span>
-                                                                <Badge color={statusColor(siblingScan)}>{siblingScan.status === 'Analyzed' ? 'Generated' : (siblingScan.status || 'Pending')}</Badge>
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            <div className="flex flex-col gap-3">
-                                                {/* Main Scan Results (OD if bilateral) */}
-                                                <div className="flex flex-col gap-1.5 min-w-[180px]">
-                                                    {siblingScan && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Right Eye (OD) Analysis</span>}
-                                                    {s.status === 'Analyzed' || s.status === 'Reviewed' ? (
-                                                        <div className="flex flex-col gap-1.5">
-                                                            <Badge color={s.aiResult === 'High Risk' ? 'red' : s.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
-                                                                {s.aiResult || 'Unknown'}
-                                                            </Badge>
-                                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                                <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-lg">
-                                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">DR:</span>
-                                                                    <span className="text-[9px] font-black text-slate-700 truncate max-w-[90px]" title={s.prediction || '—'}>{s.prediction || '—'}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ background: s.aiConfidence >= 0.7 ? '#fff1f2' : s.aiConfidence >= 0.4 ? '#fffbeb' : '#f0fdf4' }}>
-                                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Conf:</span>
-                                                                    <span className={`text-[9px] font-black ${s.aiConfidence >= 0.7 ? 'text-rose-600' : s.aiConfidence >= 0.4 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                                                        {s.aiConfidence ? `${(s.aiConfidence * 100).toFixed(1)}%` : '—'}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ) : <span className="text-[9px] font-bold text-slate-300 italic px-2">Awaiting AI Core...</span>}
+                                        <tr key={group._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-5 py-4 text-xs font-black text-slate-500 font-mono tracking-tighter">{s.scanId || s._id?.slice(-8).toUpperCase()}</td>
+                                            <td className="px-5 py-4 text-sm font-black text-slate-900">{s.patient?.name || '—'}</td>
+                                            <td className="px-5 py-4 text-sm font-bold text-slate-600 italic">{s.patient?.age || '—'}</td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${groupType === 'Bilateral' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {groupType}
+                                                    </span>
+                                                    {groupType === 'Single' && (
+                                                        <span className="text-[10px] font-bold text-slate-700">{s.eyeSide === 'OD' ? 'OD' : 'OS'}</span>
+                                                    )}
                                                 </div>
-
-                                                {/* Sibling Scan Results (OS) */}
-                                                {siblingScan && (
-                                                    <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-50">
-                                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Left Eye (OS) Analysis</span>
-                                                        {siblingScan.status === 'Analyzed' || siblingScan.status === 'Reviewed' ? (
+                                            </td>
+                                            <td className="px-5 py-4 text-xs font-bold text-slate-500">{new Date(s.date || s.createdAt).toLocaleDateString()}</td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col">
+                                                    <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none truncate max-w-[120px]" title={s.diagnosisCenter?.name || 'Direct'}>
+                                                        {s.diagnosisCenter?.name || 'Direct'}
+                                                    </p>
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">{s.technician || 'Technician'}</p>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col gap-1">
+                                                    {siblingScan && s.status === siblingScan.status ? (
+                                                        <Badge color={statusColor(s)}>{s.status === 'Analyzed' ? 'Generated' : (s.status || 'Pending')}</Badge>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex items-center gap-2">
+                                                                {siblingScan && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest w-4">OD:</span>}
+                                                                <Badge color={statusColor(s)}>{s.status === 'Analyzed' ? 'Generated' : (s.status || 'Pending')}</Badge>
+                                                            </div>
+                                                            {siblingScan && (
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest w-4">OS:</span>
+                                                                    <Badge color={statusColor(siblingScan)}>{siblingScan.status === 'Analyzed' ? 'Generated' : (siblingScan.status || 'Pending')}</Badge>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col gap-3">
+                                                    {/* Main Scan Results (OD if bilateral) */}
+                                                    <div className="flex flex-col gap-1.5 min-w-[180px]">
+                                                        {siblingScan && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Right Eye (OD) Analysis</span>}
+                                                        {s.status === 'Analyzed' || s.status === 'Reviewed' ? (
                                                             <div className="flex flex-col gap-1.5">
-                                                                <Badge color={siblingScan.aiResult === 'High Risk' ? 'red' : siblingScan.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
-                                                                    {siblingScan.aiResult || 'Unknown'}
+                                                                <Badge color={s.aiResult === 'High Risk' ? 'red' : s.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
+                                                                    {s.aiResult || 'Unknown'}
                                                                 </Badge>
                                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                                     <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-lg">
                                                                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">DR:</span>
-                                                                        <span className="text-[9px] font-black text-slate-700 truncate max-w-[90px]" title={siblingScan.prediction || '—'}>{siblingScan.prediction || '—'}</span>
+                                                                        <span className="text-[9px] font-black text-slate-700 truncate max-w-[90px]" title={s.prediction || '—'}>{s.prediction || '—'}</span>
                                                                     </div>
-                                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ background: siblingScan.aiConfidence >= 0.7 ? '#fff1f2' : siblingScan.aiConfidence >= 0.4 ? '#fffbeb' : '#f0fdf4' }}>
+                                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ background: s.aiConfidence >= 0.7 ? '#fff1f2' : s.aiConfidence >= 0.4 ? '#fffbeb' : '#f0fdf4' }}>
                                                                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Conf:</span>
-                                                                        <span className={`text-[9px] font-black ${siblingScan.aiConfidence >= 0.7 ? 'text-rose-600' : siblingScan.aiConfidence >= 0.4 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                                                            {siblingScan.aiConfidence ? `${(siblingScan.aiConfidence * 100).toFixed(1)}%` : '—'}
+                                                                        <span className={`text-[9px] font-black ${s.aiConfidence >= 0.7 ? 'text-rose-600' : s.aiConfidence >= 0.4 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                                                            {s.aiConfidence ? `${(s.aiConfidence * 100).toFixed(1)}%` : '—'}
                                                                         </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         ) : <span className="text-[9px] font-bold text-slate-300 italic px-2">Awaiting AI Core...</span>}
                                                     </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            <div className="flex flex-col gap-3">
-                                                <div className="flex items-center gap-1">
-                                                    {/* Unified Play button for both if both pending */}
-                                                    {s.status === 'Pending' && (!siblingScan || siblingScan.status === 'Pending') && (
-                                                        <button 
-                                                            onClick={async () => {
-                                                                await handleAnalyze(s._id);
-                                                                if (siblingScan) await handleAnalyze(siblingScan._id);
-                                                            }} 
-                                                            disabled={analyzingIds.includes(s._id) || (siblingScan && analyzingIds.includes(siblingScan._id))} 
-                                                            className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-all disabled:opacity-50" 
-                                                            title={siblingScan ? "Analyze Both Eyes" : "Analyze OD"}
-                                                        >
-                                                            <Play size={12} fill="currentColor" />
-                                                        </button>
-                                                    )}
-                                                    
-                                                    {/* Individual Play buttons if statuses differ */}
-                                                    {siblingScan && s.status !== siblingScan.status && (
-                                                        <>
-                                                            {s.status === 'Pending' && (
-                                                                <button onClick={() => handleAnalyze(s._id)} disabled={analyzingIds.includes(s._id)} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-all disabled:opacity-50" title="Analyze OD">
-                                                                    <Play size={12} fill="currentColor" />
-                                                                </button>
-                                                            )}
-                                                            {siblingScan.status === 'Pending' && (
-                                                                <button onClick={() => handleAnalyze(siblingScan._id)} disabled={analyzingIds.includes(siblingScan._id)} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-all disabled:opacity-50" title="Analyze OS">
-                                                                    <Play size={12} fill="currentColor" />
-                                                                </button>
-                                                            )}
-                                                        </>
-                                                    )}
 
-                                                    {(s.status === 'Analyzed' || s.status === 'Reviewed' || (siblingScan && (siblingScan.status === 'Analyzed' || siblingScan.status === 'Reviewed'))) && (
-                                                        <button onClick={() => { setSelectedScan(s); setSiblingScan(siblingScan); setShowReport(true); }} className="p-1.5 bg-indigo-50 text-indigo-500 rounded-lg hover:bg-indigo-100 transition-all" title="View Report">
-                                                            <FileText size={12} />
-                                                        </button>
+                                                    {/* Sibling Scan Results (OS) */}
+                                                    {siblingScan && (
+                                                        <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-50">
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Left Eye (OS) Analysis</span>
+                                                            {siblingScan.status === 'Analyzed' || siblingScan.status === 'Reviewed' ? (
+                                                                <div className="flex flex-col gap-1.5">
+                                                                    <Badge color={siblingScan.aiResult === 'High Risk' ? 'red' : siblingScan.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
+                                                                        {siblingScan.aiResult || 'Unknown'}
+                                                                    </Badge>
+                                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                                        <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-lg">
+                                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">DR:</span>
+                                                                            <span className="text-[9px] font-black text-slate-700 truncate max-w-[90px]" title={siblingScan.prediction || '—'}>{siblingScan.prediction || '—'}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ background: siblingScan.aiConfidence >= 0.7 ? '#fff1f2' : siblingScan.aiConfidence >= 0.4 ? '#fffbeb' : '#f0fdf4' }}>
+                                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Conf:</span>
+                                                                            <span className={`text-[9px] font-black ${siblingScan.aiConfidence >= 0.7 ? 'text-rose-600' : siblingScan.aiConfidence >= 0.4 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                                                                {siblingScan.aiConfidence ? `${(siblingScan.aiConfidence * 100).toFixed(1)}%` : '—'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ) : <span className="text-[9px] font-bold text-slate-300 italic px-2">Awaiting AI Core...</span>}
+                                                        </div>
                                                     )}
-                                                    
-                                                    {/* Consolidated Delete Button */}
-                                                    <button 
-                                                        onClick={async () => {
-                                                            if (window.confirm(`Are you sure you want to delete ${siblingScan ? 'this entire record (both eyes)' : 'this scan'}?`)) {
-                                                                await handleDeleteScan(s._id);
-                                                                if (siblingScan) await handleDeleteScan(siblingScan._id);
-                                                            }
-                                                        }} 
-                                                        className="p-1.5 bg-rose-50 text-rose-400 rounded-lg hover:bg-rose-100 transition-all" 
-                                                        title={siblingScan ? "Delete Bilateral Record" : "Delete Scan"}
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
                                                 </div>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col gap-3">
+                                                    <div className="flex items-center gap-1">
+                                                        {/* Unified Play button for both if both pending */}
+                                                        {s.status === 'Pending' && (!siblingScan || siblingScan.status === 'Pending') && (
+                                                            <button
+                                                                onClick={async () => {
+                                                                    await handleAnalyze(s._id);
+                                                                    if (siblingScan) await handleAnalyze(siblingScan._id);
+                                                                }}
+                                                                disabled={analyzingIds.includes(s._id) || (siblingScan && analyzingIds.includes(siblingScan._id))}
+                                                                className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-all disabled:opacity-50"
+                                                                title={siblingScan ? "Analyze Both Eyes" : "Analyze OD"}
+                                                            >
+                                                                <Play size={12} fill="currentColor" />
+                                                            </button>
+                                                        )}
+
+                                                        {/* Individual Play buttons if statuses differ */}
+                                                        {siblingScan && s.status !== siblingScan.status && (
+                                                            <>
+                                                                {s.status === 'Pending' && (
+                                                                    <button onClick={() => handleAnalyze(s._id)} disabled={analyzingIds.includes(s._id)} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-all disabled:opacity-50" title="Analyze OD">
+                                                                        <Play size={12} fill="currentColor" />
+                                                                    </button>
+                                                                )}
+                                                                {siblingScan.status === 'Pending' && (
+                                                                    <button onClick={() => handleAnalyze(siblingScan._id)} disabled={analyzingIds.includes(siblingScan._id)} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-all disabled:opacity-50" title="Analyze OS">
+                                                                        <Play size={12} fill="currentColor" />
+                                                                    </button>
+                                                                )}
+                                                            </>
+                                                        )}
+
+                                                        {(s.status === 'Analyzed' || s.status === 'Reviewed' || (siblingScan && (siblingScan.status === 'Analyzed' || siblingScan.status === 'Reviewed'))) && (
+                                                            <button onClick={() => { setSelectedScan(s); setSiblingScan(siblingScan); setShowReport(true); }} className="p-1.5 bg-indigo-50 text-indigo-500 rounded-lg hover:bg-indigo-100 transition-all" title="View Report">
+                                                                <FileText size={12} />
+                                                            </button>
+                                                        )}
+
+                                                        {/* Consolidated Delete Button */}
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (window.confirm(`Are you sure you want to delete ${siblingScan ? 'this entire record (both eyes)' : 'this scan'}?`)) {
+                                                                    await handleDeleteScan(s._id);
+                                                                    if (siblingScan) await handleDeleteScan(siblingScan._id);
+                                                                }
+                                                            }}
+                                                            className="p-1.5 bg-rose-50 text-rose-400 rounded-lg hover:bg-rose-100 transition-all"
+                                                            title={siblingScan ? "Delete Bilateral Record" : "Delete Scan"}
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     );
                                 })}
                             </tbody>
@@ -1490,7 +1515,7 @@ const DiagnosisCenterDashboard = () => {
                 </AnimatePresence>
                 <div className="mt-10 text-center">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                        © 2024 Retinal AI Systems · Diagnosis Center Portal · HIPAA Vault Active
+                        © 2026 Retinal AI Systems · Diagnosis Center Portal · HIPAA Vault Active
                     </p>
                 </div>
             </main>
@@ -1527,7 +1552,7 @@ const DiagnosisCenterDashboard = () => {
                                 {/* Print Header (only visible in print) */}
                                 <div className="hidden print:flex flex-col gap-1 text-center w-full">
                                     <h2 className="text-3xl font-black text-slate-900 uppercase italic">Retinal AI Diagnostic Report</h2>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Comprehensive Bilateral Retinal Screening Results</p>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Comprehensive Bilateral Retinal scanning Results</p>
                                     <div className="mt-4 flex justify-center gap-8 text-[10px] font-black uppercase text-slate-400">
                                         <span>Patient: {selectedScan.patient?.name}</span>
                                         <span>ID: {selectedScan.patient?.patientId}</span>
@@ -1587,10 +1612,8 @@ const DiagnosisCenterDashboard = () => {
                                                 {scan.aiReportSummary && (
                                                     <div className="space-y-3">
                                                         <span className="block text-[10px] font-black text-primary uppercase tracking-widest">AI Clinical Analysis</span>
-                                                        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-inner max-h-[300px] overflow-y-auto custom-scrollbar">
-                                                            <div className="text-xs font-bold text-slate-600 leading-relaxed whitespace-pre-wrap italic ai-summary-content">
-                                                                {scan.aiReportSummary}
-                                                            </div>
+                                                        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-inner max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                            {renderClinicalSummary(scan.aiReportSummary)}
                                                         </div>
                                                     </div>
                                                 )}

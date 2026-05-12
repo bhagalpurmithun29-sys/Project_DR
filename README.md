@@ -1,6 +1,6 @@
-# 👁️ Retinal AI: Clinical Grade AI-Powered Bilateral Retinal Screening System (v1.0)
+# 👁️ Retinal AI: Clinical Grade AI-Powered Bilateral Retinal scanning System (v1.0)
 
-**Retinal AI** is a production-grade, AI-powered bilateral diagnostic platform designed to revolutionize Diabetic Retinopathy (DR) screening. By leveraging state-of-the-art computer vision (ResNet50), large language models (Llama 3.3), and a secure multi-stakeholder ecosystem, Retinal AI provides doctors, patients, and diagnostic centers with high-precision bilateral analysis, official prescriptions, and real-time medical auditing.
+**Retinal AI** is a production-grade, AI-powered bilateral diagnostic platform designed to revolutionize Diabetic Retinopathy (DR) scanning. By leveraging state-of-the-art computer vision (ResNet50), large language models (Llama 3.3), and a secure multi-stakeholder ecosystem, Retinal AI provides doctors, patients, and diagnostic centers with high-precision bilateral analysis, official prescriptions, and real-time medical auditing.
 
 ---
 
@@ -130,4 +130,4 @@ graph TD
 This project is licensed under the ISC License.
 
 ---
-**Disclaimer**: *Retinal AI is an AI-assisted clinical screening tool. All final diagnostics and prescriptions should be reviewed and verified by a certified medical professional.*
+**Disclaimer**: *Retinal AI is an AI-assisted clinical scanning tool. All final diagnostics and prescriptions should be reviewed and verified by a certified medical professional.*

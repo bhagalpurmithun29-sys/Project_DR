@@ -302,7 +302,7 @@ const DoctorRegistration = () => {
                   icon={Activity}
                   placeholder="Primary Focus"
                   options={[
-                    { value: 'dr_screening', label: 'Diabetic Retinopathy Screening' },
+                    { value: 'dr_scanning', label: 'Diabetic Retinopathy scanning' },
                     { value: 'medical_dr', label: 'Medical Diabetic Retinopathy' },
                     { value: 'dr_surgery', label: 'Advanced DR & Vitreoretinal Surgery' },
                     { value: 'dr_lasers', label: 'Laser & DR Therapeutics' }
@@ -475,7 +475,7 @@ const DoctorRegistration = () => {
       </main>
 
       <footer className="mt-auto py-12 text-center text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">
-        © 2024 Retinal AI Systems Inc. / Enterprise Clinical License v2.4.1
+        © 2026 Retinal AI Systems Inc. / Enterprise Clinical License v2.4.1
       </footer>
     </div>
   );

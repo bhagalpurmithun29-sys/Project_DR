@@ -24,7 +24,7 @@ import Toast from "../components/Toast";
 const getSpecializationLabel = (spec) => {
   if (!spec) return 'Retina Specialist';
   const mapping = {
-    'dr_screening': 'Diabetic Retinopathy Screening',
+    'dr_scanning': 'Diabetic Retinopathy scanning',
     'medical_dr': 'Medical Diabetic Retinopathy',
     'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
     'dr_lasers': 'Laser & DR Therapeutics',
@@ -97,8 +97,8 @@ export default function AdminDashboard() {
 
   // Filter & Search users
   const filteredUsers = usersList.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          u.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = activeFilter === "all" || u.isVerified === activeFilter;
     const matchesRole = u.role === activeRole;
     return matchesSearch && matchesFilter && matchesRole;
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
                 </div>
                 <h1 className="text-3xl font-black tracking-tight mt-1.5">Visionary Precision AI</h1>
                 <p className="text-emerald-200/80 text-sm font-semibold mt-1 max-w-2xl">
-                  Automated, state-of-the-art screening for diabetic retinopathy. Empowering administrators with clinician verification & facility auditing insights.
+                  Advanced automatic eye scanning for diabetic retinopathy, helping administrators with doctor verification and hospital/facility audit reports.
                 </p>
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
 
       {/* ── MAIN LAYOUT ── */}
       <div className="max-w-7xl mx-auto px-6 mt-10">
-        
+
         {/* ── ANALYTICS WIDGETS ── */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
           {[
@@ -186,11 +186,10 @@ export default function AdminDashboard() {
         <div className="mb-8 flex items-center justify-center p-1.5 bg-slate-200/50 rounded-[2rem] h-16 max-w-2xl mx-auto shadow-inner gap-1 border border-slate-300/5">
           <button
             onClick={() => setActiveRole("doctor")}
-            className={`flex-1 flex items-center justify-center gap-3 h-full rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all ${
-              activeRole === "doctor"
+            className={`flex-1 flex items-center justify-center gap-3 h-full rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all ${activeRole === "doctor"
                 ? "bg-white text-emerald-700 shadow-md"
                 : "text-slate-500 hover:text-slate-800"
-            }`}
+              }`}
           >
             <Activity size={16} strokeWidth={2.5} />
             <span>Clinicians / Doctors</span>
@@ -200,11 +199,10 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveRole("diagnosis_center")}
-            className={`flex-1 flex items-center justify-center gap-3 h-full rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all ${
-              activeRole === "diagnosis_center"
+            className={`flex-1 flex items-center justify-center gap-3 h-full rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all ${activeRole === "diagnosis_center"
                 ? "bg-white text-blue-700 shadow-md"
                 : "text-slate-500 hover:text-slate-800"
-            }`}
+              }`}
           >
             <Building2 size={16} strokeWidth={2.5} />
             <span>Diagnostic Centers</span>
@@ -230,7 +228,7 @@ export default function AdminDashboard() {
                 className={`px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${activeFilter === tab.id
                   ? "bg-white text-emerald-700 shadow-sm"
                   : "text-slate-500 hover:text-slate-800"
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -373,11 +371,10 @@ export default function AdminDashboard() {
                       {!isRejected && (
                         <button
                           onClick={() => handleVerify(item._id, "rejected")}
-                          className={`flex-1 inline-flex items-center justify-center gap-2 border-2 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all ${
-                            isVerified 
+                          className={`flex-1 inline-flex items-center justify-center gap-2 border-2 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all ${isVerified
                               ? "border-slate-100 hover:border-rose-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
                               : "border-rose-600 text-rose-600 hover:bg-rose-50"
-                          }`}
+                            }`}
                         >
                           <XCircle size={14} />
                           <span>Reject</span>

@@ -67,7 +67,7 @@ export default function Login() {
         return;
       }
       const userRole = res?.data?.role;
-      
+
       const targetPath = userRole === 'doctor' || userRole === 'technician'
         ? "/doctor-dashboard"
         : userRole === 'diagnosis_center'
@@ -84,7 +84,7 @@ export default function Login() {
     }
   };
 
-    const googleLoginHandler = useGoogleLogin({
+  const googleLoginHandler = useGoogleLogin({
     onSuccess: handleGoogleLoginSuccess,
     redirect_uri: `${window.location.origin}/auth/google/callback`,
     onError: () => {
@@ -102,12 +102,12 @@ export default function Login() {
       const userRole = res?.data?.role;
       const targetPath = userRole === 'admin'
         ? "/admin-dashboard"
-        : userRole === 'doctor' || userRole === 'technician' 
-          ? "/doctor-dashboard" 
-          : userRole === 'diagnosis_center' 
-            ? "/diagnosis-center/" 
+        : userRole === 'doctor' || userRole === 'technician'
+          ? "/doctor-dashboard"
+          : userRole === 'diagnosis_center'
+            ? "/diagnosis-center/"
             : "/dashboard";
-      
+
       navigate(targetPath, { state: { loginSuccess: true } });
     } catch (err) {
       const errorMessage = getApiErrorMessage(err, "Failed to login");
@@ -166,7 +166,7 @@ export default function Login() {
           </div>
 
           <div className="relative z-10 flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-white/40">
-            <span>© 2024 Retinal AI Systems Inc.</span>
+            <span>© 2026 Retinal AI Systems Inc.</span>
             <div className="flex gap-4">
               <a href="#" className="transition-colors hover:text-white">Privacy</a>
               <a href="#" className="transition-colors hover:text-white">Terms</a>
@@ -336,7 +336,7 @@ export default function Login() {
 
                 <div className="grid gap-3 grid-cols-1">
 
-                  <button 
+                  <button
                     type="button"
                     disabled={googleLoading}
                     onClick={() => googleLoginHandler()}

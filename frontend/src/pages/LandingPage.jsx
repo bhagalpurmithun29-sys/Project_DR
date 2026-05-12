@@ -565,7 +565,7 @@ export default function LandingPage() {
 
             <div className="mt-20 pt-8 border-t border-slate-50 flex flex-col items-center justify-between gap-6 md:flex-row">
               <p className="text-sm font-bold text-slate-400">
-                © 2024 Retinal AI Systems Inc.
+                © 2026 Retinal AI Systems Inc.
               </p>
               <div className="flex items-center gap-6 text-sm font-bold text-slate-400">
                 <a href="#" className="hover:text-slate-900 transition-colors">Privacy</a>

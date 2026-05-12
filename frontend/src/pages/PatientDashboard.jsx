@@ -397,9 +397,9 @@ const PatientDashboard = () => {
 
                     {completionPercentage < 100 && (
                         <div className="-mx-6 lg:-mx-10 mb-6">
-                            <ProfileIncompleteBanner 
-                                percentage={completionPercentage} 
-                                role="patient" 
+                            <ProfileIncompleteBanner
+                                percentage={completionPercentage}
+                                role="patient"
                                 onClick={() => setIsPreferencesOpen(true)}
                             />
                         </div>
@@ -437,13 +437,13 @@ const PatientDashboard = () => {
                                     </div>
                                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold text-slate-500 dark:text-slate-400">
                                         <span className="flex items-center gap-2">
-                                            <Calendar size={16} className="text-slate-300 dark:text-slate-600" /> 
-                                            {patient?.dob 
-                                                ? `DOB: ${new Date(patient.dob).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })} (${patient.age} Years)` 
+                                            <Calendar size={16} className="text-slate-300 dark:text-slate-600" />
+                                            {patient?.dob
+                                                ? `DOB: ${new Date(patient.dob).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })} (${patient.age} Years)`
                                                 : (patient?.age && patient?.age > 0 ? `${patient.age} Years` : "Age: N/A")}
                                         </span>
                                         <span className={`flex items-center gap-2 ${diabeticStage.includes('Stage 4') || diabeticStage.includes('Stage 3') ? 'text-rose-500' :
-                                                diabeticStage.includes('Stage 2') ? 'text-amber-500' : 'text-slate-500'
+                                            diabeticStage.includes('Stage 2') ? 'text-amber-500' : 'text-slate-500'
                                             }`}>
                                             <Eye size={16} className="text-slate-300" />
                                             Diabetic Stage: {scans.length > 0 ? (diabeticStage.includes(':') ? diabeticStage.split(': ')[0] : diabeticStage) : 'N/A'}
@@ -519,76 +519,76 @@ const PatientDashboard = () => {
                                                 const { mainScan: scan, siblingScan, groupType } = group;
                                                 const isReviewed = scan.status === 'Reviewed';
                                                 return (
-                                                <tr key={group._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all group">
-                                                    <td className="px-8 py-6">
-                                                        <p className="text-sm font-black text-slate-900 dark:text-white">{new Date(group.date).toLocaleDateString()}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                                                            {groupType === 'Bilateral' ? 'Bilateral Scan (OD/OS)' : (scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)')}
-                                                        </p>
-                                                    </td>
-                                                    <td className="px-8 py-6">
-                                                        <div className="flex flex-col gap-1">
+                                                    <tr key={group._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all group">
+                                                        <td className="px-8 py-6">
+                                                            <p className="text-sm font-black text-slate-900 dark:text-white">{new Date(group.date).toLocaleDateString()}</p>
+                                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                                                {groupType === 'Bilateral' ? 'Bilateral Scan (OD/OS)' : (scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)')}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-8 py-6">
+                                                            <div className="flex flex-col gap-1">
+                                                                {isReviewed ? (
+                                                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{scan.aiResult || 'None'}</span>
+                                                                ) : (
+                                                                    <span className="text-xs font-black text-amber-500 italic uppercase tracking-wider">Review Pending</span>
+                                                                )}
+                                                                {siblingScan && (
+                                                                    <span className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1 flex flex-col gap-0.5">
+                                                                        {siblingScan.status === 'Reviewed' ? (
+                                                                            <span>OS: {siblingScan.aiResult || 'None'}</span>
+                                                                        ) : (
+                                                                            <span className="text-[9px] font-black text-amber-500/80 italic uppercase tracking-wider">OS: Review Pending</span>
+                                                                        )}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-8 py-6 text-sm font-bold text-slate-600 dark:text-slate-400">
                                                             {isReviewed ? (
-                                                                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{scan.aiResult || 'None'}</span>
+                                                                <span>{scan.lesionCount !== undefined ? `${scan.lesionCount} lesions` : 'N/A'}</span>
                                                             ) : (
-                                                                <span className="text-xs font-black text-amber-500 italic uppercase tracking-wider">Review Pending</span>
+                                                                <span className="text-xs font-bold text-slate-400 italic">Awaiting Doctor</span>
                                                             )}
                                                             {siblingScan && (
-                                                                <span className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1 flex flex-col gap-0.5">
+                                                                <span className="block text-[10px] opacity-60">
                                                                     {siblingScan.status === 'Reviewed' ? (
-                                                                        <span>OS: {siblingScan.aiResult || 'None'}</span>
+                                                                        `OS: ${siblingScan.lesionCount ?? 0} lesions`
                                                                     ) : (
-                                                                        <span className="text-[9px] font-black text-amber-500/80 italic uppercase tracking-wider">OS: Review Pending</span>
+                                                                        <span className="text-[9px] font-bold text-slate-400/80 italic">OS: Awaiting Doctor</span>
                                                                     )}
                                                                 </span>
                                                             )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-8 py-6 text-sm font-bold text-slate-600 dark:text-slate-400">
-                                                        {isReviewed ? (
-                                                            <span>{scan.lesionCount !== undefined ? `${scan.lesionCount} lesions` : 'N/A'}</span>
-                                                        ) : (
-                                                            <span className="text-xs font-bold text-slate-400 italic">Awaiting Doctor</span>
-                                                        )}
-                                                        {siblingScan && (
-                                                            <span className="block text-[10px] opacity-60">
-                                                                {siblingScan.status === 'Reviewed' ? (
-                                                                    `OS: ${siblingScan.lesionCount ?? 0} lesions`
-                                                                ) : (
-                                                                    <span className="text-[9px] font-bold text-slate-400/80 italic">OS: Awaiting Doctor</span>
-                                                                )}
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-8 py-6">
-                                                        <div className="flex flex-col gap-1">
-                                                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${isReviewed ? 'text-primary' : 'text-amber-500'}`}>
-                                                                <span className={`size-1.5 rounded-full ${isReviewed ? 'bg-primary' : 'bg-amber-500 animate-pulse'}`}></span>
-                                                                {isReviewed ? 'Reviewed' : 'Review Pending'}
-                                                            </div>
-                                                            {siblingScan && (
-                                                                <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${siblingScan.status === 'Reviewed' ? 'text-primary' : 'text-amber-500'}`}>
-                                                                    <span className={`size-1.5 rounded-full ${siblingScan.status === 'Reviewed' ? 'bg-primary' : 'bg-amber-500 animate-pulse'}`}></span>
-                                                                    {siblingScan.status === 'Reviewed' ? 'Reviewed' : 'Review Pending'}
+                                                        </td>
+                                                        <td className="px-8 py-6">
+                                                            <div className="flex flex-col gap-1">
+                                                                <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${isReviewed ? 'text-primary' : 'text-amber-500'}`}>
+                                                                    <span className={`size-1.5 rounded-full ${isReviewed ? 'bg-primary' : 'bg-amber-500 animate-pulse'}`}></span>
+                                                                    {isReviewed ? 'Reviewed' : 'Review Pending'}
                                                                 </div>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-8 py-6 text-right">
-                                                        <button
-                                                            onClick={() => {
-                                                                if (isReviewed) {
-                                                                    navigate('/reports');
-                                                                } else {
-                                                                    showToast('Your doctor is currently reviewing this scan and writing prescriptions. Clinical reports will unlock once reviewed!', 'warning');
-                                                                }
-                                                            }}
-                                                            className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-primary hover:text-white transition-all flex items-center justify-center group-hover:shadow-lg group-hover:shadow-primary/20"
-                                                        >
-                                                            <ArrowUpRight size={18} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
+                                                                {siblingScan && (
+                                                                    <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${siblingScan.status === 'Reviewed' ? 'text-primary' : 'text-amber-500'}`}>
+                                                                        <span className={`size-1.5 rounded-full ${siblingScan.status === 'Reviewed' ? 'bg-primary' : 'bg-amber-500 animate-pulse'}`}></span>
+                                                                        {siblingScan.status === 'Reviewed' ? 'Reviewed' : 'Review Pending'}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-8 py-6 text-right">
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (isReviewed) {
+                                                                        navigate('/reports');
+                                                                    } else {
+                                                                        showToast('Your doctor is currently reviewing this scan and writing prescriptions. Clinical reports will unlock once reviewed!', 'warning');
+                                                                    }
+                                                                }}
+                                                                className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-primary hover:text-white transition-all flex items-center justify-center group-hover:shadow-lg group-hover:shadow-primary/20"
+                                                            >
+                                                                <ArrowUpRight size={18} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
                                                 );
                                             }) : (
                                                 <tr>
@@ -657,7 +657,7 @@ const PatientDashboard = () => {
                 {/* Footer */}
                 <footer className="mt-auto px-10 py-10 text-center border-t border-slate-100 dark:border-slate-800">
                     <p className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.4em]">
-                        © 2024 Retinal AI Clinical Systems / v2.4.1-stable / Patient Vault Active
+                        © 2026 Retinal AI Clinical Systems / v2.4.1-stable / Patient Vault Active
                     </p>
                 </footer>
             </main>

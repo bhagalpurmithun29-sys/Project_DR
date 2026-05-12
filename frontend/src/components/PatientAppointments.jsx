@@ -29,18 +29,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PatientPreferencesModal from './PatientPreferencesModal';
 
 const formatSpecialization = (spec) => {
-    if (!spec) return 'Retina Specialist';
-    const mapping = {
-        'dr_screening': 'Diabetic Retinopathy Screening',
-        'medical_dr': 'Medical Diabetic Retinopathy',
-        'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
-        'dr_lasers': 'Laser & DR Therapeutics',
-        'general': 'General Retina',
-        'retina': 'Medical Retina',
-        'surgery': 'Vitreoretinal Surgery',
-        'pediatric': 'Pediatric Retina'
-    };
-    return mapping[spec] || spec;
+  if (!spec) return 'Retina Specialist';
+  const mapping = {
+    'dr_scanning': 'Diabetic Retinopathy scanning',
+    'medical_dr': 'Medical Diabetic Retinopathy',
+    'dr_surgery': 'Advanced DR & Vitreoretinal Surgery',
+    'dr_lasers': 'Laser & DR Therapeutics',
+    'general': 'General Retina',
+    'retina': 'Medical Retina',
+    'surgery': 'Vitreoretinal Surgery',
+    'pediatric': 'Pediatric Retina'
+  };
+  return mapping[spec] || spec;
 };
 
 const PatientAppointments = () => {
@@ -59,7 +59,7 @@ const PatientAppointments = () => {
       { startHour: 9, endHour: 12, period: 'AM' },
       { startHour: 14, endHour: 17, period: 'PM' }
     ];
-    
+
     periods.forEach(({ startHour, endHour, period }) => {
       for (let h = startHour; h <= endHour; h++) {
         let hourStr = h;
@@ -153,8 +153,8 @@ const PatientAppointments = () => {
     );
   }
 
-  const hasActiveWithSelectedDoc = bookingForm.doctorId ? appointments.some(app => 
-    app.doctorId?._id === bookingForm.doctorId && 
+  const hasActiveWithSelectedDoc = bookingForm.doctorId ? appointments.some(app =>
+    app.doctorId?._id === bookingForm.doctorId &&
     (app.status === 'pending' || app.status === 'confirmed')
   ) : false;
 
@@ -294,12 +294,11 @@ const PatientAppointments = () => {
                           </div>
                         </td>
                         <td className="px-10 py-8">
-                          <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                              app.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                              app.status === 'completed' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                          <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${app.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                            app.status === 'completed' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
                               app.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                              app.status === 'rejected' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                              'bg-slate-50 text-slate-600 border-slate-100'
+                                app.status === 'rejected' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                  'bg-slate-50 text-slate-600 border-slate-100'
                             }`}>
                             {app.status}
                           </span>
@@ -336,7 +335,7 @@ const PatientAppointments = () => {
         {/* Footer */}
         <footer className="mt-auto px-10 py-12 text-center border-t border-slate-100 bg-white/50 backdrop-blur-sm">
           <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
-            © 2024 Retinal AI Clinical Systems / Appointments / Node-{user?._id?.substring(0, 8) || "882B-7"}
+            © 2026 Retinal AI Clinical Systems / Appointments / Node-{user?._id?.substring(0, 8) || "882B-7"}
           </p>
         </footer>
       </main>
@@ -403,11 +402,10 @@ const PatientAppointments = () => {
                             key={t}
                             type="button"
                             onClick={() => setBookingForm(f => ({ ...f, time: t }))}
-                            className={`py-2 text-[10px] font-bold rounded-xl border-2 transition-all ${
-                              isSelected 
-                                ? 'bg-primary border-primary text-white shadow-md shadow-primary/15 scale-[1.02]' 
-                                : 'bg-white border-slate-100 hover:border-primary/20 text-slate-700'
-                            }`}
+                            className={`py-2 text-[10px] font-bold rounded-xl border-2 transition-all ${isSelected
+                              ? 'bg-primary border-primary text-white shadow-md shadow-primary/15 scale-[1.02]'
+                              : 'bg-white border-slate-100 hover:border-primary/20 text-slate-700'
+                              }`}
                           >
                             {t.replace(' AM', '').replace(' PM', '')} <span className="text-[8px] opacity-75">{t.slice(-2)}</span>
                           </button>
