@@ -1,13 +1,13 @@
 import { useEffect, useState, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, CheckCircle2 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { SECURITY_QUESTIONS } from '../constants/securityQuestions';
 
 const ProfileSetup = () => {
-    const { user, loading } = useContext(AuthContext);
+    const { user, loading, logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const [q1, setQ1] = useState('');
@@ -17,6 +17,7 @@ const ProfileSetup = () => {
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
     const [hasSecurityQuestions, setHasSecurityQuestions] = useState(null);
+    const [showPendingModal, setShowPendingModal] = useState(false);
 
     const defaultNextRoute = user?.role === 'doctor' || user?.role === 'technician'
         ? '/doctor-dashboard'
@@ -68,7 +69,11 @@ const ProfileSetup = () => {
                 ],
             });
 
-            navigate(nextRoute);
+            if (user?.role === 'diagnosis_center') {
+                setShowPendingModal(true);
+            } else {
+                navigate(nextRoute);
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to save security questions');
         } finally {
@@ -172,6 +177,49 @@ const ProfileSetup = () => {
                     </button>
                 </form>
             </motion.div>
+
+            <AnimatePresence>
+                {showPendingModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            className="w-full max-w-md overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-8 shadow-2xl text-center"
+                        >
+                            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-600 animate-pulse">
+                                <Shield size={40} className="stroke-[2.5]" />
+                            </div>
+                            
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">
+                                Registration Received!
+                            </h3>
+                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-4">
+                                Verification Pending
+                            </p>
+                            
+                            <p className="text-sm font-medium text-slate-500 leading-relaxed mb-8">
+                                Your security questions have been configured successfully. As part of our clinical security and compliance protocols, your Diagnostic Center registration is currently pending review by the administrator. Once approved, you will be able to sign in to your dashboard.
+                            </p>
+                            
+                            <button
+                                onClick={() => {
+                                    logout();
+                                    navigate('/login', { replace: true });
+                                }}
+                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-xl shadow-emerald-600/10"
+                            >
+                                Back to Login
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

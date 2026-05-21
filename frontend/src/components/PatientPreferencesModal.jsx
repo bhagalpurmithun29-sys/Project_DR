@@ -100,6 +100,12 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
         setProfileSaving(true);
         setProfileMsg({ type: '', text: '' });
 
+        if (profileForm.phone && !/^\d{10}$/.test(profileForm.phone)) {
+            setProfileMsg({ type: 'error', text: 'Phone number must be exactly 10 digits (e.g. 9876543210).' });
+            setProfileSaving(false);
+            return;
+        }
+
         if (profileForm.dob && new Date(profileForm.dob) > new Date()) {
             setProfileMsg({ type: 'error', text: 'Date of Birth cannot be in the future.' });
             setProfileSaving(false);
@@ -407,7 +413,6 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                                 calculatedAge = age;
                                                             }
                                                             setProfileForm(prev => ({ ...prev, dob: newDob, age: calculatedAge }));
-                                                            e.target.blur();
                                                         }}
                                                         className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
                                                         max={new Date().toISOString().split('T')[0]}
@@ -444,7 +449,10 @@ const PatientPreferencesModal = ({ isOpen, onClose, patient, user, onProfileUpda
                                                         type="tel"
                                                         placeholder="+91 00000-00000"
                                                         value={profileForm.phone}
-                                                        onChange={e => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
+                                                        onChange={e => {
+                                                            const cleanValue = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                            setProfileForm(prev => ({ ...prev, phone: cleanValue }));
+                                                        }}
                                                         className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-primary/5 transition-all"
                                                     />
                                                 </div>

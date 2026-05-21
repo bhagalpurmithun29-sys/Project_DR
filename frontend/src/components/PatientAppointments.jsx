@@ -385,7 +385,6 @@ const PatientAppointments = () => {
                     value={bookingForm.date}
                     onChange={e => {
                       setBookingForm(f => ({ ...f, date: e.target.value }));
-                      e.target.blur();
                     }}
                     className="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-900 font-bold text-sm outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all"
                   />

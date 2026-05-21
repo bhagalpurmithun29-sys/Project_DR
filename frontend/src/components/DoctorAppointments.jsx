@@ -289,7 +289,6 @@ const DoctorAppointments = () => {
                   value={filterDate}
                   onChange={(e) => {
                     setFilterDate(e.target.value);
-                    e.target.blur();
                   }}
                   className="px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-[#f8fafc]/50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 outline-none focus:border-primary/20 focus:ring-2 focus:ring-primary/5 transition-all"
                   title="Filter by Date"

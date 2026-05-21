@@ -354,6 +354,13 @@ const PatientsSection = ({ patients, onRefresh }) => {
     const handleAdd = async (e) => {
         e.preventDefault();
         setSaving(true); setMsg({ type: '', text: '' });
+
+        if (form.phoneNumber && !/^\d{10}$/.test(form.phoneNumber)) {
+            setMsg({ type: 'error', text: 'Phone number must be exactly 10 digits (e.g. 9876543210).' });
+            setSaving(false);
+            return;
+        }
+
         try {
             const res = await api.post('/patients', form);
             const generatedPassword = res.data.credentials?.temporaryPassword;
@@ -458,7 +465,10 @@ const PatientsSection = ({ patients, onRefresh }) => {
                                     </Select>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Input label="Phone Number" icon={Phone} value={form.phoneNumber} onChange={e => setForm(f => ({ ...f, phoneNumber: e.target.value }))} placeholder="+91 9999 999 999" />
+                                    <Input label="Phone Number" icon={Phone} value={form.phoneNumber} onChange={e => {
+                                         const cleanVal = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                         setForm(f => ({ ...f, phoneNumber: cleanVal }));
+                                     }} placeholder="9876543210" />
                                     <Input label="Create Password" icon={Lock} type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
                                 </div>
                                 {msg.text && (
@@ -1165,6 +1175,13 @@ const SettingsSection = ({ center, user, onCenterUpdate }) => {
     const saveProfile = async (e) => {
         e.preventDefault();
         setSaving(true); setMsg({ type: '', text: '' });
+
+        if (profile.phone && !/^\d{10}$/.test(profile.phone)) {
+            setMsg({ type: 'error', text: 'Phone number must be exactly 10 digits (e.g. 9876543210).' });
+            setSaving(false);
+            return;
+        }
+
         try {
             const res = await api.put('/diagnosis-centers/me', profile);
             setMsg({ type: 'success', text: 'Profile updated successfully.' });
@@ -1253,7 +1270,10 @@ const SettingsSection = ({ center, user, onCenterUpdate }) => {
                                 <Input label="License Number" icon={Award} value={profile.licenseNumber} onChange={e => setProfile(p => ({ ...p, licenseNumber: e.target.value }))} placeholder="LIC-123456" />
                             </div>
                             <Input label="Contact Email" icon={Mail} type="email" value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} placeholder="center@email.com" />
-                            <Input label="Phone" icon={Phone} value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} placeholder="+91 9999 999 999" />
+                            <Input label="Phone" icon={Phone} value={profile.phone} onChange={e => {
+                                const cleanVal = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setProfile(p => ({ ...p, phone: cleanVal }));
+                            }} placeholder="9876543210" />
                             <Input label="Address" icon={MapPin} value={profile.address} onChange={e => setProfile(p => ({ ...p, address: e.target.value }))} placeholder="123 Medical Street" />
                             <Input label="City" icon={MapPin} value={profile.city} onChange={e => setProfile(p => ({ ...p, city: e.target.value }))} placeholder="Mumbai" />
                             {msg.text && (

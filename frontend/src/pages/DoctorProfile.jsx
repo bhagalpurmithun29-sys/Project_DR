@@ -353,7 +353,7 @@ const DoctorProfile = () => {
                                             {
                                                 icon: Calendar,
                                                 label: "Date of Birth",
-                                                value: profile?.dob ? new Date(profile.dob).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Pending"
+                                                value: (profile?.dob || user?.dob) ? new Date(profile?.dob || user?.dob).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Pending"
                                             },
                                             { icon: Users, label: "Total Patients", value: totalPatientsCount > 0 ? `${totalPatientsCount}` : "0" }
                                         ].map((item, i) => (
@@ -462,6 +462,15 @@ const DoctorProfile = () => {
                                 </div>
                                 <div className="flex items-start gap-4">
                                     <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 mt-1">
+                                        <Phone size={14} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Contact Number</p>
+                                        <p className="text-sm font-bold text-slate-900">{profile?.phoneNumber || "Not Provided"}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-4">
+                                    <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 mt-1">
                                         <Calendar size={14} />
                                     </div>
                                     <div>
@@ -469,7 +478,7 @@ const DoctorProfile = () => {
                                         <p className="text-sm font-bold text-slate-900">{new Date(profile?.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
                                     </div>
                                 </div>
-                                {profile?.dob && (
+                                {(profile?.dob || user?.dob) && (
                                     <div className="flex items-start gap-4">
                                         <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 mt-1">
                                             <Calendar size={14} />
@@ -477,7 +486,7 @@ const DoctorProfile = () => {
                                         <div>
                                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Date of Birth</p>
                                             <p className="text-sm font-bold text-slate-900">
-                                                {new Date(profile.dob).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                {new Date(profile?.dob || user?.dob).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                                             </p>
                                         </div>
                                     </div>

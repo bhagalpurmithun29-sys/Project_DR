@@ -27,11 +27,12 @@ import { Lock } from 'lucide-react';
 
 
 const DoctorRegistration = () => {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState(null);
+  const [showPendingModal, setShowPendingModal] = useState(false);
   const [formData, setFormData] = useState({
     licenseNumber: '',
     country: '',
@@ -63,7 +64,7 @@ const DoctorRegistration = () => {
             email: p.email || (user?.email || ''),
             phoneNumber: p.phoneNumber || '',
             bio: p.bio || '',
-            dob: p.dob ? new Date(p.dob).toISOString().split('T')[0] : '',
+            dob: p.dob ? new Date(p.dob).toISOString().split('T')[0] : (user?.dob ? new Date(user.dob).toISOString().split('T')[0] : ''),
             photo: null // We don't pre-populate the file input
           });
 
@@ -74,13 +75,22 @@ const DoctorRegistration = () => {
               institution: d.institution || ''
             })));
           }
+        } else {
+          // If profile fetch returns null/empty
+          setFormData(prev => ({
+            ...prev,
+            email: user?.email || '',
+            dob: user?.dob ? new Date(user.dob).toISOString().split('T')[0] : ''
+          }));
         }
       } catch (err) {
         console.error('No existing profile found or fetch error:', err);
-        // If no profile, we still sync the email from auth context
-        if (user?.email) {
-          setFormData(prev => ({ ...prev, email: user.email }));
-        }
+        // If no profile, we still sync the email and DOB from auth context
+        setFormData(prev => ({
+          ...prev,
+          email: user?.email || '',
+          dob: user?.dob ? new Date(user.dob).toISOString().split('T')[0] : ''
+        }));
       } finally {
         setIsFetching(false);
       }
@@ -95,7 +105,12 @@ const DoctorRegistration = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'phoneNumber') {
+      const cleanValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData(prev => ({ ...prev, [name]: cleanValue }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleDegreeChange = (id, field, value) => {
@@ -125,6 +140,13 @@ const DoctorRegistration = () => {
       return;
     }
 
+    // Strict 10-digit mobile number validation
+    if (!/^\d{10}$/.test(formData.phoneNumber)) {
+      setError('Mobile number must be exactly 10 digits (e.g. 9876543210).');
+      setLoading(false);
+      return;
+    }
+
     if (formData.dob && new Date(formData.dob) > new Date()) {
       setError('Date of Birth cannot be in the future.');
       setLoading(false);
@@ -137,7 +159,7 @@ const DoctorRegistration = () => {
         degrees: degrees.map(({ title, institution }) => ({ title, institution }))
       };
       await doctorService.saveProfile(profileData);
-      navigate('/doctor-dashboard');
+      setShowPendingModal(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save profile');
     } finally {
@@ -354,7 +376,6 @@ const DoctorRegistration = () => {
                       value={formData.dob}
                       onChange={(e) => {
                         handleInputChange(e);
-                        e.target.blur();
                       }}
                       className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all shadow-sm focus:bg-white focus:text-slate-900"
                       type="date"
@@ -477,6 +498,49 @@ const DoctorRegistration = () => {
       <footer className="mt-auto py-12 text-center text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">
         © 2026 Retinal AI Systems Inc. / Enterprise Clinical License v2.4.1
       </footer>
+
+      <AnimatePresence>
+        {showPendingModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="w-full max-w-md overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-8 shadow-2xl text-center"
+            >
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-600 animate-pulse">
+                <Lock size={40} className="stroke-[2.5]" />
+              </div>
+              
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">
+                Registration Received!
+              </h3>
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-4">
+                Verification Pending
+              </p>
+              
+              <p className="text-sm font-medium text-slate-500 leading-relaxed mb-8">
+                Your profile has been saved successfully. As part of our clinical security and compliance protocols, your Doctor registration is currently pending review by the administrator. Once approved, you will be able to sign in to your dashboard.
+              </p>
+              
+              <button
+                onClick={() => {
+                  logout();
+                  navigate('/login', { replace: true });
+                }}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-xl shadow-emerald-600/10"
+              >
+                Back to Login
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

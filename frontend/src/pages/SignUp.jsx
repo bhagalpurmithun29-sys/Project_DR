@@ -304,7 +304,6 @@ const Register = () => {
                                                 value={dob}
                                                 onChange={(e) => {
                                                     setDob(e.target.value);
-                                                    e.target.blur();
                                                 }}
                                                 className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-400 font-bold focus:ring-4 focus:ring-primary/20 focus:border-primary/20 outline-none transition-all shadow-sm"
                                                 type="date"

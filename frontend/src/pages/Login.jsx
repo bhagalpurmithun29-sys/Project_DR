@@ -246,7 +246,7 @@ export default function Login() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label htmlFor="login-email" className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">
-                      {role === "doctor" ? "Work Email" : "Email Address"}
+                      {role === "doctor" ? "Email Address" : "Email Address"}
                     </label>
                     <div className="relative group">
                       <Mail
