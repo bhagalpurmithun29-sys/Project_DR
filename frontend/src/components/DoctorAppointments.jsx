@@ -26,6 +26,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import CentralAlertsModal from './CentralAlertsModal';
 import NodeSettingsModal from './NodeSettingsModal';
+import Toast from './Toast';
 
 const formatSpecialization = (spec) => {
   if (!spec) return 'Retina Specialist';
@@ -52,6 +53,12 @@ const DoctorAppointments = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterDate, setFilterDate] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
 
   const parseTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
@@ -85,26 +92,30 @@ const DoctorAppointments = () => {
   const handleBulkAction = async (status) => {
     const pendingToUpdate = filteredAppointments.filter(app => app.status === 'pending');
     if (pendingToUpdate.length === 0) {
-      alert("No pending appointments found in the current filtered view.");
+      showToast("No pending appointments found in the current filtered view.", "error");
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to mark all ${pendingToUpdate.length} pending appointments as ${status}?`)) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await Promise.all(pendingToUpdate.map(app => appointmentService.updateStatus(app._id, status)));
-      setAppointments(prev => prev.map(app => {
-        const isUpdated = pendingToUpdate.some(p => p._id === app._id);
-        return isUpdated ? { ...app, status } : app;
-      }));
-    } catch (err) {
-      alert(err.message || "Failed to update some appointments");
-    } finally {
-      setLoading(false);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: "Update Appointments",
+      message: `Are you sure you want to mark all ${pendingToUpdate.length} pending appointments as ${status}?`,
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await Promise.all(pendingToUpdate.map(app => appointmentService.updateStatus(app._id, status)));
+          setAppointments(prev => prev.map(app => {
+            const isUpdated = pendingToUpdate.some(p => p._id === app._id);
+            return isUpdated ? { ...app, status } : app;
+          }));
+          showToast(`Successfully marked ${pendingToUpdate.length} appointments as ${status}.`, "success");
+        } catch (err) {
+          showToast(err.message || "Failed to update some appointments", "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   useEffect(() => {
@@ -136,9 +147,10 @@ const DoctorAppointments = () => {
       const res = await appointmentService.updateStatus(id, status);
       if (res.success) {
         setAppointments(prev => prev.map(a => a._id === id ? { ...a, status } : a));
+        showToast(`Appointment status updated to ${status}.`, "success");
       }
     } catch (err) {
-      alert(err.message || "Failed to update status");
+      showToast(err.message || "Failed to update status", "error");
     }
   };
 
@@ -445,6 +457,65 @@ const DoctorAppointments = () => {
 
       <CentralAlertsModal isOpen={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />
       <NodeSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+      {/* Premium Custom Confirmation Modal */}
+      <AnimatePresence>
+        {confirmModal.isOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl relative z-10 text-center"
+            >
+              <div className="size-16 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-6 border border-primary/20">
+                <Calendar size={28} strokeWidth={2.5} />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight italic mb-3">
+                {confirmModal.title}
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed mb-8">
+                {confirmModal.message}
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                  className="flex-1 h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirmModal.onConfirm) confirmModal.onConfirm();
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                  }}
+                  className="flex-1 h-14 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+                >
+                  Confirm
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Premium Toast Notifications */}
+      <AnimatePresence>
+        {toast.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(prev => ({ ...prev, show: false }))}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

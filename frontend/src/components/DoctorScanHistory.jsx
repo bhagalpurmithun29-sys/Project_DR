@@ -32,6 +32,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { normalizeUrl } from '../services/api';
 import ProfileIncompleteBanner from '../components/ProfileIncompleteBanner';
+import Toast from './Toast';
 
 
 const formatSpecialization = (spec) => {
@@ -72,6 +73,11 @@ const DoctorScanHistory = () => {
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
     const [doctorPrescription, setDoctorPrescription] = useState('');
     const [sendingToPatient, setSendingToPatient] = useState(false);
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+    };
 
 
     useEffect(() => {
@@ -143,7 +149,8 @@ const DoctorScanHistory = () => {
                 technician: scan.technician || "Direct",
                 doctorName: scan.referredDoctor?.name,
                 prescription: scan.doctorPrescription,
-                sentToPatient: scan.sentToPatient
+                sentToPatient: scan.sentToPatient,
+                isBilateral: scan.isBilateral
             })));
         } catch (err) {
             console.error('Failed to fetch scans', err);
@@ -227,7 +234,7 @@ const DoctorScanHistory = () => {
             }
         } catch (err) {
             console.error('Analysis failed', err);
-            alert('Analysis failed: ' + (err.response?.data?.message || err.message));
+            showToast('Analysis failed: ' + (err.response?.data?.message || err.message), 'error');
         }
     };
 
@@ -253,10 +260,11 @@ const DoctorScanHistory = () => {
             }
             setIsAnalysisModalOpen(false);
             fetchScans();
-            if (send) alert('Report and prescription have been securely sent to the patient.');
+            if (send) showToast('Report and prescription have been securely sent to the patient.', 'success');
+            else showToast('Prescription draft saved successfully.', 'success');
         } catch (err) {
             console.error('Failed to update scan status', err);
-            alert('Failed to update: ' + (err.response?.data?.message || err.message));
+            showToast('Failed to update: ' + (err.response?.data?.message || err.message), 'error');
         } finally {
             setIsUpdatingStatus(false);
             setSendingToPatient(false);
@@ -948,6 +956,17 @@ const DoctorScanHistory = () => {
             {/* System Modals */}
             <CentralAlertsModal isOpen={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />
             <NodeSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+            {/* Premium Toast Notifications */}
+            <AnimatePresence>
+                {toast.show && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

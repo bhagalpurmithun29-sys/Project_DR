@@ -73,7 +73,7 @@ const PatientDashboard = () => {
     const reviewedScans = scans.filter(s => s.mainScan?.status === 'Reviewed');
     const latestReviewedScan = reviewedScans[0]?.mainScan;
     const latestResult = latestReviewedScan?.aiResult?.toLowerCase() || '';
-    const diabeticStage = latestResult.includes('proliferative') || latestResult.includes('pdr') || latestResult.includes('high') ? 'Stage 4: PDR' :
+    const diabeticStage = latestResult.includes('proliferative') || (latestResult.includes('pdr') && !latestResult.includes('npdr')) || latestResult.includes('high') ? 'Stage 4: PDR' :
         latestResult.includes('severe') ? 'Stage 3: Severe NPDR' :
             latestResult.includes('moderate') ? 'Stage 2: Moderate NPDR' :
                 latestResult.includes('mild') ? 'Stage 1: Mild NPDR' :
@@ -82,7 +82,7 @@ const PatientDashboard = () => {
     const getRiskLevel = (result) => {
         if (!result) return 'None';
         const lowerResult = result.toLowerCase();
-        if (lowerResult.includes('pdr') || lowerResult.includes('severe') || lowerResult.includes('high')) return 'High';
+        if ((lowerResult.includes('pdr') && !lowerResult.includes('npdr')) || lowerResult.includes('severe') || lowerResult.includes('high')) return 'High';
         if (lowerResult.includes('moderate')) return 'Moderate';
         return 'Low';
     };

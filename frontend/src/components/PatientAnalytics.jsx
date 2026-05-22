@@ -45,7 +45,7 @@ export default function PatientAnalytics() {
   // ── DR Stage helpers ──────────────────────────────────────────────────────
   const getDRStage = (prediction, aiResult) => {
     const t = (prediction || aiResult || '').toLowerCase();
-    if (t.includes('proliferat') || t.includes('pdr') || t.includes('high')) return 4;
+    if (t.includes('proliferat') || (t.includes('pdr') && !t.includes('npdr')) || t.includes('high')) return 4;
     if (t.includes('severe') || t.includes('stage 3')) return 3;
     if (t.includes('moderate') || t.includes('stage 2')) return 2;
     if (t.includes('mild') || t.includes('stage 1') || t.includes('npdr')) return 1;

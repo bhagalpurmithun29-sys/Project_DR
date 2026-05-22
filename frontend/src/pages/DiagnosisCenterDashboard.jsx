@@ -161,7 +161,7 @@ const getRiskLevel = (scan) => {
     ].filter(Boolean).join(' ').toLowerCase();
 
     // High Risk (Stage 3 & 4)
-    if (text.includes('high') || text.includes('proliferat') || text.includes('pdr') ||
+    if (text.includes('high') || text.includes('proliferat') || (text.includes('pdr') && !text.includes('npdr')) ||
         text.includes('stage 4') || text.includes('stage 3') || text.includes('severe')) return 'High';
 
     // Moderate Risk (Stage 2)
@@ -711,9 +711,12 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                                                         {siblingScan && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Right Eye (OD) Analysis</span>}
                                                         {s.status === 'Analyzed' || s.status === 'Reviewed' ? (
                                                             <div className="flex flex-col gap-1.5">
-                                                                <Badge color={s.aiResult === 'High Risk' ? 'red' : s.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
-                                                                    {s.aiResult || 'Unknown'}
-                                                                </Badge>
+                                                                {(() => {
+                                                                    const level = getRiskLevel(s);
+                                                                    const color = level === 'High' ? 'red' : level === 'Moderate' ? 'amber' : 'emerald';
+                                                                    const label = level === 'High' ? 'High Risk' : level === 'Moderate' ? 'Moderate Risk' : level === 'No DR' ? 'No DR' : 'Low Risk';
+                                                                    return <Badge color={color}>{label}</Badge>;
+                                                                })()}
                                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                                     <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-lg">
                                                                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">DR:</span>
@@ -736,9 +739,12 @@ const ScansSection = ({ scans, patients, onRefresh, showToast, setSelectedScan, 
                                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Left Eye (OS) Analysis</span>
                                                             {siblingScan.status === 'Analyzed' || siblingScan.status === 'Reviewed' ? (
                                                                 <div className="flex flex-col gap-1.5">
-                                                                    <Badge color={siblingScan.aiResult === 'High Risk' ? 'red' : siblingScan.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
-                                                                        {siblingScan.aiResult || 'Unknown'}
-                                                                    </Badge>
+                                                                    {(() => {
+                                                                        const level = getRiskLevel(siblingScan);
+                                                                        const color = level === 'High' ? 'red' : level === 'Moderate' ? 'amber' : 'emerald';
+                                                                        const label = level === 'High' ? 'High Risk' : level === 'Moderate' ? 'Moderate Risk' : level === 'No DR' ? 'No DR' : 'Low Risk';
+                                                                        return <Badge color={color}>{label}</Badge>;
+                                                                    })()}
                                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                                         <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-lg">
                                                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">DR:</span>
@@ -986,10 +992,11 @@ const ReportsSection = ({ scans, setSelectedScan, setSiblingScan, setShowReport 
                                                     {g.scans.map(s => {
                                                         const level = getRiskLevel(s);
                                                         const color = level === 'High' ? 'red' : level === 'Moderate' ? 'amber' : 'emerald';
+                                                        const displayLabel = level === 'High' ? 'High Risk' : level === 'Moderate' ? 'Moderate Risk' : level === 'No DR' ? 'No DR' : 'Low Risk';
                                                         return (
                                                             <div key={s._id} className="flex items-center gap-1.5">
                                                                 <span className="text-[8px] font-black text-slate-300 w-4">{s.eyeSide}:</span>
-                                                                <Badge color={color}>{s.aiResult || s.prediction || '—'}</Badge>
+                                                                <Badge color={color}>{displayLabel}</Badge>
                                                             </div>
                                                         );
                                                     })}
@@ -1535,7 +1542,7 @@ const DiagnosisCenterDashboard = () => {
                 </AnimatePresence>
                 <div className="mt-10 text-center">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                        © 2026 Retinal AI Systems · Diagnosis Center Portal · HIPAA Vault Active
+                        © 2026 Retinal AI Systems · Diagnosis Center Portal
                     </p>
                 </div>
             </main>
@@ -1591,12 +1598,12 @@ const DiagnosisCenterDashboard = () => {
                                                     <div className="size-2 rounded-full bg-primary" />
                                                     {scan.eyeSide === 'OD' ? 'Right Eye (OD)' : 'Left Eye (OS)'}
                                                 </h4>
-                                                <Badge color={scan.aiResult === 'High Risk' ? 'red' : scan.aiResult === 'Moderate Risk' ? 'amber' : 'emerald'}>
-                                                    {scan.aiResult || 'Low Risk'}
-                                                </Badge>
-                                            </div>
-
-                                            <div className="aspect-[4/3] rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-900 shadow-inner group relative">
+                                                {(() => {
+                                                    const level = getRiskLevel(scan);
+                                                    const color = level === 'High' ? 'red' : level === 'Moderate' ? 'amber' : 'emerald';
+                                                    const label = level === 'High' ? 'High Risk' : level === 'Moderate' ? 'Moderate Risk' : level === 'No DR' ? 'No DR' : 'Low Risk';
+                                                    return <Badge color={color}>{label}</Badge>;
+                                                })()}
                                                 <img src={normalizeUrl(scan.imageUrl)} alt={`${scan.eyeSide} Retina`} className="w-full h-full object-cover" />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                                                     <p className="text-white text-[10px] font-black uppercase tracking-widest">
