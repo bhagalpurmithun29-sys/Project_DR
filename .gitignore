@@ -1,48 +1,125 @@
-# --- Node.js / Javascript ---
+# --- Dependencies ---
 node_modules/
 **/node_modules/
-package-lock.json
+.pnp/
+.pnp.*
+
+# --- Package Manager Caches ---
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# --- Logs ---
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.npm/
-.eslintcache
+pnpm-debug.log*
+lerna-debug.log*
 
-# --- Frontend (Vite/React) ---
+# --- Environment Files / Secrets ---
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# --- Frontend / Build Output ---
 dist/
-dist-ssr/
 **/dist/
+dist-ssr/
+**/dist-ssr/
 build/
+**/build/
 out/
+**/out/
 coverage/
+**/coverage/
+.vite/
+**/.vite/
+.vite-temp/
+**/.vite-temp/
 .next/
 .serverless/
-
-# --- Environment Secrets ---
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-**/.env
-**/.env.local
+.vercel/
+.netlify/
 
 # --- Python ---
-model/
-**/model/
 venv/
 .venv/
 env/
 **/venv/
+**/.venv/
 **/env/
+__pycache__/
 **/__pycache__/
 *.py[cod]
 *$py.class
 .Python
 .pytest_cache/
+**/.pytest_cache/
 .mypy_cache/
+**/.mypy_cache/
+.ruff_cache/
+**/.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+pip-wheel-metadata/
 
-# --- OS Specific ---
+# --- AI / ML Local Runtime Artifacts ---
+backend/ai/model/
+backend/ai/venv/
+backend/ai/runs/
+backend/ai/outputs/
+runs/
+wandb/
+mlruns/
+*.onnx
+*.tflite
+*.ckpt
+
+# --- Uploads / Sensitive Clinical Data ---
+uploads/
+**/uploads/*
+!**/uploads/.gitkeep
+
+# --- Local / Sample Medical Image Assets ---
+frontend/public/images/
+frontend/public/retina.png
+frontend/public/stage*.jpeg
+
+# --- Local Databases ---
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+
+# --- Generated Reports / Temporary Artifacts ---
+scratch/
+**/scratch/
+tmp/
+temp/
+**/tmp/
+**/temp/
+lint_output.txt
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# --- Presentation Build Artifacts ---
+presentation_deck.html
+Retinal_AI_Project_Presentation.pptx
+presentation/assets/
+
+# --- OS Files ---
 .DS_Store
 .DS_Store?
 ._*
@@ -62,24 +139,3 @@ desktop.ini
 *.ntvs*
 *.njsproj
 *.sln
-
-# --- Project Specific Artifacts ---
-scratch/
-**/scratch/
-lint_output.txt
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.pdf
-*.svg
-!frontend/public/*.svg
-!frontend/src/assets/**/*
-
-# --- Clinical Data (HIPAA) ---
-**/uploads/*
-!**/uploads/.gitkeep
-
-# --- Presentation Files ---
-presentation_deck.html
-Retinal_AI_Project_Presentation.pptx
